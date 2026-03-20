@@ -3,6 +3,7 @@ import "./index.css";
 import Dashboard from "./pages/Dashboard";
 import { BrowserRouter,Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
+import UserManagement from "./pages/UserManagement";
 
 function App() {
   return (
@@ -14,6 +15,12 @@ function App() {
             <Dashboard />
           </ProtectedRoute>
         } 
+        />
+        <Route path="/users" element={
+          <ProtectedRoute>
+            <UserManagement />
+          </ProtectedRoute>
+        }
         />
       </Routes>
     </BrowserRouter>
