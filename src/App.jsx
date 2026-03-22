@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import { BrowserRouter,Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UserManagement from "./pages/UserManagement";
+import EvacuationAlerts from "./pages/EvacuationAlerts";
 
 function App() {
   return (
@@ -19,6 +20,12 @@ function App() {
         <Route path="/users" element={
           <ProtectedRoute>
             <UserManagement />
+          </ProtectedRoute>
+        }
+        />
+        <Route path="/evacuation-alerts" element={
+          <ProtectedRoute>
+            <EvacuationAlerts />
           </ProtectedRoute>
         }
         />
