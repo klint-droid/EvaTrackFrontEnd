@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Button from "../ui/Button";
 import API from "../api";
 
 function Login() {
@@ -56,7 +57,7 @@ function Login() {
 
         <br />
 
-        <button type="submit">Login</button>
+        <Button type="submit">Login</Button>
       </form>
     </div>
   );
