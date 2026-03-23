@@ -79,7 +79,7 @@ const UserManagement = () => {
                         onClick={() => setShowCreateModal(true)}
                         className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
                     >
-                        + Add User
+                        Add User
                     </button>
                 </div>
 
