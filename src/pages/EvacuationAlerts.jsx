@@ -12,7 +12,7 @@ const EvacuationAlerts = () => {
                 <p className="text-gray-600">No evacuation alerts found. Click "Create Alerts" to add new evacuation alerts.</p>
             </div>
             <div>
-                <p>foot</p>
+                <p>adadadadada</p>
             </div>
         </DashboardLayout>
     )
