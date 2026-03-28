@@ -37,8 +37,7 @@ function Login() {
 
   return (
     <div>
-      <h2 className="text-2xl text-blue-600">Login</h2>
-
+      <h2 className="text-3xl font-semibold text-green-600">Login</h2>
       <form onSubmit={handleLogin}>
         <input
           type="email"
@@ -51,6 +50,7 @@ function Login() {
         <input
           type="password"
           placeholder="Password"
+          className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
           onChange={(e) => setPassword(e.target.value)}
         />
 
@@ -59,6 +59,9 @@ function Login() {
         <button type="submit">Login</button>
       </form>
     </div>
+
+    
+    
   );
 }
 
