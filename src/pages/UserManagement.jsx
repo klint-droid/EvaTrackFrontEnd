@@ -97,8 +97,8 @@ const UserManagement = () => {
                         </thead>
                         <tbody>
                             {users.map((user) => (
-                                <tr key={user.id} className="border-t">
-                                    <td className="px-4 py-2">{user.id}</td>
+                                <tr key={user.user_id} className="border-t">
+                                    <td className="px-4 py-2">{user.user_id}</td>
                                     <td className="px-4 py-2">{user.name}</td>
                                     <td className="px-4 py-2">{user.email}</td>
                                     <td className="px-4 py-2">{user.role}</td>
@@ -114,7 +114,7 @@ const UserManagement = () => {
                                             (currentUser.role === "admin" && user.role === "user")
                                         ) && (
                                             <button
-                                                onClick={() => deleteUser(user.id)}
+                                                onClick={() => deleteUser(user.user_id)}
                                                 className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
                                                 >
                                                 Delete

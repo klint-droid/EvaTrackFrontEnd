@@ -15,7 +15,7 @@ function Login() {
 
       await API.get("/sanctum/csrf-cookie");
 
-      await API.post("/login", {
+      await API.post("/api/login", {
         email,
         password,
       });
