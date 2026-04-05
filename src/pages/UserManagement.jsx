@@ -70,7 +70,6 @@ const UserManagement = () => {
     }
 
     return(
-        <DashboardLayout>
             <div className="p-6">
                <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold">User Management</h1>
@@ -253,7 +252,6 @@ const UserManagement = () => {
                     </div>
                     )}
             </div>
-        </DashboardLayout>
     );
 }
 

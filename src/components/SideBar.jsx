@@ -1,8 +1,24 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { logout } from "../api/auth/Logout";
+import { useNavigate } from "react-router-dom";
 
 const Sidebar = () => {
     const user = JSON.parse(localStorage.getItem("user"));
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
+        navigate("/")
+    };
 
     return (
         <div className="w-64 h-screen bg-white shadow-md p-4 flex flex-col">
@@ -53,6 +69,15 @@ const Sidebar = () => {
                 <p className="text-sm font-semibold">{user?.name}</p>
                 <p className="text-xs text-gray-600">{user?.role}</p>
             </div>
+                <button
+                    onClick={() => {
+                        if (!window.confirm("Are you sure you want to logout?")) return;
+                        handleLogout();
+                    }}
+                    className="bg-red-500 text-white px-4 py-2 rounded"
+                >
+                    Logout
+                </button>
         </div>
     );
 };

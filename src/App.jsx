@@ -5,30 +5,32 @@ import { BrowserRouter,Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UserManagement from "./pages/UserManagement";
 import EvacuationAlerts from "./pages/EvacuationAlerts";
+import VerifyHousehold from "./pages/VerifyHousehold";
+import EvacuationList from "./pages/evacuation/EvacuationList";
+import DashboardLayout from "./layout/DashboardLayout";
+import EvacuationForm from "./pages/evacuation/EvacuationForm";
+import EvacuationDetail from "./pages/evacuation/EvacuationDetail";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } 
-        />
-        <Route path="/users" element={
-          <ProtectedRoute>
-            <UserManagement />
-          </ProtectedRoute>
-        }
-        />
-        <Route path="/evacuation-alerts" element={
-          <ProtectedRoute>
-            <EvacuationAlerts />
-          </ProtectedRoute>
-        }
-        />
+        <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/users" element={<UserManagement />} />
+        <Route path="/evacuation-alerts" element={<EvacuationAlerts />} />
+        <Route path="/household-verification" element={<VerifyHousehold />} />
+
+        {/* Evacuation Centers */}
+        <Route path="/evacuation-centers">
+          <Route index element={<EvacuationList />} />
+          <Route path="create" element={<EvacuationForm />} />
+          <Route path="edit/:id" element={<EvacuationForm />} />
+          <Route path=":id" element={<EvacuationDetail />} />
+        </Route>
+
+      </Route>
       </Routes>
     </BrowserRouter>
   );
