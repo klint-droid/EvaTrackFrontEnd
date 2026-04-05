@@ -8,7 +8,6 @@ import EvacuationAlerts from "./pages/EvacuationAlerts";
 import VerifyHousehold from "./pages/VerifyHousehold";
 import EvacuationList from "./pages/evacuation/EvacuationList";
 import DashboardLayout from "./layout/DashboardLayout";
-import EvacuationForm from "./pages/evacuation/EvacuationForm";
 import EvacuationDetail from "./pages/evacuation/EvacuationDetail";
 
 function App() {
@@ -19,15 +18,13 @@ function App() {
         <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
 
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/users" element={<UserManagement />} />
+        <Route path="/user-management" element={<UserManagement />} />
         <Route path="/evacuation-alerts" element={<EvacuationAlerts />} />
         <Route path="/household-verification" element={<VerifyHousehold />} />
 
         {/* Evacuation Centers */}
         <Route path="/evacuation-centers">
           <Route index element={<EvacuationList />} />
-          <Route path="create" element={<EvacuationForm />} />
-          <Route path="edit/:id" element={<EvacuationForm />} />
           <Route path=":id" element={<EvacuationDetail />} />
         </Route>
 
