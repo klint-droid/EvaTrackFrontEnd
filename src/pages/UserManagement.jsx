@@ -72,8 +72,12 @@ const UserManagement = () => {
   const loadCenters = async () => {
     try {
       const res = await getCenters();
-      setCenters(res.data);
-    } catch (err) { console.error(err); }
+      const list = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
+      setCenters(list);
+    } catch (err) { 
+      console.error(err); 
+      setCenters([]);
+    }
   };
 
   useEffect(() => {

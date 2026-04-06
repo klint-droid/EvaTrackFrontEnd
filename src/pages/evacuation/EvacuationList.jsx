@@ -9,6 +9,7 @@ import {
   DoorOpen,
   Activity
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { getCenters } from "../../api/evacuation/getCenters";
 import { deleteCenter } from "../../api/evacuation/deleteCenter";
@@ -221,9 +222,12 @@ export default function EvacuationList() {
                     <button onClick={() => { setSelected(c); setDeleteOpen(true); }} className="text-[11px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-tight">Delete</button>
                   )}
                 </div>
-                <button className="flex items-center gap-1 text-[11px] font-black text-slate-600 uppercase tracking-tighter hover:text-blue-600">
+               <Link
+                  to={`/evacuation-centers/${c.evacuation_center_id}`}
+                  className="flex items-center gap-1 text-[11px] font-black text-slate-600 uppercase tracking-tighter hover:text-blue-600"
+                >
                   Manage <ChevronRight size={14} />
-                </button>
+                </Link>
               </div>
             </div>
           );

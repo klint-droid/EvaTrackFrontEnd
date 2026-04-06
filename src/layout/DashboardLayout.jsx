@@ -10,9 +10,19 @@ const DashboardLayout = () => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
 
     // Format the path for the breadcrumb (e.g., /resource-monitoring -> Resource Monitoring)
-    const currentPath = location.pathname === "/" 
-        ? "Dashboard" 
-        : location.pathname.split("/").pop()?.replace(/-/g, " ");
+    const getPageTitle = (pathname) => {
+        if (pathname === "/") return "Dashboard";
+        
+        const segments = pathname
+            .split("/")
+            .filter(Boolean) // remove empty strings
+            .map(seg => seg.replace(/-/g, " "));
+    
+        // Option B — Breadcrumb style: "Settings / Profile"
+        return segments.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(" / ");
+    };
+
+    const currentPath = getPageTitle(location.pathname);
 
     const handleLogout = async () => {
         try {
