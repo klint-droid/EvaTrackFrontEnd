@@ -143,7 +143,7 @@ const UserManagement = () => {
           <p className="text-xs text-slate-500 font-medium tracking-wide uppercase">System Access & Role Control</p>
         </div>
 
-        {isSuperAdminUser && (
+        {isSuperAdminUser || isAdminUser && (
           <button
             onClick={() => setShowCreateModal(true)}
             className="flex items-center space-x-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all active:scale-95"
@@ -167,69 +167,87 @@ const UserManagement = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {users.map((user) => (
-                <tr key={user.user_id} className="hover:bg-slate-50/30 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200">
-                        {user.name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-800 leading-none mb-1">{user.name}</p>
-                        <p className="text-xs text-slate-400 flex items-center gap-1">
-                          <Mail size={12} /> {user.email}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border ${getRoleBadge(user.role)}`}>
-                      {user.role.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center gap-2 text-slate-600">
-                        <MapPin size={14} className="text-blue-500" />
-                        <span className="text-xs font-semibold">{user.assigned_center_name || "Unassigned"}</span>
-                      </div>
-                      <select
-                        className="text-[11px] font-bold bg-slate-100 border-none rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50"
-                        value={user.assigned_evacuation_center_id || ""}
-                        disabled={assigningUserId === user.user_id || !canAssign(user)}
-                        onChange={(e) => handleAssignCenter(user.user_id, e.target.value)}
-                      >
-                        <option value="">Change Center</option>
-                        {centers.map((center) => (
-                          <option key={center.evacuation_center_id} value={center.evacuation_center_id}>
-                            {center.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      {canEdit(user) && (
-                        <button 
-                          onClick={() => setEditingUser(user)}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                        >
-                          <Edit3 size={16} />
-                        </button>
-                      )}
-                      {canDelete(user) && (
-                        <button 
-                          onClick={() => handleDeleteUser(user.user_id)}
-                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {users
+                .filter(user => {
+                  if (isAdminUser) return user.role !== "super_admin";
+                  return true;
+                })
+                .map((user) => {
+
+                  const assignedCenter = centers.find(
+                    (c) => c.evacuation_center_id === user.assigned_evacuation_center_id
+                  );
+
+                  return (
+                    <tr key={user.user_id} className="hover:bg-slate-50/30 transition-colors group">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200">
+                            {user.name.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-800 leading-none mb-1">{user.name}</p>
+                            <p className="text-xs text-slate-400 flex items-center gap-1">
+                              <Mail size={12} /> {user.email}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border ${getRoleBadge(user.role)}`}>
+                          {user.role.replace('_', ' ')}
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-2 text-slate-600">
+                            <MapPin size={14} className="text-blue-500" />
+                            <span className="text-xs font-semibold">
+                              {assignedCenter ? assignedCenter.name : "Unassigned"}
+                            </span>
+                          </div>
+
+                          <select
+                            className="text-[11px] font-bold bg-slate-100 border-none rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50"
+                            value={user.assigned_evacuation_center_id || ""}
+                            disabled={assigningUserId === user.user_id || !canAssign(user)}
+                            onChange={(e) => handleAssignCenter(user.user_id, e.target.value)}
+                          >
+                            <option value="">Change Center</option>
+                            {centers.map((center) => (
+                              <option key={center.evacuation_center_id} value={center.evacuation_center_id}>
+                                {center.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          {canEdit(user) && (
+                            <button 
+                              onClick={() => setEditingUser(user)}
+                              className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                            >
+                              <Edit3 size={16} />
+                            </button>
+                          )}
+                          {canDelete(user) && (
+                            <button 
+                              onClick={() => handleDeleteUser(user.user_id)}
+                              className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
