@@ -22,7 +22,7 @@ export default function RoomModal({ centerId, onClose, onSuccess }) {
     try {
       setLoading(true);
       const payload = {
-        evacuation_center_id: centerId,
+        center_id: centerId,
         room_number: roomNumber.trim(),
         max_capacity: Number(capacity),
       };
