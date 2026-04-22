@@ -33,14 +33,14 @@ const Sidebar = () => {
     };
 
     const menuItems = [
-        { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", roles: ["user", "admin", "super_admin"] },
-        { icon: Users, label: "Household", path: "/household-verification", roles: ["user"] },
-        { icon: Send, label: "Alerts", path: "/evacuation-alerts", roles: ["user", "admin"] },
-        { icon: Home, label: "Centers", path: "/evacuation-centers", roles: ["user", "admin"] },
-        { icon: Package, label: "Resources", path: "/resource-monitoring", roles: ["user", "admin"] },
-        { icon: BarChart3, label: "Analytics", path: "/analytics", roles: ["admin"] },
-        { icon: FileText, label: "Reports", path: "/reports", roles: ["admin"] },
-        { icon: User, label: "Users", path: "/user-management", roles: ["admin","super_admin"] },
+        { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", roles: ["evac_personnel", "evac_admin", "super_admin"] },
+        { icon: Users, label: "Household", path: "/household-verification", roles: ["evac_personnel"] },
+        { icon: Send, label: "Alerts", path: "/evacuation-alerts", roles: ["evac_personnel", "evac_admin"] },
+        { icon: Home, label: "Centers", path: "/evacuation-centers", roles: ["evac_personnel", "evac_admin"] },
+        { icon: Package, label: "Resources", path: "/resource-monitoring", roles: ["evac_personnel", "evac_admin"] },
+        { icon: BarChart3, label: "Analytics", path: "/analytics", roles: ["evac_personnel", "evac_admin"] },
+        { icon: FileText, label: "Reports", path: "/reports", roles: ["evac_admin"] },
+        { icon: User, label: "Users", path: "/user-management", roles: ["evac_admin","super_admin"] },
     ];
 
     return (

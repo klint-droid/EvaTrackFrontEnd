@@ -9,6 +9,7 @@ import VerifyHousehold from "./pages/VerifyHousehold";
 import EvacuationList from "./pages/evacuation/EvacuationList";
 import DashboardLayout from "./layout/DashboardLayout";
 import EvacuationDetail from "./pages/evacuation/EvacuationDetail";
+import "leaflet/dist/leaflet.css";
 
 function App() {
   return (

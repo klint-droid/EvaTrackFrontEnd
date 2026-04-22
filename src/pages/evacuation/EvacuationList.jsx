@@ -27,7 +27,6 @@ export default function EvacuationList() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   
-  // 🔥 NEW STATES FOR SORTING AND FILTERING
   const [sortBy, setSortBy] = useState("name");
   const [filterStatus, setFilterStatus] = useState("All Status");
 
@@ -78,7 +77,9 @@ export default function EvacuationList() {
   // 🔥 UPDATED PROCESSING LOGIC (Filter + Sort)
   const processedCenters = centers
     .filter((c) => {
-      const matchesSearch = `${c.name} ${c.location}`.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch = `${c.name} ${c.address?.full_address || ""}`
+      .toLowerCase()
+      .includes(search.toLowerCase());
       const status = getStatus(c.current ?? 0, c.capacity ?? 0);
       const matchesStatus = filterStatus === "All Status" || status === filterStatus;
       return matchesSearch && matchesStatus;
@@ -174,7 +175,7 @@ export default function EvacuationList() {
                 <h3 className="text-lg font-bold text-slate-800 leading-tight mb-1">{c.name}</h3>
                 <div className="flex items-center text-slate-400 text-xs font-medium mb-5">
                   <MapPin size={12} className="mr-1 text-blue-400" />
-                  {c.location}
+                  {c.address?.full_address}
                 </div>
 
                 {/* OCCUPANCY MINI-BAR */}
@@ -200,13 +201,6 @@ export default function EvacuationList() {
                     <div className="flex items-center gap-2">
                         <Users size={14} className="text-blue-500" />
                         <span className="text-xs font-bold text-slate-700">{current} / {max}</span>
-                    </div>
-                  </div>
-                  <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-100">
-                    <p className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1.5">Rooms</p>
-                    <div className="flex items-center gap-2">
-                        <DoorOpen size={14} className="text-blue-500" />
-                        <span className="text-xs font-bold text-slate-700">{c.rooms || 0} / {c.rooms || 0}</span>
                     </div>
                   </div>
                 </div>
