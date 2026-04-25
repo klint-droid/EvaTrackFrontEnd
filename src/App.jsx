@@ -9,6 +9,7 @@ import VerifyHousehold from "./pages/VerifyHousehold";
 import EvacuationList from "./pages/evacuation/EvacuationList";
 import DashboardLayout from "./layout/DashboardLayout";
 import EvacuationDetail from "./pages/evacuation/EvacuationDetail";
+import EventManagement from "./pages/EventManagement";
 import "leaflet/dist/leaflet.css";
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
         <Route path="/user-management" element={<UserManagement />} />
         <Route path="/evacuation-alerts" element={<EvacuationAlerts />} />
         <Route path="/household-verification" element={<VerifyHousehold />} />
+        <Route path="/events" element={<EventManagement />} />
 
         {/* Evacuation Centers */}
         <Route path="/evacuation-centers">

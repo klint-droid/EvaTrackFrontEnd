@@ -7,10 +7,10 @@ import {
   AlertCircle, 
   CheckCircle2, 
   TrendingUp,
-  MapPin
+  MapPin,
+  DoorOpen
 } from "lucide-react";
 import { getCenters } from "../api/evacuation/getCenters";
-import { getCapacity } from "../api/evacuation/getCapacity";
 import CapacityChart from "../components/dashboard/CapacityChart";
 
 const Dashboard = () => {
@@ -19,6 +19,7 @@ const Dashboard = () => {
     totalCenters: 0,
     totalCapacity: 0,
     totalOccupied: 0,
+    totalHouseholds: 0,
   });
 
   useEffect(() => {
@@ -28,33 +29,24 @@ const Dashboard = () => {
   const loadDashboard = async () => {
     try {
       const res = await getCenters();
-      const centerList = res.data || [];
+      const centers = res.data || [];
 
-      const capacities = await Promise.all(
-        centerList.map(async (c) => {
-          try {
-            const id = c.evacuation_center_id;
-            if (!id) return { name: c.name, current: 0, max: c.capacity || 0 };
-            
-            const cap = await getCapacity(id);
-            return {
-              name: c.name,
-              current: cap.data?.current ?? 0,
-              max: cap.data?.max ?? c.capacity ?? 0,
-            };
-          } catch (err) {
-            return { name: c.name, current: 0, max: c.capacity || 0 };
-          }
-        })
-      );
+      // Map directly from center list — no extra API calls needed
+      const capacities = centers.map(c => ({
+        name: c.name,
+        current: Number(c.current_occupancy) || 0,
+        max: Number(c.capacity) || 0,
+        households: Number(c.household_count) || 0,
+      }));
 
       setChartData(capacities);
 
-      const totalCenters = centerList.length;
-      const totalCapacity = capacities.reduce((sum, c) => sum + (c.max || 0), 0);
-      const totalOccupied = capacities.reduce((sum, c) => sum + (c.current || 0), 0);
+      const totalCenters = centers.length;
+      const totalCapacity = capacities.reduce((sum, c) => sum + c.max, 0);
+      const totalOccupied = capacities.reduce((sum, c) => sum + c.current, 0);
+      const totalHouseholds = capacities.reduce((sum, c) => sum + c.households, 0);
 
-      setStats({ totalCenters, totalCapacity, totalOccupied });
+      setStats({ totalCenters, totalCapacity, totalOccupied, totalHouseholds });
     } catch (err) {
       console.error("Dashboard error:", err);
     }
@@ -81,11 +73,12 @@ const Dashboard = () => {
       </div>
 
       {/* 🔹 TOP STATS GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         {[
           { label: "Active Centers", val: stats.totalCenters, icon: Home, color: "text-blue-600", bg: "bg-blue-50" },
           { label: "Total Capacity", val: stats.totalCapacity, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50" },
           { label: "Total Occupied", val: stats.totalOccupied, icon: PieChart, color: "text-amber-600", bg: "bg-amber-50" },
+          { label: "Households", val: stats.totalHouseholds, icon: DoorOpen, color: "text-purple-600", bg: "bg-purple-50" },
           { label: "Available Slots", val: availableSlots, icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
         ].map((item, i) => (
           <div key={i} className="bg-white p-6 rounded-[1.5rem] border border-slate-100 shadow-sm hover:shadow-md transition-all group">
@@ -133,8 +126,8 @@ const Dashboard = () => {
               <tr className="bg-slate-50/50">
                 <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Center Name</th>
                 <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Occupancy</th>
-                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Status</th>
-              </tr>
+                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Households</th>
+                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Status</th></tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {chartData.map((c, index) => {
@@ -161,6 +154,12 @@ const Dashboard = () => {
                         </div>
                       </div>
                     </td>
+                    <td className="px-8 py-5 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <DoorOpen size={14} className="text-purple-400" />
+                        <span className="text-sm font-bold text-slate-700">{c.households ?? 0}</span>
+                      </div>
+                    </td>
                     <td className="px-8 py-5 text-right">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
                         isCritical ? 'bg-red-50 text-red-600 border-red-100' : 
@@ -169,8 +168,7 @@ const Dashboard = () => {
                       }`}>
                         {isCritical ? 'Critical' : isWarning ? 'Warning' : 'Capable'}
                       </span>
-                    </td>
-                  </tr>
+                    </td></tr>
                 );
               })}
             </tbody>

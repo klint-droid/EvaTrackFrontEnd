@@ -13,8 +13,6 @@ import { verifyManual } from "../api/evacuationRecords/verifyManual";
 import { createHousehold } from "../api/evacuationRecords/createHousehold";
 import { getUser } from "../api/auth/getUser";
 import { getCenter } from "../api/evacuation/getCenter";
-import { suggestRoom } from "../api/rooms/suggestRoom";
-import { assignRoom } from "../api/rooms/assignRoom";
 import { admitHousehold } from "../api/evacuationRecords/admitHousehold";
 
 export default function VerifyHousehold() {

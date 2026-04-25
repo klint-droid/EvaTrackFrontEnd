@@ -74,26 +74,21 @@ export default function EvacuationList() {
     return "text-emerald-600 bg-emerald-50 border-emerald-100";
   };
 
-  // 🔥 UPDATED PROCESSING LOGIC (Filter + Sort)
   const processedCenters = centers
     .filter((c) => {
       const matchesSearch = `${c.name} ${c.address?.full_address || ""}`
       .toLowerCase()
       .includes(search.toLowerCase());
-      const status = getStatus(c.current ?? 0, c.capacity ?? 0);
+      const status = getStatus(c.current_occupancy ?? 0, c.capacity ?? 0);
       const matchesStatus = filterStatus === "All Status" || status === filterStatus;
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
-      if (sortBy === "capacity") {
-        return (b.capacity || 0) - (a.capacity || 0); // Highest capacity first
+      if(sortBy === "occupancy"){
+        const ratioA = a.capacity ? (a.current_occupancy || 0) / a.capacity : 0;
+        const ratioB = b.capacity ? (b.current_occupancy || 0) / b.capacity : 0;  
+        return ratioB - ratioA;
       }
-      if (sortBy === "occupancy") {
-        const ratioA = a.capacity ? (a.current || 0) / a.capacity : 0;
-        const ratioB = b.capacity ? (b.current || 0) / b.capacity : 0;
-        return ratioB - ratioA; // Most full first
-      }
-      return a.name.localeCompare(b.name); // Default: Alphabetical
     });
 
   return (
@@ -156,8 +151,8 @@ export default function EvacuationList() {
       {/* ⚡️ COMPACT GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {processedCenters.map((c) => {
-          const current = c.current ?? 0;
-          const max = c.capacity ?? 0;
+          const current = Number(c.current_occupancy) || 0;
+          const max = Number(c.capacity) || 0;
           const percent = max ? (current / max) * 100 : 0;
 
           return (
@@ -201,6 +196,13 @@ export default function EvacuationList() {
                     <div className="flex items-center gap-2">
                         <Users size={14} className="text-blue-500" />
                         <span className="text-xs font-bold text-slate-700">{current} / {max}</span>
+                    </div>
+                  </div>
+                  <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-100">
+                    <p className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1.5">Households</p>
+                    <div className="flex items-center gap-2">
+                      <DoorOpen size={14} className="text-indigo-500" />
+                      <span className="text-xs font-bold text-slate-700">{c.household_count ?? 0}</span>
                     </div>
                   </div>
                 </div>

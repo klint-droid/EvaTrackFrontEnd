@@ -14,6 +14,7 @@ import {
     ChevronRight,
     LogOut,
     User,
+    ShieldAlertIcon,
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -35,6 +36,7 @@ const Sidebar = () => {
     const menuItems = [
         { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", roles: ["evac_personnel", "evac_admin", "super_admin"] },
         { icon: Users, label: "Household", path: "/household-verification", roles: ["evac_personnel"] },
+        { icon: ShieldAlertIcon, label: "Events", path: "/events", roles: ["evac_admin"] },
         { icon: Send, label: "Alerts", path: "/evacuation-alerts", roles: ["evac_personnel", "evac_admin"] },
         { icon: Home, label: "Centers", path: "/evacuation-centers", roles: ["evac_personnel", "evac_admin"] },
         { icon: Package, label: "Resources", path: "/resource-monitoring", roles: ["evac_personnel", "evac_admin"] },
