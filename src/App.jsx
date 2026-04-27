@@ -13,6 +13,8 @@ import EventManagement from "./pages/EventManagement";
 import HouseholdManagement from './pages/HouseholdManagement';
 import HouseholdDetail from './pages/HouseholdDetail';
 import ResourceRequests from './pages/ResourceRequests';
+import CenterIssueReports from './pages/CenterIssueReports';
+
 import "leaflet/dist/leaflet.css";
 
 function App() {
@@ -40,6 +42,8 @@ function App() {
         </Route>
 
         <Route path="/resource-requests" element={<ResourceRequests />} />
+        
+        <Route path="/center-issue-reports" element={<CenterIssueReports />} />
       </Route>
       </Routes>
     </BrowserRouter>
