@@ -35,11 +35,12 @@ const Sidebar = () => {
 
     const menuItems = [
         { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", roles: ["evac_personnel", "evac_admin", "super_admin"] },
-        { icon: Users, label: "Household", path: "/household-verification", roles: ["evac_personnel"] },
+        { icon: Home, label: "Household", path: "/households", roles: ["evac_admin", "evac_personnel"] },
+        { icon: Users, label: "Household Verification", path: "/household-verification", roles: ["evac_personnel"] },
         { icon: ShieldAlertIcon, label: "Events", path: "/events", roles: ["evac_admin"] },
         { icon: Send, label: "Alerts", path: "/evacuation-alerts", roles: ["evac_personnel", "evac_admin"] },
         { icon: Home, label: "Centers", path: "/evacuation-centers", roles: ["evac_personnel", "evac_admin"] },
-        { icon: Package, label: "Resources", path: "/resource-monitoring", roles: ["evac_personnel", "evac_admin"] },
+        { icon: Package, label: "Resources", path: "/resource-requests", roles: ["evac_personnel", "evac_admin"] },
         { icon: BarChart3, label: "Analytics", path: "/analytics", roles: ["evac_personnel", "evac_admin"] },
         { icon: FileText, label: "Reports", path: "/reports", roles: ["evac_admin"] },
         { icon: User, label: "Users", path: "/user-management", roles: ["evac_admin","super_admin"] },

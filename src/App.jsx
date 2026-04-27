@@ -10,6 +10,9 @@ import EvacuationList from "./pages/evacuation/EvacuationList";
 import DashboardLayout from "./layout/DashboardLayout";
 import EvacuationDetail from "./pages/evacuation/EvacuationDetail";
 import EventManagement from "./pages/EventManagement";
+import HouseholdManagement from './pages/HouseholdManagement';
+import HouseholdDetail from './pages/HouseholdDetail';
+import ResourceRequests from './pages/ResourceRequests';
 import "leaflet/dist/leaflet.css";
 
 function App() {
@@ -31,6 +34,12 @@ function App() {
           <Route path=":id" element={<EvacuationDetail />} />
         </Route>
 
+        <Route path="/households">
+          <Route index element={<HouseholdManagement />} />
+          <Route path=":id" element={<HouseholdDetail />} />
+        </Route>
+
+        <Route path="/resource-requests" element={<ResourceRequests />} />
       </Route>
       </Routes>
     </BrowserRouter>
