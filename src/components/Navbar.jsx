@@ -45,7 +45,7 @@ const Navbar = () => {
               to="/login"
               className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 border border-transparent hover:bg-gray-50 transition-colors"
             >
-              Admin Login
+              Login
             </Link>
           </div>
 
