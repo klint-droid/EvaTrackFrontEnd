@@ -1,7 +1,15 @@
-import Login from "./pages/Login";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import "leaflet/dist/leaflet.css";
 import "./index.css";
+
+// Public Pages
+import Landing from "./pages/Landing";
+import PublicPortal from "./pages/PublicPortal"; 
+import Login from "./pages/Login";
+import Navbar from "./components/Navbar";
+
+// Admin Pages
 import Dashboard from "./pages/Dashboard";
-import { BrowserRouter,Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UserManagement from "./pages/UserManagement";
 import EvacuationAlerts from "./pages/EvacuationAlerts";
@@ -15,36 +23,51 @@ import HouseholdDetail from './pages/HouseholdDetail';
 import ResourceRequests from './pages/ResourceRequests';
 import CenterIssueReports from './pages/CenterIssueReports';
 
-import "leaflet/dist/leaflet.css";
+const PublicLayout = () => {
+  return (
+    <>
+      <Navbar />
+      <Outlet />
+    </>
+  );
+};
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/user-management" element={<UserManagement />} />
-        <Route path="/evacuation-alerts" element={<EvacuationAlerts />} />
-        <Route path="/household-verification" element={<VerifyHousehold />} />
-        <Route path="/events" element={<EventManagement />} />
-
-        {/* Evacuation Centers */}
-        <Route path="/evacuation-centers">
-          <Route index element={<EvacuationList />} />
-          <Route path=":id" element={<EvacuationDetail />} />
-        </Route>
-
-        <Route path="/households">
-          <Route index element={<HouseholdManagement />} />
-          <Route path=":id" element={<HouseholdDetail />} />
-        </Route>
-
-        <Route path="/resource-requests" element={<ResourceRequests />} />
         
-        <Route path="/center-issue-reports" element={<CenterIssueReports />} />
-      </Route>
+        {/* PUBLIC ROUTES (With Navbar) */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<Landing />} />
+          <Route path="/portal" element={<PublicPortal />} />
+        </Route>
+
+        {/* STANDALONE ROUTE (No Navbar) */}
+        <Route path="/login" element={<Login />} />
+
+        {/* PROTECTED ADMIN ROUTES (With DashboardLayout) */}
+        <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/user-management" element={<UserManagement />} />
+          <Route path="/evacuation-alerts" element={<EvacuationAlerts />} />
+          <Route path="/household-verification" element={<VerifyHousehold />} />
+          <Route path="/events" element={<EventManagement />} />
+
+          <Route path="/evacuation-centers">
+            <Route index element={<EvacuationList />} />
+            <Route path=":id" element={<EvacuationDetail />} />
+          </Route>
+
+          <Route path="/households">
+            <Route index element={<HouseholdManagement />} />
+            <Route path=":id" element={<HouseholdDetail />} />
+          </Route>
+
+          <Route path="/resource-requests" element={<ResourceRequests />} />
+          <Route path="/center-issue-reports" element={<CenterIssueReports />} />
+        </Route>
+
       </Routes>
     </BrowserRouter>
   );
