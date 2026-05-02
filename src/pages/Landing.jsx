@@ -23,13 +23,13 @@ const Landing = () => {
             to="/portal"
             className="px-8 py-4 bg-white text-blue-900 font-bold rounded-full shadow-lg hover:bg-gray-100 transition-transform hover:scale-105 text-center"
           >
-            Find Evacuation Centers 🗺️
+            Find Evacuation Centers 
           </Link>
           <Link 
             to="/login"
             className="px-8 py-4 bg-blue-700 text-white font-bold rounded-full border border-blue-500 shadow-lg hover:bg-blue-600 transition-transform hover:scale-105 text-center"
           >
-            Responder Login 🛡️
+            Responder Login 
           </Link>
         </div>
       </div>
