@@ -23,7 +23,6 @@ export default function CenterModal({ isOpen, onClose, onSubmit, initialData }) 
   const [searchLoading, setSearchLoading] = useState(false);
   const debounce                          = useRef(null);
 
-  // ── reset / populate on open ─────────────────────────────────────────────────
   useEffect(() => {
     if (!isOpen) return;
 
@@ -45,16 +44,26 @@ export default function CenterModal({ isOpen, onClose, onSubmit, initialData }) 
     }
   }, [initialData, isOpen]);
 
-  // ── map pin ──────────────────────────────────────────────────────────────────
+
   const handleSelectLocation = async (pos) => {
     setPosition(pos); setLat(pos.lat); setLng(pos.lng);
     setLoadingAddr(true);
     try {
       const addr = await reverseGeocode(pos.lat, pos.lng);
-      setOsmAddress(addr);
-      setSearchQuery(addr.full_address || "");
-      setSearchResults([]);
-    } finally { setLoadingAddr(false); }
+      if(addr){
+        setOsmAddress(addr);
+        setSearchQuery(addr.full_address);
+        setSearchResults([]);
+      } else {
+        setOsmAddress(null);
+        setSearchQuery("");
+      }
+    } catch (error) {
+      console.error(error);
+      setOsmAddress(null);
+      setSearchQuery("");
+    }
+    finally { setLoadingAddr(false); }
   };
 
   // ── manual search (Nominatim) ────────────────────────────────────────────────
@@ -73,7 +82,7 @@ export default function CenterModal({ isOpen, onClose, onSubmit, initialData }) 
           { headers: { "User-Agent": "EvacTrack/1.0 (klintruales11@gmail.com)" } }
         );
         setSearchResults(await res.json());
-      } catch { /* silently fail */ }
+      } catch { setSearchResults([]); }
       finally { setSearchLoading(false); }
     }, 500);
   };
@@ -86,8 +95,12 @@ export default function CenterModal({ isOpen, onClose, onSubmit, initialData }) 
     setLoadingAddr(true);
     try {
       const addr = await reverseGeocode(pos.lat, pos.lng);
-      setOsmAddress(addr);
-    } finally { setLoadingAddr(false); }
+      setOsmAddress({ full_address: result.display_name });
+    } catch (error) {
+      console.error(error);
+      setOsmAddress(null);
+    }
+    finally { setLoadingAddr(false); }
   };
 
   // ── submit ───────────────────────────────────────────────────────────────────

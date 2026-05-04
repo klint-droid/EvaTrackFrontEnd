@@ -14,35 +14,6 @@ import { isAdmin, isSuperAdmin } from "../../utils/roles";
 import CenterModal  from "../../components/evacuation/CenterModal";
 import { DeleteModal } from "../../components/evacuation/DeleteModal";
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Build a human-readable address string from the normalized address object.
- * Falls back to the raw OSM street_address if no FKs are filled yet.
- */
-function resolveAddress(address) {
-  if (!address) return "No address on record";
-
-  // If barangay relation is loaded, build from relations
-  if (address.barangay?.barangay_name) {
-    const parts = [
-      address.purok?.purok_name,
-      address.sitio?.sitio_name,
-      address.barangay.barangay_name,
-      address.barangay?.city?.city_name,
-      address.barangay?.city?.province?.province_name,
-    ].filter(Boolean);
-    return parts.join(", ");
-  }
-
-  // Fall back to raw OSM string saved at creation
-  return address.street_address || "Address not yet verified";
-}
-
-/** True when address has no normalized FK mapped yet */
-function isUnverified(address) {
-  return !address?.barangay_id;
-}
 
 function getStatus(current, max) {
   const ratio = max ? current / max : 0;
@@ -97,7 +68,7 @@ export default function EvacuationList() {
 
   const processedCenters = centers
     .filter((c) => {
-      const addrStr = resolveAddress(c.address).toLowerCase();
+      const addrStr = (c.osm_address || "").toLowerCase();
       const matchesSearch = `${c.name} ${addrStr}`.toLowerCase().includes(search.toLowerCase());
       const status = getStatus(c.current_occupancy ?? 0, c.capacity ?? 0);
       const matchesStatus = filterStatus === "All Status" || status === filterStatus;
@@ -177,8 +148,7 @@ export default function EvacuationList() {
           const current  = Number(c.current_occupancy) || 0;
           const max      = Number(c.capacity) || 0;
           const percent  = max ? (current / max) * 100 : 0;
-          const addrStr  = resolveAddress(c.address);
-          const unverified = isUnverified(c.address);
+          const addrStr  = c.osm_address || "Address not on record.";
 
           return (
             <div
@@ -205,14 +175,6 @@ export default function EvacuationList() {
                   <MapPin size={12} className="mt-0.5 shrink-0 text-blue-400" />
                   <span className="text-slate-400 leading-snug">{addrStr}</span>
                 </div>
-
-                {/* Unverified address badge */}
-                {unverified && (
-                  <div className="flex items-center gap-1.5 mb-4 text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1 w-fit">
-                    <AlertCircle size={11} />
-                    <span className="text-[9px] font-black uppercase tracking-wide">Address unverified</span>
-                  </div>
-                )}
 
                 {/* OCCUPANCY BAR */}
                 <div className="space-y-2 mb-5 mt-3">
