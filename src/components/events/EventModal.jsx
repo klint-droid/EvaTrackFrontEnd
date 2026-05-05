@@ -1,15 +1,32 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createEvent } from '../../api/events/createEvent';
-
-const EVENT_TYPES = ['Typhoon', 'Flood', 'Earthquake', 'Fire', 'Other'];
+import { getDisasterTypes } from '../../api/events/getDisasterTypes';
+import { getSeverityLevels } from '../../api/events/getSeverityLevels';
 
 export default function EventModal({ onClose, onCreated }) {
-    const [form, setForm] = useState({ name: '', type: '' });
+    const [form, setForm] = useState({ name: '', type_id: '', severity_id: '' });
+    const [disasterTypes, setDisasterTypes] = useState([]);
+    const [severityLevels, setSeverityLevels] = useState([]);
+    const [typesLoading, setTypesLoading] = useState(true);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-
+    
+    useEffect(() => {
+        const fetchTypes = async () => {
+            try {
+                const [typeRes, severityRes] = await Promise.all([getDisasterTypes(), getSeverityLevels()]);
+                setSeverityLevels(severityRes.data);
+                setDisasterTypes(typeRes.data);
+            } catch (error) {
+                setError(error.response?.data?.message || 'Failed to load option.');
+            } finally {
+                setTypesLoading(false);
+            }
+        };
+        fetchTypes();
+    }, []);
     const handleSubmit = async () => {
-        if (!form.name || !form.type) {
+        if (!form.name || !form.type_id || !form.severity_id) {
             setError('All fields are required.');
             return;
         }
@@ -51,15 +68,35 @@ export default function EventModal({ onClose, onCreated }) {
                         <label className="text-sm font-medium text-gray-700">Type</label>
                         <select
                             className="w-full border rounded-lg px-3 py-2 mt-1 text-sm"
-                            value={form.type}
-                            onChange={e => setForm({ ...form, type: e.target.value })}
+                            value={form.type_id}
+                            onChange={e => setForm({ ...form, type_id: Number(e.target.value) })}
+                            disabled={typesLoading}
                         >
-                            <option value="">Select type</option>
-                            {EVENT_TYPES.map(t => (
-                                <option key={t} value={t}>{t}</option>
+                            <option value="">{typesLoading ? 'Loading...' : 'Select type'}</option>
+                            {disasterTypes.map(type => (
+                                <option key={type.type_id} value={type.type_id}>
+                                    {type.type_name}
+                                </option>
                             ))}
                         </select>
                     </div>
+                </div>
+
+                <div>
+                    <label className="text-sm font-medium text-gray-700">Severity Level</label>
+                    <select
+                        className="w-full border rounded-lg px-3 py-2 mt-1 text-sm"
+                        value={form.severity_id}
+                        onChange={e => setForm({ ...form, severity_id: Number(e.target.value) })}
+                        disabled={typesLoading}
+                        >
+                        <option value="">{typesLoading ? 'Loading...' : 'Select severity level'}</option>
+                        {severityLevels.map(severity => (
+                            <option key={severity.severity_id} value={severity.severity_id}>
+                            {severity.severity_label}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 <div className="flex justify-end gap-2 mt-5">
@@ -71,7 +108,7 @@ export default function EventModal({ onClose, onCreated }) {
                     </button>
                     <button
                         onClick={handleSubmit}
-                        disabled={loading}
+                        disabled={loading || typesLoading}
                         className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
                     >
                         {loading ? 'Creating...' : 'Create Event'}
