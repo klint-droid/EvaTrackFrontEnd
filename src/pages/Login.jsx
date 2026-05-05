@@ -59,7 +59,7 @@ function Login() {
             E
           </div>
         </div>
-        <h2 className="text-center text-3xl font-extrabold text-gray-900 tracking-tight">
+        <h2 className="text-center text-3xl font-extrabold text-red-900 tracking-tight">
           Login
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">

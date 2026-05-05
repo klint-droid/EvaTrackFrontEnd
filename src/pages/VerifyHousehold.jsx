@@ -106,15 +106,20 @@ export default function VerifyHousehold() {
   }, []);
 
   useEffect(() => {
-    if (!user?.assigned_center_id) return;
+  if (!user?.assigned_center_id) return;
 
-    getCenter(user.assigned_center_id)
-      .then((res) => {
-        const body = getApiBody(res);
-        setCenterName(body?.data?.name || body?.name);
-      })
-      .catch(console.error);
-  }, [user]);
+  getCenter(user.assigned_center_id)
+    .then((res) => {
+      const body = getApiBody(res);
+      const center = body?.data || body;
+      setCenterName(
+        center?.name || center?.center_name || user.assigned_center_id
+      );
+    })
+    .catch(() => {
+      setCenterName(user.assigned_center_id);
+    });
+}, [user]);
 
   const handleScan = async (householdId) => {
     setLoading(true);
@@ -280,7 +285,7 @@ export default function VerifyHousehold() {
                 Station
               </p>
               <p className="text-xs font-bold text-slate-700">
-                {centerName || "Assigning..."}
+                {centerName ?? "---"}
               </p>
             </div>
           </div>

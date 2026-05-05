@@ -41,13 +41,6 @@ export const reverseGeocode = async (lat, lng) => {
   } catch (error) {
     console.error("Reverse geocode error:", error);
 
-    return {
-      region: "",
-      province: "",
-      city: "",
-      barangay: "",
-      street: "",
-      full_address: "Unable to fetch address",
-    };
+    return null;
   }
 };
