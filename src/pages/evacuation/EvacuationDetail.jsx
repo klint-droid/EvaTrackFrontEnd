@@ -17,6 +17,7 @@ import { getUnitsByCenter } from '../../api/units/getUnitsByCenter';
 import { deleteUnit } from '../../api/units/deleteUnit';
 import { getUnitAllocations } from '../../api/allocations/getUnitAllocations';
 import { unassignHousehold } from '../../api/allocations/unassignHousehold';
+import { getCapacity } from '../../api/evacuation/getCapacity';
 
 import { getRecordsByCenter } from '../../api/evacuationRecords/getRecordsByCenter';
 import { deleteRecord } from '../../api/evacuationRecords/deleteRecord';
@@ -50,8 +51,8 @@ export default function EvacuationDetail() {
 
     const fetchCenter = async () => {
         try {
-            const res = await getCenter(id);
-            setCenter(res.data);
+            const center = await getCenter(id);
+            setCenter(center);
         } catch (err) {
             console.error(err);
         }
@@ -178,7 +179,7 @@ export default function EvacuationDetail() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">{center.name}</h1>
-                    <p className="text-sm text-slate-500">{center.address?.full_address}</p>
+                    <p className="text-sm text-slate-500">{center.osm_address}</p>
                 </div>
 
                 <div className="flex items-center gap-2">

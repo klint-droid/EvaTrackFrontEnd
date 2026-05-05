@@ -3,6 +3,7 @@ import { getEvents } from '../api/events/getEvents';
 import EventModal from '../components/events/EventModal';
 import EndEventButton from '../components/events/EndEventButton';
 import AssignCentersModal from '../components/events/AssignCentersModal';
+import SeverityBadge from '../components/events/SeverityBadge';
 
 export default function EventManagement() {
     const [events, setEvents] = useState([]);
@@ -48,6 +49,7 @@ export default function EventManagement() {
                                 <th className="px-4 py-3">Event ID</th>
                                 <th className="px-4 py-3">Name</th>
                                 <th className="px-4 py-3">Type</th>
+                                <th className='px-4 py-3'>Severity</th>
                                 <th className="px-4 py-3">Started At</th>
                                 <th className="px-4 py-3">Status</th>
                                 <th className="px-4 py-3">Actions</th>
@@ -58,7 +60,10 @@ export default function EventManagement() {
                                 <tr key={event.event_id} className="border-t hover:bg-gray-50">
                                     <td className="px-4 py-3 font-mono text-xs">{event.event_id}</td>
                                     <td className="px-4 py-3">{event.name}</td>
-                                    <td className="px-4 py-3">{event.type}</td>
+                                    <td className="px-4 py-3">{event.primary_type?.type_name}</td>
+                                    <td className="px-4 py-3">
+                                        <SeverityBadge severity={event.severity} />
+                                    </td>
                                     <td className="px-4 py-3">
                                         {new Date(event.started_at).toLocaleString()}
                                     </td>
