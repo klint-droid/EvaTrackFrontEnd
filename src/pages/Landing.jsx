@@ -84,9 +84,9 @@ const Landing = () => {
         <div className="bg-red-500 px-5 py-3 text-xs font-semibold text-white sm:px-8">
           <div className="mx-auto flex max-w-6xl items-start gap-2">
             <AlertCircle className="mt-0.5 h-4 w-4 flex-none" />
-            <span>
+            <center><span>
               Active Alert: Typhoon Signal No. 3 in effect. Please proceed to the nearest evacuation center if in low-lying areas.
-            </span>
+            </span></center>
           </div>
         </div>
 
