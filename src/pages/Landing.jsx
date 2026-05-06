@@ -36,23 +36,7 @@ const Landing = () => {
 
       {/* Features Grid */}
       <div className="max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center">
-          <div className="w-14 h-14 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">📍</div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Live Availability</h3>
-          <p className="text-gray-500">View real-time capacity of nearby centers so you don't travel to a shelter that is already full.</p>
-        </div>
-
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center">
-          <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">📱</div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">QR Verification</h3>
-          <p className="text-gray-500">Fast-track your entry. Local governments use QR scanning to instantly verify your household and assign a room.</p>
-        </div>
-
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center">
-          <div className="w-14 h-14 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">⚕️</div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Critical Services</h3>
-          <p className="text-gray-500">Filter centers based on your needs, including medical stations, pet-friendly areas, and child care.</p>
-        </div>
+       
       </div>
     </div>
   );
