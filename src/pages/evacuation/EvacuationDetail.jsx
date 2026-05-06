@@ -214,7 +214,7 @@ export default function EvacuationDetail() {
                 <div className="bg-white rounded-xl border p-4">
                     <p className="text-xs text-slate-500 uppercase font-bold mb-1">Occupied Slots</p>
                     <p className="text-2xl font-black text-slate-800">
-                        {units.reduce((sum, u) => sum + (u.current_occupancy || 0), 0)}
+                        {units.reduce((sum, u) => sum + (parseInt(u.current_occupancy) || 0), 0)}
                     </p>
                 </div>
             </div>
@@ -230,8 +230,11 @@ export default function EvacuationDetail() {
                 ) : (
                     <div className="space-y-3">
                         {units.map(unit => {
-                            const percent = unit.max_capacity
-                                ? Math.round((unit.current_occupancy / unit.max_capacity) * 100)
+                            const occupancy = Number(unit.current_occupancy ?? 0);
+                            const capacity = Number(unit.max_capacity ?? 0);
+
+                            const percent = capacity > 0
+                                ? Math.round((occupancy / capacity) * 100)
                                 : 0;
 
                             const isExpanded = expandedUnit === unit.unit_id;
@@ -250,7 +253,7 @@ export default function EvacuationDetail() {
                                                 <p className="font-semibold text-slate-800">{unit.name}</p>
 
                                                 <span className="text-xs text-slate-500 font-medium">
-                                                    {unit.current_occupancy} / {unit.max_capacity}
+                                                    {Number(unit.current_occupancy)} / {Number(unit.max_capacity)}
                                                 </span>
                                             </div>
 
@@ -339,11 +342,11 @@ export default function EvacuationDetail() {
 
                                                                 <div>
                                                                     <p className="text-sm font-medium text-slate-700">
-                                                                        {alloc.evacuation?.household?.household_name}
+                                                                        {alloc.evacuation_record?.household?.household_name}
                                                                     </p>
 
                                                                     <p className="text-xs text-slate-400">
-                                                                        {alloc.evacuation?.evacuated_count} people
+                                                                        {alloc.evacuation_record?.evacuated_count} people
                                                                     </p>
                                                                 </div>
                                                             </div>
@@ -473,7 +476,7 @@ export default function EvacuationDetail() {
                                             </td>
 
                                             <td className="px-4 py-3 text-slate-600">
-                                                {record.unit_allocation?.unit?.name || (
+                                                {record.unit_allocations?.[0]?.unit?.name || (
                                                     <span className="text-amber-600 font-medium">Unassigned</span>
                                                 )}
                                             </td>
