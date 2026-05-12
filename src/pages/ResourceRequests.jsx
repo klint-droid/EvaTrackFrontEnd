@@ -96,7 +96,7 @@ export default function ResourceRequests() {
 
   useEffect(() => {
     fetchUrgencyLevels();
-    if (canUpdateStatus) fetchCenters(); // ✅ only admin needs centers
+    if (canUpdateStatus) fetchCenters();
   }, []);
 
   useEffect(() => {
@@ -117,7 +117,6 @@ export default function ResourceRequests() {
       return;
     }
 
-    // ✅ Admin must select a center
     if (canUpdateStatus && !form.evacuation_center_id) {
       showMessage('Please select an evacuation center.', 'error');
       return;
@@ -133,7 +132,6 @@ export default function ResourceRequests() {
         urgency_id:    form.urgency_id,
         description:   form.description,
         target_agency: form.target_agency || 'ResQperation',
-        // ✅ only include if present (admin sets it, personnel backend auto-assigns)
         ...(form.evacuation_center_id && {
           evacuation_center_id: form.evacuation_center_id
         }),
