@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import evaTrackLogo from "../assets/evatrack_logo_horizontal.svg";
 
 const Navbar = () => {
   const location = useLocation();
@@ -11,12 +12,11 @@ const Navbar = () => {
           
           {/* Logo / Brand */}
           <Link to="/" className="flex items-center cursor-pointer">
-            <div className="w-6 h-6 bg-slate-900 text-white flex items-center justify-center rounded font-bold text-xs mr-2 border border-slate-700">
-              E
-            </div>
-            <span className="font-bold text-sm text-white tracking-wide">
-              EVA<span className="text-blue-600">TRACK</span>
-            </span>
+            <img
+              src={evaTrackLogo}
+              alt="EvaTrack logo"
+              className="h-10 w-40 object-contain"
+            />
           </Link>
 
           {/* Navigation Links */}

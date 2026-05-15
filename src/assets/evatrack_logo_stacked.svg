@@ -1,0 +1,19 @@
+<svg viewBox="0 0 360 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title">
+  <title id="title">EvaTrack stacked logo</title>
+  <g transform="translate(180 73)">
+    <circle r="47" fill="#0D1F2D"/>
+    <circle r="46" fill="none" stroke="#0D9E6E" stroke-width="1.2" opacity=".3"/>
+    <polygon points="0,-58 -7,-43 0,-47 7,-43" fill="#0D9E6E"/>
+    <polygon points="0,58 -7,43 0,47 7,43" fill="#0D9E6E"/>
+    <polygon points="-58,0 -43,-7 -47,0 -43,7" fill="#0D9E6E"/>
+    <polygon points="58,0 43,-7 47,0 43,7" fill="#0D9E6E"/>
+    <circle cx="-15" cy="-4" r="8" fill="#fff" opacity=".65"/>
+    <path d="M-28 23Q-28 7-15 7Q-2 7-2 23Z" fill="#fff" opacity=".65"/>
+    <circle cx="15" cy="-4" r="8" fill="#fff" opacity=".65"/>
+    <path d="M2 23Q2 7 15 7Q28 7 28 23Z" fill="#fff" opacity=".65"/>
+    <circle cy="-12" r="11" fill="#fff"/>
+    <path d="M-19 27Q-19 5 0 5Q19 5 19 27Z" fill="#fff"/>
+  </g>
+  <text x="180" y="169" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="58" font-weight="800" letter-spacing="-2" fill="#fff">Eva<tspan fill="#0DCC8A">Track</tspan></text>
+  <text x="180" y="216" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="600" letter-spacing="4" fill="#7E8BA1">FIND SHELTER - STAY SAFE</text>
+</svg>

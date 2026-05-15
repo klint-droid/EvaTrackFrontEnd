@@ -102,7 +102,7 @@ const PublicPortal = () => {
     <div className="flex flex-col min-h-[calc(100vh-64px)] bg-gray-50">
       
       {/* 🔍 Search Section */}
-      <section className="bg-blue-900 py-8 px-4 shadow-inner">
+      <section className="bg-[#0f1c2d] py-8 px-4 shadow-inner">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-6">
             Find the Nearest Open Evacuation Center

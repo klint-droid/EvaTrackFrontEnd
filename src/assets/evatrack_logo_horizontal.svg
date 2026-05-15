@@ -1,0 +1,18 @@
+<svg viewBox="0 0 260 72" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title">
+  <title id="title">EvaTrack horizontal logo</title>
+  <g transform="translate(36 36)">
+    <circle r="25" fill="#0D1F2D"/>
+    <circle r="24" fill="none" stroke="#0D9E6E" stroke-width="1" opacity=".3"/>
+    <polygon points="0,-31 -4,-22 0,-24 4,-22" fill="#0D9E6E"/>
+    <polygon points="0,31 -4,22 0,24 4,22" fill="#0D9E6E"/>
+    <polygon points="-31,0 -22,-4 -24,0 -22,4" fill="#0D9E6E"/>
+    <polygon points="31,0 22,-4 24,0 22,4" fill="#0D9E6E"/>
+    <circle cx="-8" cy="-2" r="4.5" fill="#fff" opacity=".65"/>
+    <path d="M-15 13Q-15 4-8 4Q-1 4-1 13Z" fill="#fff" opacity=".65"/>
+    <circle cx="8" cy="-2" r="4.5" fill="#fff" opacity=".65"/>
+    <path d="M1 13Q1 4 8 4Q15 4 15 13Z" fill="#fff" opacity=".65"/>
+    <circle cy="-6" r="6" fill="#fff"/>
+    <path d="M-10 15Q-10 3 0 3Q10 3 10 15Z" fill="#fff"/>
+  </g>
+  <text x="76" y="44" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800" fill="#fff">Eva<tspan fill="#0DCC8A">Track</tspan></text>
+</svg>

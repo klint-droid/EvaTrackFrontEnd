@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AlertCircle, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import API from "../api";
+import evaTrackLogo from "../assets/evatrack_logo_stacked.svg";
 
 function Login() {
   const [userId, setUserId] = useState("");
@@ -53,10 +54,12 @@ function Login() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.08),transparent_34%)]" />
 
       <section className="relative w-full max-w-[440px] overflow-hidden rounded-[28px] bg-[#081524] shadow-2xl">
-        <div className="flex justify-center bg-[#162438] px-8 py-9">
-          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-blue-600 text-3xl font-black text-white shadow-lg shadow-blue-950/30">
-            E
-          </div>
+        <div className="flex justify-center bg-[#162438] px-8 py-7">
+          <img
+            src={evaTrackLogo}
+            alt="EvaTrack logo"
+            className="h-40 w-72 object-contain"
+          />
         </div>
 
         <div className="px-8 pb-9 pt-6 sm:px-10">
