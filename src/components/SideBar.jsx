@@ -1,6 +1,7 @@
+import logo from "../assets/logo.png";
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { logout } from "../api/auth/Logout";
+import { logout } from "../api/auth/logout";
 import {
     LayoutDashboard,
     Users,
@@ -63,9 +64,13 @@ const Sidebar = () => {
             {/* BRANDING / LOGO SECTION */}
             <div className="h-20 flex items-center px-5 border-b border-slate-800/50">
                 <div className="flex items-center gap-3">
-                    <div className="min-w-[40px] h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                        <ShieldAlert size={22} className="text-white" />
-                    </div>
+                    <div className="min-w-[40px] h-10 flex items-center justify-center">
+    <img 
+        src={logo} 
+        alt="logo" 
+        className="h-10 w-10 object-contain"
+    />
+</div>
                     {!isCollapsed && (
                         <div className="flex flex-col overflow-hidden whitespace-nowrap">
                             <span className="text-lg font-bold tracking-tight text-white italic">
