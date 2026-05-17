@@ -46,8 +46,7 @@ export default function EvacuationList() {
   useEffect(() => { fetchCenters(); }, []);
 
   const fetchCenters = async () => {
-    const res = await getCenters();
-    setCenters(res.data || []);
+    setCenters(await getCenters());
   };
 
   const handleSubmit = async (form) => {

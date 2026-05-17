@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type InternalAxiosRequestConfig} from "axios";
 
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -8,7 +8,7 @@ const API = axios.create({
   },
 });
 
-API.interceptors.request.use((config) => {
+API.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
 
   if (match) {
