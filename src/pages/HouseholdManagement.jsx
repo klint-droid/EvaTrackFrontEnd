@@ -1,14 +1,23 @@
-import { useState, useEffect } from "react";
+import {
+    ChevronLeft, ChevronRight,
+    Edit3,
+    Eye,
+    Home,
+    Loader2,
+    MoreHorizontal,
+    Search,
+    Trash2,
+    Users,
+    X
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Home, Search, Edit3, Trash2, ChevronLeft, ChevronRight,
-    MoreHorizontal, Loader2, X, Users, MapPin, Phone,
-    CheckCircle, XCircle, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import { getHouseholds } from "../api/households/getHouseholds";
-import { updateHousehold } from "../api/households/updateHousehold";
 import { getCenters } from "../api/evacuation/getCenters";
 import { deleteHousehold } from "../api/households/deleteHousehold";
+import { getHouseholds } from "../api/households/getHouseholds";
+import { updateHousehold } from "../api/households/updateHousehold";
 import { isAdmin, isSuperAdmin } from "../utils/roles";
 
 export default function HouseholdManagement() {
@@ -129,9 +138,9 @@ export default function HouseholdManagement() {
             {/* HEADER */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">Households</h1>
+                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">Evacuated Households</h1>
                     <p className="text-xs text-slate-500 font-medium tracking-wide uppercase">
-                        Manage and monitor household evacuation status
+                        Manage and monitor household evacuation status in your assigned evacuation center
                     </p>
                 </div>
             </div>

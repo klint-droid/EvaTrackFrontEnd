@@ -79,7 +79,7 @@ const UserManagement = () => {
   const loadCenters = async () => {
     try {
       const res = await getCenters();
-      const list = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
+      const list = Array.isArray(res) ? res : (res?.data ?? []);
       setCenters(list);
     } catch (err) {
       console.error(err);

@@ -72,7 +72,7 @@ export default function CreateAlertModal({ onClose, onSent }) {
 
     useEffect(() => {
         getUrgencyLevels().then(res => setUrgencyLevels(res.data || []));
-        getCenters().then(res => setCenters(Array.isArray(res.data) ? res.data : res.data?.data ?? []));
+        getCenters().then(res => setCenters(Array.isArray(res) ? res : (res?.data ?? [])));
         getEvents().then(res => setEvents((res.data || []).filter(e => !e.ended_at)));
     }, []);
 

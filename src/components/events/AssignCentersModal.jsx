@@ -13,10 +13,11 @@ export default function AssignCentersModal({ event, onClose, onSaved }) {
         const fetchCenters = async () => {
             try {
                 const res = await getCenters();
-                setCenters(res.data);
+                const list = Array.isArray(res) ? res : (res?.data ?? []);
+                setCenters(list);
 
                 // pre-check centers already assigned to this event
-                const alreadyAssigned = res.data
+                const alreadyAssigned = list
                     .filter(c => c.current_event_id === event.event_id)
                     .map(c => c.evacuation_center_id);
                 setSelected(alreadyAssigned);

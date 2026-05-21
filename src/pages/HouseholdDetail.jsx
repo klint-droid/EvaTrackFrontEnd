@@ -311,7 +311,7 @@ export default function HouseholdDetail() {
                                 <tr className="bg-slate-50/50 border-b border-slate-100">
                                     {[
                                         'Name',
-                                        'Birth Date',
+                                        'Age',
                                         'Gender',
                                         'Relation',
                                         'Civil Status',
@@ -341,7 +341,18 @@ export default function HouseholdDetail() {
                                             </td>
 
                                             <td className="px-6 py-3 text-sm text-slate-500">
-                                                {member.birth_date || '—'}
+                                                {(() => {
+                                                    if (!member.birth_date) return '—';
+                                                    const birth = new Date(member.birth_date);
+                                                    if (isNaN(birth.getTime())) return '—';
+                                                    const today = new Date();
+                                                    let age = today.getFullYear() - birth.getFullYear();
+                                                    const m = today.getMonth() - birth.getMonth();
+                                                    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+                                                        age--;
+                                                    }
+                                                    return `${age} yrs old`;
+                                                })()}
                                             </td>
 
                                             <td className="px-6 py-3 text-sm text-slate-500">

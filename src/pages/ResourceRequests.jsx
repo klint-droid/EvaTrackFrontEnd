@@ -70,7 +70,7 @@ export default function ResourceRequests() {
   const fetchCenters = async () => {
     try {
       const res = await getCenters();
-      setCenters(res.data || []);
+      setCenters(Array.isArray(res) ? res : (res?.data ?? []));
     } catch (err) {
       console.error(err);
     }
