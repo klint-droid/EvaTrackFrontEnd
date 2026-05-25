@@ -28,8 +28,8 @@ const Dashboard = () => {
 
   const loadDashboard = async () => {
     try {
-      const res = await getCenters();
-      const centers = res.data || [];
+      const centers = await getCenters();
+
 
       // Map directly from center list — no extra API calls needed
       const capacities = centers.map(c => ({

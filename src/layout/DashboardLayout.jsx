@@ -2,7 +2,7 @@ import React from "react";
 import Sidebar from "../components/SideBar";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Bell, User, LogOut, Settings, Home, ChevronRight } from "lucide-react";
-import { logout } from "../api/auth/Logout";
+import { logout } from "../api/auth/logout";
 
 const DashboardLayout = () => {
     const navigate = useNavigate();

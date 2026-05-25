@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { createPortal } from 'react-dom';
 import {
     Users,
     Phone,
@@ -14,7 +13,6 @@ import {
     Plus,
     Edit3,
     Trash2,
-    X
 } from 'lucide-react';
 
 import { getHousehold } from '../api/households/getHousehold';
@@ -24,15 +22,7 @@ import { deleteMember } from '../api/households/deleteMember';
 import { getEvacuationRecord } from '../api/evacuationRecords/getEvacuationRecord';
 import { updateMemberEvacuationStatus } from '../api/evacuationRecords/updateMemberEvacuationStatus';
 import { isAdmin, isSuperAdmin, isPersonnel } from '../utils/roles';
-
-const EMPTY_MEMBER = {
-    name: '',
-    age: '',
-    gender: 'male',
-    relation: '',
-    is_pwd: false,
-    is_pregnant: false
-};
+import MemberModal from '../components/households/MemberModal';
 
 export default function HouseholdDetail() {
     const { id } = useParams();
@@ -47,15 +37,13 @@ export default function HouseholdDetail() {
     const [loading, setLoading] = useState(true);
     const [memberModal, setMemberModal] = useState(false);
     const [editingMember, setEditingMember] = useState(null);
-    const [form, setForm] = useState(EMPTY_MEMBER);
-    const [saving, setSaving] = useState(false);
-    const [error, setError] = useState(null);
     const [statusUpdatingMemberId, setStatusUpdatingMemberId] = useState(null);
 
     const canEdit = isAdmin() || isSuperAdmin() || isPersonnel();
     const canDelete = isAdmin() || isSuperAdmin();
-
     const isEvacuationContext = !!evacuationIdFromUrl;
+
+    // ─── Fetchers ─────────────────────────────────────────────────────
 
     const fetchHousehold = async () => {
         try {
@@ -68,7 +56,6 @@ export default function HouseholdDetail() {
 
     const fetchEvacuationContext = async () => {
         if (!evacuationIdFromUrl) return;
-
         try {
             const res = await getEvacuationRecord(evacuationIdFromUrl);
             setEvacuationContext(res.data || res);
@@ -80,12 +67,8 @@ export default function HouseholdDetail() {
 
     const fetchPageData = async () => {
         setLoading(true);
-
         try {
-            await Promise.all([
-                fetchHousehold(),
-                fetchEvacuationContext()
-            ]);
+            await Promise.all([fetchHousehold(), fetchEvacuationContext()]);
         } finally {
             setLoading(false);
         }
@@ -95,68 +78,40 @@ export default function HouseholdDetail() {
         fetchPageData();
     }, [id, evacuationIdFromUrl]);
 
+    // ─── Modal Handlers ───────────────────────────────────────────────
+
     const openAdd = () => {
         setEditingMember(null);
-        setForm(EMPTY_MEMBER);
-        setError(null);
         setMemberModal(true);
     };
 
     const openEdit = (member) => {
         setEditingMember(member);
-        setForm({
-            name: member.name || '',
-            age: member.age || '',
-            gender: member.gender || 'male',
-            relation: member.relation || '',
-            is_pwd: !!member.is_pwd,
-            is_pregnant: !!member.is_pregnant,
-        });
-        setError(null);
         setMemberModal(true);
     };
 
-    const handleSave = async () => {
-        if (!form.name || !form.age || !form.gender || !form.relation) {
-            setError('All fields are required.');
-            return;
+    const handleSave = async (formData) => {
+        if (editingMember) {
+            await updateMember(id, editingMember.member_id, formData);
+        } else {
+            await addMember(id, formData);
         }
 
-        setSaving(true);
-        setError(null);
+        await fetchHousehold();
 
-        try {
-            if (editingMember) {
-                await updateMember(id, editingMember.member_id, form);
-            } else {
-                await addMember(id, form);
-            }
-
-            setMemberModal(false);
-
-            await fetchHousehold();
-
-            if (evacuationIdFromUrl) {
-                await fetchEvacuationContext();
-            }
-        } catch (err) {
-            setError(err.response?.data?.message || 'Failed to save member.');
-        } finally {
-            setSaving(false);
+        if (evacuationIdFromUrl) {
+            await fetchEvacuationContext();
         }
     };
 
+    // ─── Other Handlers ───────────────────────────────────────────────
+
     const handleDelete = async (memberId) => {
         if (!confirm('Remove this member?')) return;
-
         try {
             await deleteMember(id, memberId);
-
             await fetchHousehold();
-
-            if (evacuationIdFromUrl) {
-                await fetchEvacuationContext();
-            }
+            if (evacuationIdFromUrl) await fetchEvacuationContext();
         } catch (err) {
             alert(err.response?.data?.message || 'Failed to remove member.');
         }
@@ -175,18 +130,13 @@ export default function HouseholdDetail() {
 
         try {
             setStatusUpdatingMemberId(memberId);
-
             await updateMemberEvacuationStatus(
                 activeEvacuation.evacuation_id,
                 memberId,
                 status
             );
-
             await fetchHousehold();
-
-            if (evacuationIdFromUrl) {
-                await fetchEvacuationContext();
-            }
+            if (evacuationIdFromUrl) await fetchEvacuationContext();
         } catch (err) {
             alert(err.response?.data?.message || 'Failed to update member evacuation status.');
         } finally {
@@ -199,9 +149,10 @@ export default function HouseholdDetail() {
             navigate(`/evacuation-centers/${centerIdFromUrl}`);
             return;
         }
-
         navigate(-1);
     };
+
+    // ─── Guards ───────────────────────────────────────────────────────
 
     if (loading) {
         return (
@@ -212,9 +163,7 @@ export default function HouseholdDetail() {
     }
 
     if (!household) {
-        return (
-            <div className="p-6 text-red-500">Household not found.</div>
-        );
+        return <div className="p-6 text-red-500">Household not found.</div>;
     }
 
     const evacuation =
@@ -229,11 +178,10 @@ export default function HouseholdDetail() {
         evacuation?.evacuatedMembers ||
         [];
 
-    const verifiedMemberIds = new Set(
-        evacuatedMembers.map(item => item.member_id)
-    );
-
+    const verifiedMemberIds = new Set(evacuatedMembers.map(item => item.member_id));
     const showMemberEvacuationStatus = isEvacuationContext && isEvacuated;
+
+    // ─── Render ───────────────────────────────────────────────────────
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -262,14 +210,11 @@ export default function HouseholdDetail() {
                             Evacuation Context
                         </span>
                     )}
-
-                    <span
-                        className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-full border ${
-                            isEvacuated
-                                ? 'bg-green-50 text-green-600 border-green-100'
-                                : 'bg-slate-50 text-slate-500 border-slate-100'
-                        }`}
-                    >
+                    <span className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-full border ${
+                        isEvacuated
+                            ? 'bg-green-50 text-green-600 border-green-100'
+                            : 'bg-slate-50 text-slate-500 border-slate-100'
+                    }`}>
                         {isEvacuated ? 'Evacuated' : 'Not Evacuated'}
                     </span>
                 </div>
@@ -282,35 +227,18 @@ export default function HouseholdDetail() {
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                         Basic Information
                     </p>
-
                     {[
-                        {
-                            icon: Users,
-                            label: 'Members',
-                            value: `${household.member_count || household.members?.length || 0} people`
-                        },
-                        {
-                            icon: Phone,
-                            label: 'Contact',
-                            value: household.contact_number || '—'
-                        },
-                        {
-                            icon: MapPin,
-                            label: 'Address',
-                            value: household.address?.full_address || '—'
-                        },
+                        { icon: Users,  label: 'Members', value: `${household.member_count || household.members?.length || 0} people` },
+                        { icon: Phone,  label: 'Contact', value: household.contact_number || '—' },
+                        { icon: MapPin, label: 'Address', value: household.address?.full_address || '—' },
                     ].map(({ icon: Icon, label, value }) => (
                         <div key={label} className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
                                 <Icon size={16} className="text-blue-600" />
                             </div>
                             <div>
-                                <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest">
-                                    {label}
-                                </p>
-                                <p className="text-sm font-bold text-slate-800">
-                                    {value}
-                                </p>
+                                <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest">{label}</p>
+                                <p className="text-sm font-bold text-slate-800">{value}</p>
                             </div>
                         </div>
                     ))}
@@ -321,42 +249,21 @@ export default function HouseholdDetail() {
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                         Evacuation Status
                     </p>
-
                     {isEvacuated ? (
                         <>
                             {[
-                                {
-                                    icon: Building,
-                                    label: 'Center',
-                                    value: evacuation.center?.name || '—'
-                                },
-                                {
-                                    icon: DoorOpen,
-                                    label: 'Unit',
-                                    value: evacuation.unit_allocation?.unit?.name || 'No unit assigned'
-                                },
-                                {
-                                    icon: CheckCircle,
-                                    label: 'Event',
-                                    value: evacuation.event?.name || '—'
-                                },
-                                {
-                                    icon: Users,
-                                    label: 'Verified Members',
-                                    value: `${evacuatedMembers.length || evacuation.evacuated_count || 0} verified`
-                                },
+                                { icon: Building,     label: 'Center',           value: evacuation.center?.name || '—' },
+                                { icon: DoorOpen,     label: 'Unit',             value: evacuation.unit_allocation?.unit?.name || 'No unit assigned' },
+                                { icon: CheckCircle,  label: 'Event',            value: evacuation.event?.name || '—' },
+                                { icon: Users,        label: 'Verified Members', value: `${evacuatedMembers.length || evacuation.evacuated_count || 0} verified` },
                             ].map(({ icon: Icon, label, value }) => (
                                 <div key={label} className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
                                         <Icon size={16} className="text-green-600" />
                                     </div>
                                     <div>
-                                        <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest">
-                                            {label}
-                                        </p>
-                                        <p className="text-sm font-bold text-slate-800">
-                                            {value}
-                                        </p>
+                                        <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest">{label}</p>
+                                        <p className="text-sm font-bold text-slate-800">{value}</p>
                                     </div>
                                 </div>
                             ))}
@@ -370,21 +277,19 @@ export default function HouseholdDetail() {
                 </div>
             </div>
 
-            {/* Members */}
+            {/* Members Table */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                     <div>
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                             Members ({household.members?.length || 0})
                         </p>
-
                         {showMemberEvacuationStatus && (
                             <p className="text-xs text-slate-400 mt-1">
                                 Mark each household member as Evacuated or Not Verified for this evacuation record.
                             </p>
                         )}
                     </div>
-
                     {canEdit && (
                         <button
                             onClick={openAdd}
@@ -409,15 +314,12 @@ export default function HouseholdDetail() {
                                         'Age',
                                         'Gender',
                                         'Relation',
-                                        'PWD',
-                                        'Pregnant',
+                                        'Civil Status',
+                                        'Vulnerable Groups',
                                         ...(showMemberEvacuationStatus ? ['Status'] : []),
                                         ''
                                     ].map(h => (
-                                        <th
-                                            key={h}
-                                            className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest"
-                                        >
+                                        <th key={h} className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                             {h}
                                         </th>
                                     ))}
@@ -431,44 +333,54 @@ export default function HouseholdDetail() {
 
                                     return (
                                         <tr key={member.member_id} className="hover:bg-slate-50/30 group">
+
                                             <td className="px-6 py-3 text-sm font-medium text-slate-700">
-                                                {member.name}
+                                                {[member.first_name, member.middle_name, member.last_name]
+                                                    .filter(Boolean)
+                                                    .join(' ')}
                                             </td>
 
                                             <td className="px-6 py-3 text-sm text-slate-500">
-                                                {member.age}
-                                            </td>
-
-                                            <td className="px-6 py-3 text-sm text-slate-500 capitalize">
-                                                {member.gender}
+                                                {(() => {
+                                                    if (!member.birth_date) return '—';
+                                                    const birth = new Date(member.birth_date);
+                                                    if (isNaN(birth.getTime())) return '—';
+                                                    const today = new Date();
+                                                    let age = today.getFullYear() - birth.getFullYear();
+                                                    const m = today.getMonth() - birth.getMonth();
+                                                    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+                                                        age--;
+                                                    }
+                                                    return `${age} yrs old`;
+                                                })()}
                                             </td>
 
                                             <td className="px-6 py-3 text-sm text-slate-500">
-                                                {member.relation}
+                                                {member.gender?.label || '—'}
+                                            </td>
+
+                                            <td className="px-6 py-3 text-sm text-slate-500">
+                                                {member.relationship?.label || '—'}
+                                            </td>
+
+                                            <td className="px-6 py-3 text-sm text-slate-500">
+                                                {member.civil_status?.label || '—'}
                                             </td>
 
                                             <td className="px-6 py-3">
-                                                <span
-                                                    className={`px-2 py-0.5 text-[9px] font-black rounded-full border ${
-                                                        member.is_pwd
-                                                            ? 'bg-purple-50 text-purple-600 border-purple-100'
-                                                            : 'bg-slate-50 text-slate-400 border-slate-100'
-                                                    }`}
-                                                >
-                                                    {member.is_pwd ? 'Yes' : 'No'}
-                                                </span>
-                                            </td>
-
-                                            <td className="px-6 py-3">
-                                                <span
-                                                    className={`px-2 py-0.5 text-[9px] font-black rounded-full border ${
-                                                        member.is_pregnant
-                                                            ? 'bg-pink-50 text-pink-600 border-pink-100'
-                                                            : 'bg-slate-50 text-slate-400 border-slate-100'
-                                                    }`}
-                                                >
-                                                    {member.is_pregnant ? 'Yes' : 'No'}
-                                                </span>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {member.vulnerable_groups?.length
+                                                        ? member.vulnerable_groups.map(v => (
+                                                            <span
+                                                                key={v.id}
+                                                                className="px-2 py-0.5 text-[9px] font-black rounded-full bg-blue-50 text-blue-600 border border-blue-100"
+                                                            >
+                                                                {v.label}
+                                                            </span>
+                                                        ))
+                                                        : <span className="text-slate-400 text-xs">—</span>
+                                                    }
+                                                </div>
                                             </td>
 
                                             {showMemberEvacuationStatus && (
@@ -476,12 +388,7 @@ export default function HouseholdDetail() {
                                                     <select
                                                         value={isMemberEvacuated ? 'evacuated' : 'not_verified'}
                                                         disabled={!canEdit || isStatusUpdating}
-                                                        onChange={(e) =>
-                                                            handleMemberStatusChange(
-                                                                member.member_id,
-                                                                e.target.value
-                                                            )
-                                                        }
+                                                        onChange={e => handleMemberStatusChange(member.member_id, e.target.value)}
                                                         className={`px-3 py-1.5 text-[10px] font-black rounded-lg border outline-none disabled:opacity-60 ${
                                                             isMemberEvacuated
                                                                 ? 'bg-green-50 text-green-600 border-green-100'
@@ -504,7 +411,6 @@ export default function HouseholdDetail() {
                                                             <Edit3 size={14} />
                                                         </button>
                                                     )}
-
                                                     {canDelete && (
                                                         <button
                                                             onClick={() => handleDelete(member.member_id)}
@@ -525,139 +431,12 @@ export default function HouseholdDetail() {
             </div>
 
             {/* Member Modal */}
-            {memberModal && createPortal(
-                <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9999] p-4">
-                    <div
-                        className="absolute inset-0 bg-slate-900/60 animate-in fade-in duration-200"
-                        onClick={() => setMemberModal(false)}
-                    />
-
-                    <div className="relative bg-white rounded-[1.5rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
-                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                            <h2 className="text-sm font-black text-slate-800 tracking-tight">
-                                {editingMember ? 'Edit Member' : 'Add Member'}
-                            </h2>
-
-                            <button
-                                onClick={() => setMemberModal(false)}
-                                className="p-1.5 text-slate-400 hover:bg-slate-200 rounded-full transition-all"
-                            >
-                                <X size={18} />
-                            </button>
-                        </div>
-
-                        <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
-                            {error && (
-                                <p className="text-red-500 text-sm">{error}</p>
-                            )}
-
-                            {[
-                                { key: 'name', label: 'Full Name', type: 'text' },
-                                { key: 'age', label: 'Age', type: 'number' },
-                                { key: 'relation', label: 'Relation to Head', type: 'text' },
-                            ].map(field => (
-                                <div key={field.key} className="space-y-1">
-                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
-                                        {field.label}
-                                    </label>
-
-                                    <input
-                                        type={field.type}
-                                        min={field.key === 'age' ? 0 : undefined}
-                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
-                                        value={form[field.key]}
-                                        onChange={e =>
-                                            setForm({
-                                                ...form,
-                                                [field.key]: e.target.value
-                                            })
-                                        }
-                                    />
-                                </div>
-                            ))}
-
-                            <div className="space-y-1">
-                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
-                                    Gender
-                                </label>
-
-                                <select
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"
-                                    value={form.gender}
-                                    onChange={e =>
-                                        setForm({
-                                            ...form,
-                                            gender: e.target.value
-                                        })
-                                    }
-                                >
-                                    <option value="male">Male</option>
-                                    <option value="female">Female</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-
-                            <div className="flex gap-4 pt-1">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={form.is_pwd}
-                                        onChange={e =>
-                                            setForm({
-                                                ...form,
-                                                is_pwd: e.target.checked
-                                            })
-                                        }
-                                        className="accent-blue-600 w-4 h-4"
-                                    />
-                                    <span className="text-xs font-bold text-slate-600">
-                                        PWD
-                                    </span>
-                                </label>
-
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={form.is_pregnant}
-                                        onChange={e =>
-                                            setForm({
-                                                ...form,
-                                                is_pregnant: e.target.checked
-                                            })
-                                        }
-                                        className="accent-pink-500 w-4 h-4"
-                                    />
-                                    <span className="text-xs font-bold text-slate-600">
-                                        Pregnant
-                                    </span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-end gap-3">
-                            <button
-                                onClick={() => setMemberModal(false)}
-                                className="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
-                            >
-                                Cancel
-                            </button>
-
-                            <button
-                                onClick={handleSave}
-                                disabled={saving}
-                                className="px-5 py-2 bg-blue-600 text-white text-[10px] font-black rounded-lg shadow-lg uppercase tracking-wider hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
-                            >
-                                {saving
-                                    ? 'Saving...'
-                                    : editingMember
-                                        ? 'Save Changes'
-                                        : 'Add Member'}
-                            </button>
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
+            <MemberModal
+                open={memberModal}
+                onClose={() => setMemberModal(false)}
+                onSave={handleSave}
+                editingMember={editingMember}
+            />
         </div>
     );
 }

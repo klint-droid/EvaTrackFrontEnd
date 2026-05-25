@@ -151,10 +151,10 @@ export default function CenterIssueReports() {
     setEditingReport(report);
     setForm({
       evacuation_center_id: report.evacuation_center_id || '',
-      category: report.category || 'incident',
+      category: report.category || report.category_key || 'incident',
       title: report.title || '',
       description: report.description || '',
-      severity: report.severity || 'medium',
+      severity: report.severity || report.severity_key || 'medium',
     });
     setModalOpen(true);
   };
@@ -295,10 +295,10 @@ export default function CenterIssueReports() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-            Center Issue Reports
+            Evacuation Center Issues
           </h1>
           <p className="text-sm text-slate-500 font-medium">
-            Report and monitor incidents, facility problems, health issues, and safety concerns inside evacuation centers.
+            Report and monitor incidents, facility problems, health issues, and safety concerns inside your assigned evacuation center.
           </p>
         </div>
 
@@ -548,7 +548,7 @@ export default function CenterIssueReports() {
                       </td>
 
                       <td className="px-6 py-4 text-xs font-bold text-slate-500">
-                        {report.reported_by?.name || '—'}
+                        {report.reporter?.name || report.reported_by_user?.name || '—'}
                       </td>
 
                       <td className="px-6 py-4 text-xs text-slate-500">

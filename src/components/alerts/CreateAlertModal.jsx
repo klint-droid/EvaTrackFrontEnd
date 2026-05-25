@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
-    X, Send, Clock, RefreshCw, Bell,
-    MessageSquare, Smartphone, Users,
-    CheckCircle, Activity
+    X, Send, Clock, RefreshCw,
+    MessageSquare, Smartphone, CheckCircle,
+    AlertTriangle, Sparkles, HelpCircle, Layers
 } from 'lucide-react';
 import { sendAlert } from '../../api/alerts/sendAlert';
 import { getUrgencyLevels } from '../../api/alerts/getUrgencyLevels';
 import { previewRecipients } from '../../api/alerts/previewRecipients';
 import { getCenters } from '../../api/evacuation/getCenters';
 import { getEvents } from '../../api/events/getEvents';
-import { getAlerts } from '../../api/alerts/getAlerts';
 
 const EMPTY_FORM = {
     message: '',
@@ -25,38 +24,58 @@ const EMPTY_FORM = {
     recurrence_end_at: '',
 };
 
-const URGENCY_COLORS = {
-    critical: { bg: 'bg-red-500',    text: 'text-white', border: 'border-red-500'    },
-    high:     { bg: 'bg-orange-500', text: 'text-white', border: 'border-orange-500' },
-    medium:   { bg: 'bg-yellow-400', text: 'text-white', border: 'border-yellow-400' },
-    low:      { bg: 'bg-green-500',  text: 'text-white', border: 'border-green-500'  },
-};
+const PRESETS = [
+    {
+        label: 'Typhoon Evacuation',
+        message: 'EMERGENCY: Heavy rainfall and severe winds are expected from the typhoon. A mandatory evacuation order is in effect. Please secure your home and move immediately to your designated evacuation center.',
+        urgency: 'critical',
+        channel: 'both'
+    },
+    {
+        label: 'Flood Advisory',
+        message: 'WARNING: Rapidly rising water levels detected. A flood advisory has been issued. Be prepared to evacuate. Move essential belongings and electronics to higher ground.',
+        urgency: 'high',
+        channel: 'both'
+    },
+    {
+        label: 'Fire Alert',
+        message: 'CRITICAL ALERT: An active fire has been reported near your area. Evacuate immediately if you are within the hazard zone. Follow emergency service directions.',
+        urgency: 'critical',
+        channel: 'both'
+    },
+    {
+        label: 'Safe to Return',
+        message: 'ALL CLEAR: The emergency threat has passed. Government and safety agencies have declared it safe to return to your household. Please travel with caution.',
+        urgency: 'low',
+        channel: 'both'
+    }
+];
 
-const URGENCY_INACTIVE = 'bg-white text-slate-500 border-slate-200 hover:border-slate-300';
+const URGENCY_STYLES = {
+    critical: 'bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20 active:bg-red-500/30',
+    high: 'bg-orange-500/10 border-orange-500/30 text-orange-500 hover:bg-orange-500/20 active:bg-orange-500/30',
+    medium: 'bg-yellow-500/10 border-yellow-500/30 text-yellow-600 hover:bg-yellow-500/20 active:bg-yellow-500/30',
+    low: 'bg-green-500/10 border-green-500/30 text-green-600 hover:bg-green-500/20 active:bg-green-500/30',
+};
 
 export default function CreateAlertModal({ onClose, onSent }) {
     const [form, setForm] = useState(EMPTY_FORM);
     const [urgencyLevels, setUrgencyLevels] = useState([]);
     const [centers, setCenters] = useState([]);
     const [events, setEvents] = useState([]);
-    const [recentAlerts, setRecentAlerts] = useState([]);
     const [recipientCount, setRecipientCount] = useState(null);
     const [loading, setLoading] = useState(false);
     const [previewing, setPreviewing] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
-
-    // targeting mode: 'all' | 'center' | 'event'
     const [targetMode, setTargetMode] = useState('all');
 
     useEffect(() => {
         getUrgencyLevels().then(res => setUrgencyLevels(res.data || []));
-        getCenters().then(res => setCenters(Array.isArray(res.data) ? res.data : res.data?.data ?? []));
+        getCenters().then(res => setCenters(Array.isArray(res) ? res : (res?.data ?? [])));
         getEvents().then(res => setEvents((res.data || []).filter(e => !e.ended_at)));
-        getAlerts(1).then(res => setRecentAlerts(res.data?.slice(0, 5) || []));
     }, []);
 
-    // auto preview recipients
     useEffect(() => {
         const timeout = setTimeout(async () => {
             setPreviewing(true);
@@ -71,11 +90,10 @@ export default function CreateAlertModal({ onClose, onSent }) {
             } finally {
                 setPreviewing(false);
             }
-        }, 500);
+        }, 400);
         return () => clearTimeout(timeout);
     }, [form.target_filter, form.evacuation_center_id, form.evacuation_event_id]);
 
-    // when target mode changes, reset filters
     const handleTargetMode = (mode) => {
         setTargetMode(mode);
         setForm(prev => ({
@@ -86,18 +104,16 @@ export default function CreateAlertModal({ onClose, onSent }) {
         }));
     };
 
-    const selectedUrgency = urgencyLevels.find(u => u.urgency_id === form.urgency_level_id);
-
-    const getDeliveryStats = () => {
-        if (!recentAlerts.length) return { rate: 0, sent: 0, total: 0 };
-        const total = recentAlerts.reduce((s, a) => s + (a.recipients_count || 0), 0);
-        const sent = recentAlerts.filter(a => a.status === 'sent')
-            .reduce((s, a) => s + (a.recipients_count || 0), 0);
-        const rate = total > 0 ? Math.round((sent / total) * 100) : 0;
-        return { rate, sent, total };
+    const applyPreset = (preset) => {
+        const match = urgencyLevels.find(u => u.urgency_key === preset.urgency);
+        setForm(prev => ({
+            ...prev,
+            message: preset.message,
+            urgency_level_id: match ? match.urgency_id : prev.urgency_level_id,
+            channel: preset.channel
+        }));
+        setError(null);
     };
-
-    const stats = getDeliveryStats();
 
     const handleSubmit = async () => {
         if (!form.message || !form.urgency_level_id) {
@@ -113,26 +129,20 @@ export default function CreateAlertModal({ onClose, onSent }) {
         try {
             const payload = { ...form };
             if (!payload.evacuation_center_id) delete payload.evacuation_center_id;
-            if (!payload.evacuation_event_id) delete payload.evacuation_event_id;
-            if (!payload.scheduled_at) delete payload.scheduled_at;
+            if (!payload.evacuation_event_id)  delete payload.evacuation_event_id;
+            if (!payload.scheduled_at)         delete payload.scheduled_at;
             if (!payload.is_recurring) {
                 delete payload.recurrence_type;
                 delete payload.recurrence_end_at;
             }
-
             await sendAlert(payload);
-
             const channelLabel = form.channel === 'both' ? 'Push & SMS'
                 : form.channel === 'sms' ? 'SMS' : 'Push';
             setSuccess(`Alert successfully broadcasted via ${channelLabel}.`);
-
-            // refresh recent alerts
-            getAlerts(1).then(res => setRecentAlerts(res.data?.slice(0, 5) || []));
             onSent();
-
-            // reset form
-            setForm(EMPTY_FORM);
-            setTargetMode('all');
+            setTimeout(() => {
+                onClose();
+            }, 1000);
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to send alert.');
         } finally {
@@ -140,399 +150,377 @@ export default function CreateAlertModal({ onClose, onSent }) {
         }
     };
 
-    const getUrgencyStyle = (urgency) => {
-        const key = urgency?.urgency_key;
-        return URGENCY_COLORS[key] || { bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-200' };
-    };
+    const selectedUrgency = urgencyLevels.find(u => u.urgency_id === form.urgency_level_id);
+    const broadcastLabel = form.is_recurring
+        ? 'Schedule Recurring Alert'
+        : form.scheduled_at
+            ? 'Schedule Broadcast'
+            : 'Broadcast Urgent Alert Now';
 
-    const getRecentUrgencyBadge = (key) => {
-        const map = {
-            critical: 'bg-red-100 text-red-600',
-            high:     'bg-orange-100 text-orange-600',
-            medium:   'bg-yellow-100 text-yellow-700',
-            low:      'bg-green-100 text-green-600',
-        };
-        return map[key] || map.low;
-    };
+    const BroadcastIcon = form.is_recurring ? RefreshCw : form.scheduled_at ? Clock : Send;
 
     return createPortal(
         <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9999] p-4">
-            <div className="absolute inset-0 bg-slate-900/70 animate-in fade-in duration-200" onClick={onClose} />
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
+            <div
+                className="absolute inset-0 bg-slate-950/40 backdrop-blur-md animate-in fade-in duration-300"
+                onClick={onClose}
+            />
+
+            <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-100 flex flex-col max-h-[90vh]">
 
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div className="px-6 py-5 flex items-center justify-between border-b border-slate-50 bg-slate-50/50">
                     <div>
-                        <h2 className="text-base font-black text-slate-800">Evacuation Alerts</h2>
-                        <p className="text-xs text-slate-400">Broadcast emergency notifications to households</p>
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-xl font-black text-slate-900 tracking-tight">Create Emergency Broadcast</h2>
+                            <Sparkles size={16} className="text-amber-500 animate-pulse" />
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5 font-medium">
+                            Dispatch immediate warning alerts across emergency channels
+                        </p>
                     </div>
-                    <button onClick={onClose} className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-full transition-all">
+                    <button
+                        onClick={onClose}
+                        className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all"
+                    >
                         <X size={18} />
                     </button>
                 </div>
 
-                <div className="flex divide-x divide-slate-100">
+                {/* Form body */}
+                <div className="p-6 space-y-6 overflow-y-auto flex-1">
 
-                    {/* LEFT — Form */}
-                    <div className="flex-1 p-6 space-y-5 overflow-y-auto max-h-[75vh]">
+                    {/* Feedback banners */}
+                    {error && (
+                        <div className="bg-red-50 border border-red-100 text-red-600 text-xs font-semibold rounded-2xl px-4 py-3 flex items-start gap-2.5 shadow-sm animate-in slide-in-from-top-2">
+                            <AlertTriangle size={15} className="flex-shrink-0 mt-0.5" />
+                            <span>{error}</span>
+                        </div>
+                    )}
+                    {success && (
+                        <div className="bg-green-50 border border-green-100 text-green-700 text-xs font-semibold rounded-2xl px-4 py-3 flex items-center gap-2.5 shadow-sm animate-in slide-in-from-top-2">
+                            <CheckCircle size={15} className="text-green-600" />
+                            <span>{success}</span>
+                        </div>
+                    )}
 
-                        {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3">
-                                {error}
-                            </div>
-                        )}
-
-                        {success && (
-                            <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl px-4 py-3 flex items-center gap-2">
-                                <CheckCircle size={15} />
-                                {success}
-                            </div>
-                        )}
-
-                        {/* Broadcast Targeting */}
-                        <div className="space-y-2">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                Broadcast Targeting
-                            </label>
-                            <div className="flex gap-2">
-                                {[
-                                    { value: 'all',    label: 'All' },
-                                    { value: 'center', label: 'By Center' },
-                                    { value: 'event',  label: 'By Event' },
-                                ].map(opt => (
+                    {/* Operational Presets */}
+                    <div className="space-y-2.5">
+                        <Label>Operational Presets (Click to Auto-fill)</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                            {PRESETS.map((p, idx) => {
+                                const cls = URGENCY_STYLES[p.urgency] || 'border-slate-200 bg-slate-50 text-slate-700';
+                                return (
                                     <button
-                                        key={opt.value}
+                                        key={idx}
                                         type="button"
-                                        onClick={() => handleTargetMode(opt.value)}
-                                        className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all ${
-                                            targetMode === opt.value
-                                                ? 'bg-slate-800 text-white border-slate-800'
-                                                : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                                        }`}
+                                        onClick={() => applyPreset(p)}
+                                        className={`flex flex-col justify-between p-3.5 rounded-2xl border text-left transition-all active:scale-[0.98] ${cls}`}
                                     >
-                                        {opt.label}
+                                        <span className="text-xs font-bold tracking-tight">{p.label}</span>
+                                        <span className="text-[9px] font-black uppercase tracking-wider opacity-75 mt-1.5">
+                                            {p.urgency} preset
+                                        </span>
                                     </button>
-                                ))}
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Live Target Estimator widget */}
+                    <div className="bg-slate-950 text-slate-100 rounded-3xl p-5 border border-slate-800 shadow-xl relative overflow-hidden">
+                        <div className="absolute right-0 top-0 w-28 h-28 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+                        
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                                <p className="text-[8px] font-black tracking-widest text-slate-500 uppercase">Target Estimator</p>
+                                <h4 className="text-xs font-bold text-slate-300">Live Broadcast Reach</h4>
                             </div>
-
-                            {targetMode === 'center' && (
-                                <select
-                                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none mt-2"
-                                    value={form.evacuation_center_id}
-                                    onChange={e => setForm({ ...form, evacuation_center_id: e.target.value, target_filter: 'all' })}
-                                >
-                                    <option value="">Select center</option>
-                                    {centers.map(c => (
-                                        <option key={c.evacuation_center_id} value={c.evacuation_center_id}>
-                                            {c.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            )}
-
-                            {targetMode === 'event' && (
-                                <select
-                                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none mt-2"
-                                    value={form.evacuation_event_id}
-                                    onChange={e => setForm({ ...form, evacuation_event_id: e.target.value, target_filter: 'all' })}
-                                >
-                                    <option value="">Select event</option>
-                                    {events.map(e => (
-                                        <option key={e.event_id} value={e.event_id}>
-                                            {e.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            )}
-
-                            {/* Evacuation status filter */}
-                            <div className="flex gap-2 mt-2">
-                                {[
-                                    { value: 'all',           label: 'All Households' },
-                                    { value: 'evacuated',     label: 'Evacuated' },
-                                    { value: 'not_evacuated', label: 'Not Evacuated' },
-                                ].map(opt => (
-                                    <button
-                                        key={opt.value}
-                                        type="button"
-                                        onClick={() => setForm({ ...form, target_filter: opt.value })}
-                                        className={`px-3 py-1.5 text-[10px] font-bold rounded-lg border transition-all ${
-                                            form.target_filter === opt.value
-                                                ? 'bg-blue-600 text-white border-blue-600'
-                                                : 'bg-white text-slate-500 border-slate-200 hover:border-blue-300'
-                                        }`}
-                                    >
-                                        {opt.label}
-                                    </button>
-                                ))}
+                            <div className="flex items-center gap-1.5 bg-blue-500/15 text-blue-400 px-3 py-1 rounded-full text-[9px] font-black border border-blue-500/25">
+                                <span className={`w-1.5 h-1.5 rounded-full bg-blue-400 ${previewing ? 'animate-ping' : ''}`} />
+                                <span>LIVE COUNT</span>
                             </div>
                         </div>
-
-                        {/* Urgency Level */}
-                        <div className="space-y-2">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                Urgency Level
-                            </label>
-                            <div className="flex gap-2 flex-wrap">
-                                {urgencyLevels.map(u => {
-                                    const style = getUrgencyStyle(u);
-                                    const isSelected = form.urgency_level_id === u.urgency_id;
-                                    return (
-                                        <button
-                                            key={u.urgency_id}
-                                            type="button"
-                                            onClick={() => setForm({ ...form, urgency_level_id: u.urgency_id })}
-                                            className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all ${
-                                                isSelected
-                                                    ? `${style.bg} ${style.text} ${style.border}`
-                                                    : URGENCY_INACTIVE
-                                            }`}
-                                        >
-                                            {u.urgency_label}
-                                        </button>
-                                    );
-                                })}
+                        
+                        <div className="mt-4 flex items-baseline gap-2">
+                            <span className="text-4xl font-black tracking-tight text-white font-mono">
+                                {previewing ? '...' : recipientCount ?? 0}
+                            </span>
+                            <span className="text-xs text-slate-400 font-bold">households targeted</span>
+                        </div>
+                        
+                        <div className="mt-4 flex items-center justify-between text-[10px] text-slate-400 border-t border-slate-800/80 pt-3.5">
+                            <div>
+                                <span className="font-semibold text-slate-500 uppercase tracking-widest text-[8px] mr-1">Channels:</span> 
+                                <span className="text-slate-300 font-semibold">{form.channel === 'both' ? 'SMS + Push' : form.channel.toUpperCase()}</span>
+                            </div>
+                            <div>
+                                <span className="font-semibold text-slate-500 uppercase tracking-widest text-[8px] mr-1">Status:</span> 
+                                <span className="text-slate-300 font-semibold">{form.target_filter.replace('_', ' ')}</span>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Schedule */}
-                        <div className="space-y-2">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                Schedule (optional)
-                            </label>
-                            <input
-                                type="datetime-local"
-                                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"
-                                value={form.scheduled_at}
-                                onChange={e => setForm({ ...form, scheduled_at: e.target.value })}
+                    {/* Targeting Mode */}
+                    <div className="space-y-3">
+                        <Label>Target Filters</Label>
+                        <div className="flex bg-slate-50 p-1 rounded-2xl border border-slate-100 gap-1">
+                            {[
+                                { value: 'all',    label: 'All Areas' },
+                                { value: 'center', label: 'By Evacuation Center' },
+                                { value: 'event',  label: 'By Active Event' },
+                            ].map(opt => (
+                                <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => handleTargetMode(opt.value)}
+                                    className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                                        targetMode === opt.value
+                                            ? 'bg-white text-slate-900 shadow-sm border border-slate-100 font-black'
+                                            : 'text-slate-500 hover:text-slate-700'
+                                    }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {targetMode === 'center' && (
+                            <select
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 transition-all"
+                                value={form.evacuation_center_id}
+                                onChange={e => setForm({ ...form, evacuation_center_id: e.target.value, target_filter: 'all' })}
+                            >
+                                <option value="">Select Center Target…</option>
+                                {centers.map(c => (
+                                    <option key={c.evacuation_center_id} value={c.evacuation_center_id}>{c.name}</option>
+                                ))}
+                            </select>
+                        )}
+
+                        {targetMode === 'event' && (
+                            <select
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 transition-all"
+                                value={form.evacuation_event_id}
+                                onChange={e => setForm({ ...form, evacuation_event_id: e.target.value, target_filter: 'all' })}
+                            >
+                                <option value="">Select Disaster Event Target…</option>
+                                {events.map(e => (
+                                    <option key={e.event_id} value={e.event_id}>{e.name}</option>
+                                ))}
+                            </select>
+                        )}
+
+                        {/* Evacuation status sub-filter */}
+                        <div className="flex gap-1.5">
+                            {[
+                                { value: 'all',           label: 'All Residents' },
+                                { value: 'evacuated',     label: 'Evacuated Only' },
+                                { value: 'not_evacuated', label: 'Not Evacuated' },
+                            ].map(opt => (
+                                <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => setForm({ ...form, target_filter: opt.value })}
+                                    className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl border transition-all ${
+                                        form.target_filter === opt.value
+                                            ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/15'
+                                            : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                                    }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Urgency */}
+                    <div className="space-y-2.5">
+                        <Label>Urgency Level</Label>
+                        <div className="flex gap-1.5 flex-wrap">
+                            {urgencyLevels.map(u => {
+                                const isSelected = form.urgency_level_id === u.urgency_id;
+                                const baseStyle = URGENCY_STYLES[u.urgency_key] || 'border-slate-200 hover:border-slate-300 bg-slate-50';
+                                return (
+                                    <button
+                                        key={u.urgency_id}
+                                        type="button"
+                                        onClick={() => setForm({ ...form, urgency_level_id: u.urgency_id })}
+                                        className={`px-4 py-2 text-xs font-bold rounded-2xl border transition-all ${
+                                            isSelected
+                                                ? `${baseStyle.replace('bg-opacity-10', 'bg-opacity-100')} border-transparent font-black ring-2 ring-slate-900/10`
+                                                : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        {u.urgency_label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Notification channels */}
+                    <div className="space-y-2.5">
+                        <Label>Broadcast Channels</Label>
+                        <div className="grid grid-cols-2 gap-3.5">
+                            {[
+                                { value: 'push', label: 'Mobile Push Broadcast', description: 'Immediate App Alert', Icon: Smartphone },
+                                { value: 'sms',  label: 'Direct SMS Gateway', description: 'SMS Mobile Alert', Icon: MessageSquare },
+                            ].map(({ value, label, description, Icon }) => {
+                                const isActive = form.channel === value || form.channel === 'both';
+                                return (
+                                    <button
+                                        key={value}
+                                        type="button"
+                                        onClick={() => {
+                                            if (form.channel === 'both') {
+                                                setForm({ ...form, channel: value === 'push' ? 'sms' : 'push' });
+                                            } else if (form.channel === value) {
+                                                setForm({ ...form, channel: 'both' });
+                                            } else {
+                                                setForm({ ...form, channel: 'both' });
+                                            }
+                                        }}
+                                        className={`flex items-start gap-3 p-4 rounded-2xl border-2 transition-all text-left relative overflow-hidden ${
+                                            isActive
+                                                ? 'border-blue-600 bg-blue-50/40 shadow-sm'
+                                                : 'border-slate-100 bg-white hover:border-slate-200'
+                                        }`}
+                                    >
+                                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                                            isActive ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-400'
+                                        }`}>
+                                            <Icon size={16} />
+                                        </div>
+                                        <div className="space-y-0.5">
+                                            <p className={`text-xs font-bold leading-tight ${isActive ? 'text-slate-900' : 'text-slate-600'}`}>
+                                                {label}
+                                            </p>
+                                            <p className="text-[10px] text-slate-400 font-medium">{description}</p>
+                                        </div>
+                                        {isActive && (
+                                            <div className="absolute top-3 right-3 bg-blue-600 rounded-full w-4 h-4 flex items-center justify-center text-white">
+                                                <CheckCircle size={10} strokeWidth={3} />
+                                            </div>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Message */}
+                    <div className="space-y-2.5">
+                        <Label>Alert Message Content</Label>
+                        <div className="relative">
+                            <textarea
+                                rows={4}
+                                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs leading-relaxed focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 outline-none transition-all resize-none font-medium placeholder-slate-400 text-slate-700"
+                                placeholder="Type custom emergency notification..."
+                                value={form.message}
+                                onChange={e => setForm({ ...form, message: e.target.value })}
                             />
                         </div>
+                        <div className="flex justify-between text-[9px] font-black uppercase text-slate-400 tracking-wider px-0.5">
+                            <span>{form.message.length} Characters</span>
+                            <span className={recipientCount === 0 ? 'text-red-500 font-bold animate-pulse' : 'text-slate-400'}>
+                                {previewing ? 'Estimating Reach...' : `${recipientCount ?? 0} Recipient Households`}
+                            </span>
+                        </div>
+                    </div>
 
-                        {/* Recurring */}
-                        <div className="space-y-2">
-                            <label className="flex items-center gap-2 cursor-pointer">
+                    {/* Schedule */}
+                    <div className="space-y-2.5">
+                        <div className="flex items-center gap-2">
+                            <Label>Schedule Delayed Broadcast (Optional)</Label>
+                            <Clock size={11} className="text-slate-400" />
+                        </div>
+                        <input
+                            type="datetime-local"
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 transition-all text-slate-700"
+                            value={form.scheduled_at}
+                            onChange={e => setForm({ ...form, scheduled_at: e.target.value })}
+                        />
+                    </div>
+
+                    {/* Recurring Options */}
+                    <div className="space-y-3 pt-2">
+                        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                            <div className="relative flex items-center">
                                 <input
                                     type="checkbox"
                                     checked={form.is_recurring}
                                     onChange={e => setForm({ ...form, is_recurring: e.target.checked })}
-                                    className="accent-blue-600 w-4 h-4"
+                                    className="accent-blue-600 w-4.5 h-4.5 rounded-lg border-slate-300 cursor-pointer"
                                 />
-                                <span className="text-xs font-bold text-slate-600">Repeat this alert</span>
-                            </label>
+                            </div>
+                            <span className="text-xs font-bold text-slate-700">Repeat this broadcast alert periodically</span>
+                        </label>
 
-                            {form.is_recurring && (
-                                <div className="bg-blue-50 rounded-xl p-4 space-y-3 border border-blue-100">
-                                    <div className="flex gap-2">
-                                        {[
-                                            { value: 'hourly', label: 'Hourly' },
-                                            { value: 'daily',  label: 'Daily' },
-                                            { value: 'weekly', label: 'Weekly' },
-                                        ].map(opt => (
+                        {form.is_recurring && (
+                            <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
+                                <div className="space-y-1.5">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Recurrence Interval</span>
+                                    <div className="flex gap-1.5">
+                                        {['hourly', 'daily', 'weekly'].map(opt => (
                                             <button
-                                                key={opt.value}
+                                                key={opt}
                                                 type="button"
-                                                onClick={() => setForm({ ...form, recurrence_type: opt.value })}
-                                                className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all ${
-                                                    form.recurrence_type === opt.value
-                                                        ? 'bg-blue-600 text-white border-blue-600'
-                                                        : 'bg-white text-slate-600 border-slate-200'
+                                                onClick={() => setForm({ ...form, recurrence_type: opt })}
+                                                className={`flex-1 py-2 text-xs font-bold rounded-xl border transition-all ${
+                                                    form.recurrence_type === opt
+                                                        ? 'bg-slate-900 border-slate-900 text-white font-black'
+                                                        : 'bg-white border-slate-100 text-slate-500 hover:border-slate-200'
                                                 }`}
                                             >
-                                                {opt.label}
+                                                {opt.charAt(0).toUpperCase() + opt.slice(1)}
                                             </button>
                                         ))}
                                     </div>
-                                    <div>
-                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                            Stop On
-                                        </label>
-                                        <input
-                                            type="datetime-local"
-                                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm outline-none mt-1"
-                                            value={form.recurrence_end_at}
-                                            onChange={e => setForm({ ...form, recurrence_end_at: e.target.value })}
-                                        />
-                                    </div>
                                 </div>
-                            )}
-                        </div>
-
-                        {/* Notification Methods */}
-                        <div className="space-y-2">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                Notification Methods
-                            </label>
-                            <div className="space-y-2">
-                                {[
-                                    { value: 'push', label: 'Push Notification', icon: Smartphone },
-                                    { value: 'sms',  label: 'SMS Text',          icon: MessageSquare },
-                                ].map(({ value, label, icon: Icon }) => {
-                                    const isActive = form.channel === value || form.channel === 'both';
-                                    return (
-                                        <button
-                                            key={value}
-                                            type="button"
-                                            onClick={() => {
-                                                if (form.channel === 'both') {
-                                                    setForm({ ...form, channel: value === 'push' ? 'sms' : 'push' });
-                                                } else if (form.channel === value) {
-                                                    setForm({ ...form, channel: 'both' });
-                                                } else {
-                                                    setForm({ ...form, channel: 'both' });
-                                                }
-                                            }}
-                                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${
-                                                isActive
-                                                    ? 'border-red-400 bg-red-50'
-                                                    : 'border-slate-200 bg-white opacity-50'
-                                            }`}
-                                        >
-                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? 'bg-red-100' : 'bg-slate-100'}`}>
-                                                <Icon size={16} className={isActive ? 'text-red-500' : 'text-slate-400'} />
-                                            </div>
-                                            <span className={`text-sm font-bold ${isActive ? 'text-red-600' : 'text-slate-400'}`}>
-                                                {label}
-                                            </span>
-                                            {isActive && (
-                                                <div className="ml-auto w-4 h-4 rounded-full bg-red-500 flex items-center justify-center">
-                                                    <CheckCircle size={12} className="text-white" />
-                                                </div>
-                                            )}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Alert Message */}
-                        <div className="space-y-2">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                Alert Message
-                            </label>
-                            <textarea
-                                rows={4}
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 outline-none transition-all resize-none"
-                                placeholder="Enter emergency message here..."
-                                value={form.message}
-                                onChange={e => setForm({ ...form, message: e.target.value })}
-                            />
-                            <div className="flex justify-between text-[9px] text-slate-400 px-1">
-                                <span>{form.message.length} CHARS</span>
-                                <span className="font-bold">
-                                    {previewing ? 'COUNTING...' : recipientCount !== null
-                                        ? `BROADCASTING TO ${recipientCount} HOUSEHOLD${recipientCount !== 1 ? 'S' : ''}`
-                                        : 'SELECT FILTERS ABOVE'
-                                    }
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Broadcast Button */}
-                        <button
-                            onClick={handleSubmit}
-                            disabled={loading || recipientCount === 0 || !form.message || !form.urgency_level_id}
-                            className="w-full flex items-center justify-center gap-2 py-3.5 bg-red-500 hover:bg-red-600 text-white font-black rounded-xl transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-red-500/20"
-                        >
-                            {loading ? (
-                                <span className="animate-pulse">Sending...</span>
-                            ) : (
-                                <>
-                                    {form.is_recurring
-                                        ? <RefreshCw size={16} />
-                                        : form.scheduled_at
-                                            ? <Clock size={16} />
-                                            : <Send size={16} />
-                                    }
-                                    {form.is_recurring
-                                        ? 'Schedule Recurring Alert'
-                                        : form.scheduled_at
-                                            ? 'Schedule Alert'
-                                            : 'Broadcast Now'
-                                    }
-                                </>
-                            )}
-                        </button>
-                    </div>
-
-                    {/* RIGHT — Stats + Recent */}
-                    <div className="w-72 p-6 space-y-5 bg-slate-900 flex-shrink-0">
-
-                        {/* Delivery Rate */}
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2">
-                                <Activity size={14} className="text-blue-400" />
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                    Delivery Rate
-                                </p>
-                            </div>
-                            <div className="bg-slate-800 rounded-xl p-4 space-y-3">
-                                <div className="flex items-end justify-between">
-                                    <p className="text-3xl font-black text-white">{stats.rate}%</p>
-                                    <p className="text-[9px] text-slate-400 uppercase font-bold">Delivered Status</p>
-                                </div>
-                                <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-blue-500 rounded-full transition-all duration-700"
-                                        style={{ width: `${stats.rate}%` }}
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
+                                        End Recurrence On
+                                    </label>
+                                    <input
+                                        type="datetime-local"
+                                        className="w-full px-4 py-2.5 bg-white border border-slate-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all text-slate-700"
+                                        value={form.recurrence_end_at}
+                                        onChange={e => setForm({ ...form, recurrence_end_at: e.target.value })}
                                     />
                                 </div>
-                                <div className="flex justify-between text-[9px] font-black text-slate-400 uppercase">
-                                    <span>{stats.sent} Sent</span>
-                                    <span>{stats.total} Total</span>
-                                </div>
                             </div>
-                        </div>
-
-                        {/* Recent Activity */}
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2">
-                                <Bell size={14} className="text-slate-400" />
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                    Recent Activity
-                                </p>
-                            </div>
-                            <div className="space-y-2">
-                                {recentAlerts.length === 0 ? (
-                                    <p className="text-xs text-slate-500 text-center py-4">No recent alerts</p>
-                                ) : recentAlerts.map(alert => (
-                                    <div key={alert.notif_id} className="bg-slate-800 rounded-xl p-3 space-y-1.5">
-                                        <div className="flex items-center justify-between">
-                                            <span className={`px-2 py-0.5 text-[8px] font-black rounded-full ${getRecentUrgencyBadge(alert.urgency_level?.urgency_key)}`}>
-                                                {alert.urgency_level?.urgency_label?.toUpperCase()}
-                                            </span>
-                                            <span className={`text-[8px] font-black uppercase flex items-center gap-1 ${
-                                                alert.status === 'sent' ? 'text-green-400' : 'text-slate-400'
-                                            }`}>
-                                                {alert.status === 'sent' && <CheckCircle size={9} />}
-                                                {alert.status}
-                                            </span>
-                                        </div>
-                                        <p className="text-xs text-slate-300 font-medium line-clamp-1">
-                                            {alert.message}
-                                        </p>
-                                        <div className="flex items-center justify-between text-[8px] text-slate-500">
-                                            <span className="flex items-center gap-1">
-                                                <Users size={8} />
-                                                {alert.recipients_count || 0}
-                                            </span>
-                                            <span>
-                                                {alert.created_at
-                                                    ? new Date(alert.created_at).toLocaleString('en-PH', {
-                                                        month: 'short', day: 'numeric',
-                                                        hour: '2-digit', minute: '2-digit'
-                                                    })
-                                                    : '—'
-                                                }
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                        )}
                     </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4.5 border-t border-slate-50 bg-slate-50/50">
+                    <button
+                        onClick={handleSubmit}
+                        disabled={loading || recipientCount === 0 || !form.message || !form.urgency_level_id}
+                        className="w-full flex items-center justify-center gap-2 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-2xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20 uppercase tracking-widest"
+                    >
+                        {loading ? (
+                            <span className="animate-pulse text-xs">Transmitting Broadcast...</span>
+                        ) : (
+                            <>
+                                <BroadcastIcon size={14} strokeWidth={3} />
+                                <span>{broadcastLabel}</span>
+                            </>
+                        )}
+                    </button>
                 </div>
             </div>
         </div>,
         document.body
+    );
+}
+
+function Label({ children }) {
+    return (
+        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+            {children}
+        </p>
     );
 }
