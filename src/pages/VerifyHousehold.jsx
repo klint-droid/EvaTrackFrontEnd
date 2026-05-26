@@ -14,7 +14,8 @@ import {
   Loader2,
   X,
   Sparkles,
-  Fingerprint
+  Fingerprint,
+  Plus
 } from "lucide-react";
 
 import QRScanner from "../components/QRScanner";
@@ -29,9 +30,9 @@ import { admitHousehold } from "../api/evacuationRecords/admitHousehold";
 export default function VerifyHousehold() {
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState("scan");
+  const [tab, setTab] = useState("admit"); // "admit" = Search Registry, "manual" = New On-site entry
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState(undefined); // undefined indicates search has not run yet
   const [headName, setHeadName] = useState("");
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -40,8 +41,11 @@ export default function VerifyHousehold() {
   const [centerName, setCenterName] = useState(null);
 
   const [assignmentModal, setAssignmentModal] = useState(false);
+  const [qrModalOpen, setQrModalOpen] = useState(false); // Modal for live QR Scanner
   const [scannedData, setScannedData] = useState(null);
   const [memberCount, setMemberCount] = useState("");
+
+  const records = Array.isArray(results) ? results : (Array.isArray(results?.data) ? results.data : (results?.data?.data || []));
 
   const showMessage = (msg, type = "success") => {
     setMessage({
@@ -106,20 +110,20 @@ export default function VerifyHousehold() {
   }, []);
 
   useEffect(() => {
-  if (!user?.assigned_center_id) return;
+    if (!user?.assigned_center_id) return;
 
-  getCenter(user.assigned_center_id)
-    .then((res) => {
-      const body = getApiBody(res);
-      const center = body?.data || body;
-      setCenterName(
-        center?.name || center?.center_name || user.assigned_center_id
-      );
-    })
-    .catch(() => {
-      setCenterName(user.assigned_center_id);
-    });
-}, [user]);
+    getCenter(user.assigned_center_id)
+      .then((res) => {
+        const body = getApiBody(res);
+        const center = body?.data || body;
+        setCenterName(
+          center?.name || center?.center_name || user.assigned_center_id
+        );
+      })
+      .catch(() => {
+        setCenterName(user.assigned_center_id);
+      });
+  }, [user]);
 
   const handleScan = async (householdId) => {
     setLoading(true);
@@ -189,11 +193,11 @@ export default function VerifyHousehold() {
         payload;
 
       if (!household?.household_id) {
-        showMessage("Household created, but response is missing household ID.", "error");
+        showMessage("Household admitted, but response is missing household ID.", "error");
         return;
       }
 
-      showMessage("Household created. Please confirm admission.");
+      showMessage("Household admitted. Confirm final count.");
 
       setScannedData({
         household,
@@ -261,23 +265,23 @@ export default function VerifyHousehold() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <Fingerprint className="text-blue-600" size={28} />
+            <Fingerprint className="text-indigo-600" size={28} />
             Household Verification
           </h1>
-          <p className="text-sm text-slate-500 font-medium uppercase tracking-wider text-[10px]">
-            Registry & Admission Control
+          <p className="text-xs text-slate-500 font-medium uppercase tracking-wider text-[10px]">
+            Registry Admission & Verification Control
           </p>
         </div>
 
         {user && (
           <div className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-2xl shadow-sm">
-            <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+            <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600">
               <MapPin size={16} />
             </div>
             <div>
@@ -292,19 +296,18 @@ export default function VerifyHousehold() {
         )}
       </div>
 
-      {/* Tabs */}
+      {/* Simplified Tabs: Verify Registry & Manual Entry */}
       <div className="flex p-1 bg-slate-200/50 rounded-2xl w-full md:w-fit">
         {[
-          { id: "scan", label: "QR Scan", icon: QrCode },
-          { id: "search", label: "Registry", icon: Search },
-          { id: "manual", label: "New Entry", icon: UserPlus },
+          { id: "admit", label: "Registry Admission", icon: Search },
+          { id: "manual", label: "On-Site Registration", icon: UserPlus },
         ].map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex items-center justify-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+            className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
               tab === t.id
-                ? "bg-white text-blue-600 shadow-sm ring-1 ring-slate-200"
+                ? "bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200"
                 : "text-slate-500 hover:text-slate-700 hover:bg-white/40"
             }`}
           >
@@ -314,7 +317,7 @@ export default function VerifyHousehold() {
         ))}
       </div>
 
-      {/* Feedback */}
+      {/* Feedback Alert */}
       {message && (
         <div
           className={`flex items-center gap-3 p-4 rounded-2xl border animate-in zoom-in-95 duration-300 ${
@@ -334,86 +337,104 @@ export default function VerifyHousehold() {
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden min-h-[420px] flex flex-col relative">
+      {/* Main Screen Wrapper */}
+      <div className="bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden min-h-[380px] flex flex-col relative">
 
-        {tab === "scan" && (
-          <div className="p-10 flex-1 flex flex-col items-center justify-center space-y-8">
-            <div className="w-full max-w-[320px] aspect-square bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden relative group">
-              <QRScanner onScan={handleScan} />
-              <div className="absolute inset-0 border-[20px] border-white/10 pointer-events-none" />
-            </div>
-
-            <div className="text-center">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
-                Awaiting Data Link
+        {tab === "admit" && (
+          <div className="p-8 space-y-6">
+            
+            {/* Title */}
+            <div className="space-y-1">
+              <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-1.5">
+                <Search size={16} className="text-indigo-600" />
+                Registry Manual Query
               </h3>
-              <p className="text-sm font-medium text-slate-400">
-                Position the household QR inside the frame
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-tight">
+                Query family head names/IDs, or trigger QR card scanning below
               </p>
             </div>
-          </div>
-        )}
 
-        {tab === "search" && (
-          <div className="p-8 space-y-6">
-            <div className="flex gap-2">
+            {/* Input fields beside QR scanner button */}
+            <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1 group">
                 <SearchIcon
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"
-                  size={18}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors"
+                  size={16}
                 />
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Enter Household ID or Head Name..."
-                  className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all"
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+                  placeholder="Enter family ID or Family Head name..."
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white outline-none transition-all"
                 />
               </div>
 
-              <button
-                onClick={handleSearch}
-                disabled={loading}
-                className="px-8 py-3.5 bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-slate-800 active:scale-95 transition-all disabled:opacity-50"
-              >
-                {loading ? <Loader2 className="animate-spin" size={18} /> : "Query"}
-              </button>
+              <div className="flex gap-2">
+                {/* 📣 Interactive QR Scan Prompt Trigger */}
+                <button
+                  type="button"
+                  onClick={() => setQrModalOpen(true)}
+                  className="px-4 py-3 bg-indigo-50 text-indigo-600 border border-indigo-100 hover:bg-indigo-100 active:scale-95 transition-all rounded-xl flex items-center justify-center gap-2 shadow-sm font-black text-[10px] uppercase tracking-widest"
+                  title="Scan Digital QR Card"
+                >
+                  <QrCode size={18} />
+                  <span>Scan QR</span>
+                </button>
+
+                <button
+                  onClick={handleSearch}
+                  disabled={loading}
+                  className="px-6 py-3 bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-slate-800 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center"
+                >
+                  {loading ? <Loader2 className="animate-spin" size={14} /> : "Search"}
+                </button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {results?.data?.length === 0 ? (
-                <p className="text-center text-slate-400 text-sm">
-                  No results found
-                </p>
+            {/* Search Registry Results Box */}
+            <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
+              {results === undefined ? (
+                <div className="py-12 text-center border border-dashed border-slate-100 rounded-2xl bg-slate-50/30 flex flex-col items-center justify-center space-y-2">
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Awaiting query database sync...</p>
+                  <p className="text-[10px] text-slate-400">Type family head credentials above or trigger live scan</p>
+                </div>
+              ) : records.length === 0 ? (
+                <div className="py-12 text-center border border-dashed border-slate-100 rounded-2xl bg-rose-50/20">
+                  <p className="text-xs text-rose-500 font-bold uppercase tracking-wider">No matching families found in registry.</p>
+                </div>
               ) : (
-                results?.data?.map((h) => (
+                records.map((h) => (
                   <div
                     key={h.household_id}
-                    className="p-5 border border-slate-100 rounded-[1.5rem] bg-slate-50/50 flex justify-between items-center group hover:bg-white hover:shadow-xl transition-all duration-300"
+                    className="p-4 border border-slate-100 rounded-2xl bg-slate-50/40 flex justify-between items-center group hover:bg-white hover:shadow-md transition-all duration-200"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 shadow-sm border border-slate-100 group-hover:text-blue-500 group-hover:border-blue-100 transition-all">
-                        <User size={18} />
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center text-slate-400 shadow-sm border border-slate-100 group-hover:text-indigo-500 group-hover:border-indigo-100 transition-all">
+                        <User size={16} />
                       </div>
 
                       <div>
-                        <p className="text-sm font-black text-slate-800 leading-tight">
+                        <p className="text-xs font-black text-slate-800 leading-tight">
                           {h.household_name}
                         </p>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                          ID: {h.household_id}
-                        </p>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                          Members: {h.member_count || 0}
-                        </p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                            ID: {h.household_id}
+                          </span>
+                          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                            Members: {h.member_count || 0}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
                     <button
                       onClick={() => handleVerify(h)}
-                      className="p-3 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-600/20 hover:bg-blue-700 active:scale-90 transition-all"
+                      className="flex items-center gap-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase tracking-wider shadow hover:bg-indigo-700 active:scale-95 transition-all"
                     >
-                      <Navigation size={14} fill="currentColor" />
+                      <span>Admit</span>
+                      <Navigation size={10} fill="currentColor" />
                     </button>
                   </div>
                 ))
@@ -423,14 +444,15 @@ export default function VerifyHousehold() {
         )}
 
         {tab === "manual" && (
-          <div className="p-8 flex flex-col items-center justify-center flex-1">
-            <div className="max-w-sm w-full space-y-6">
-              <div className="text-center space-y-1 mb-4">
-                <h2 className="text-lg font-black text-slate-800 tracking-tight">
-                  On-Site Registration
+          <div className="p-8 flex flex-col items-center justify-center flex-1 min-h-[380px]">
+            <div className="max-w-md w-full p-6 bg-slate-50/40 border border-slate-100 rounded-3xl space-y-6">
+              <div className="text-center space-y-1 mb-2">
+                <h2 className="text-base font-black text-slate-800 tracking-tight flex items-center justify-center gap-2">
+                  <UserPlus size={18} className="text-indigo-600" />
+                  On-Site Emergency Entry
                 </h2>
-                <p className="text-xs text-slate-400 font-medium uppercase tracking-tighter">
-                  Emergency Field Entry Only
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  Create new listing for unregistered families
                 </p>
               </div>
 
@@ -441,7 +463,8 @@ export default function VerifyHousehold() {
                 <input
                   value={headName}
                   onChange={(e) => setHeadName(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all"
+                  placeholder="e.g. John Doe"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
                 />
               </div>
 
@@ -454,19 +477,23 @@ export default function VerifyHousehold() {
                   min="1"
                   value={memberCount}
                   onChange={(e) => setMemberCount(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all"
+                  placeholder="e.g. 4"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
                 />
               </div>
 
               <button
                 onClick={handleCreate}
                 disabled={!headName || !memberCount || loading}
-                className="w-full py-4 bg-blue-600 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-blue-600/30 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
+                className="w-full py-3.5 bg-indigo-600 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl shadow hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? (
-                  <Loader2 className="animate-spin mx-auto" size={18} />
+                  <Loader2 className="animate-spin" size={14} />
                 ) : (
-                  "Create & Admit Household"
+                  <>
+                    <span>Create & Admit Household</span>
+                    <Plus size={12} />
+                  </>
                 )}
               </button>
             </div>
@@ -474,7 +501,55 @@ export default function VerifyHousehold() {
         )}
       </div>
 
-      {/* Admission Modal */}
+      {/* 📣 QR CAMERA SCANNING MODAL VIEW */}
+      {qrModalOpen &&
+        createPortal(
+          <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9999] p-4">
+            <div
+              className="absolute inset-0 bg-slate-900/60 animate-in fade-in duration-200"
+              onClick={() => setQrModalOpen(false)}
+            />
+
+            <div className="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 p-6 flex flex-col items-center">
+              <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-5">
+                <h3 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-1.5">
+                  <QrCode size={15} className="text-indigo-600 animate-pulse" />
+                  Live QR Camera Scanner
+                </h3>
+                <button
+                  onClick={() => setQrModalOpen(false)}
+                  className="p-1 text-slate-400 hover:bg-slate-100 rounded-full transition-all"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* QR Scanner viewport box */}
+              <div className="w-full aspect-square bg-slate-50 rounded-[2rem] border border-slate-200 flex items-center justify-center overflow-hidden relative shadow-inner">
+                <QRScanner onScan={(id) => {
+                  setQrModalOpen(false);
+                  handleScan(id);
+                }} />
+                {/* Visual scan targets */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-44 h-44 border border-white/20 rounded-2xl flex items-center justify-center pointer-events-none">
+                  <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-indigo-500 rounded-tl-md" />
+                  <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-indigo-500 rounded-tr-md" />
+                  <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-indigo-500 rounded-bl-md" />
+                  <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-indigo-500 rounded-br-md" />
+                </div>
+              </div>
+
+              <div className="text-center mt-5 space-y-1">
+                <p className="text-xs font-bold text-slate-600">Align QR code inside the target frame</p>
+                <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Awaiting scan telemetry...</p>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )
+      }
+
+      {/* Admission Finalize Modal */}
       {assignmentModal &&
         createPortal(
           <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9999] p-4">
@@ -486,7 +561,7 @@ export default function VerifyHousehold() {
             <div className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
               <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <h2 className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-2">
-                  <Sparkles size={16} className="text-blue-600" />
+                  <Sparkles size={16} className="text-indigo-600" />
                   Finalize Admission
                 </h2>
 
@@ -499,16 +574,16 @@ export default function VerifyHousehold() {
               </div>
 
               <div className="p-6 space-y-5">
-                <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50">
-                  <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">
+                <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
+                  <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">
                     Household Identified
                   </p>
-                  <p className="text-sm font-bold text-blue-900">
+                  <p className="text-sm font-bold text-indigo-900">
                     {scannedData?.household?.household_name ||
                       scannedData?.household?.head_name ||
                       "Selected household"}
                   </p>
-                  <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mt-1">
+                  <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mt-1">
                     {scannedData?.household?.household_id}
                   </p>
                 </div>
@@ -521,7 +596,7 @@ export default function VerifyHousehold() {
                     type="number"
                     min="1"
                     placeholder="e.g. 4"
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all"
                     value={memberCount}
                     onChange={(e) => setMemberCount(e.target.value)}
                   />
@@ -544,8 +619,8 @@ export default function VerifyHousehold() {
                   onClick={handleConfirmAdmission}
                   className={`px-5 py-2.5 text-white text-[10px] font-black rounded-lg shadow-lg uppercase tracking-wider flex items-center gap-2 transition-all ${
                     loading || !memberCount
-                      ? "bg-blue-300 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700 active:scale-95 shadow-blue-600/20"
+                      ? "bg-indigo-300 cursor-not-allowed"
+                      : "bg-indigo-600 hover:bg-indigo-700 active:scale-95 shadow-indigo-600/20"
                   }`}
                 >
                   {loading && <Loader2 size={12} className="animate-spin" />}
