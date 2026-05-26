@@ -7,7 +7,7 @@ export interface GetEventsResponse {
 }
 
 export const getEvents = async (): Promise<GetEventsResponse> => {
-    const res = await API.get<GetEventsResponse>("/api/disaster-events");
+    const res = await API.get<GetEventsResponse>("/api/events");
 
     return res.data;
 }
