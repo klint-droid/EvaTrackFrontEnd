@@ -29,9 +29,52 @@ function getStatusColor(current, max) {
   return "text-emerald-600 bg-emerald-50 border-emerald-100";
 }
 
+const CenterSkeleton = () => (
+  <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-4 animate-pulse flex flex-col justify-between h-[308px]">
+    <div className="space-y-4 flex-1">
+      {/* TOP ROW */}
+      <div className="flex justify-between items-start">
+        <div className="w-10 h-10 bg-slate-100 rounded-xl" />
+        <div className="w-24 h-6 bg-slate-50 rounded-full border border-slate-100/50" />
+      </div>
+
+      {/* NAME */}
+      <div className="h-6 bg-slate-200 rounded-lg w-2/3" />
+
+      {/* ADDRESS */}
+      <div className="space-y-1.5 mt-2">
+        <div className="h-3 bg-slate-100 rounded w-5/6" />
+        <div className="h-3 bg-slate-100 rounded w-1/2" />
+      </div>
+
+      {/* OCCUPANCY BAR */}
+      <div className="space-y-2 mt-4">
+        <div className="flex justify-between">
+          <div className="h-3 bg-slate-100 rounded w-1/4" />
+          <div className="h-3 bg-slate-100 rounded w-1/12" />
+        </div>
+        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden" />
+      </div>
+
+      {/* STAT TILES */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-100 space-y-2">
+          <div className="h-2.5 bg-slate-100 rounded w-1/2" />
+          <div className="h-3.5 bg-slate-200 rounded w-2/3" />
+        </div>
+        <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-100 space-y-2">
+          <div className="h-2.5 bg-slate-100 rounded w-1/2" />
+          <div className="h-3.5 bg-slate-200 rounded w-2/3" />
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 // ─── component ────────────────────────────────────────────────────────────────
 export default function EvacuationList() {
   const [centers, setCenters]         = useState([]);
+  const [loading, setLoading]         = useState(true);
   const [search, setSearch]           = useState("");
   const [modalOpen, setModalOpen]     = useState(false);
   const [deleteOpen, setDeleteOpen]   = useState(false);
@@ -46,7 +89,14 @@ export default function EvacuationList() {
   useEffect(() => { fetchCenters(); }, []);
 
   const fetchCenters = async () => {
-    setCenters(await getCenters());
+    setLoading(true);
+    try {
+      setCenters(await getCenters());
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (form) => {
@@ -143,103 +193,113 @@ export default function EvacuationList() {
 
       {/* GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {processedCenters.map((c) => {
-          const current  = Number(c.current_occupancy) || 0;
-          const max      = Number(c.capacity) || 0;
-          const percent  = max ? (current / max) * 100 : 0;
-          const addrStr  = c.osm_address || "Address not on record.";
+        {loading ? (
+          [...Array(6)].map((_, i) => <CenterSkeleton key={i} />)
+        ) : processedCenters.length > 0 ? (
+          processedCenters.map((c) => {
+            const current  = Number(c.current_occupancy) || 0;
+            const max      = Number(c.capacity) || 0;
+            const percent  = max ? (current / max) * 100 : 0;
+            const addrStr  = c.osm_address || "Address not on record.";
 
-          return (
-            <div
-              key={c.evacuation_center_id}
-              className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden"
-            >
-              <div className="p-5 flex-1">
+            return (
+              <div
+                key={c.evacuation_center_id}
+                className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden animate-in fade-in-50 duration-300"
+              >
+                <div className="p-5 flex-1">
 
-                {/* TOP ROW */}
-                <div className="flex justify-between items-start mb-4">
-                  <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
-                    <Home size={20} />
+                  {/* TOP ROW */}
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                      <Home size={20} />
+                    </div>
+                    <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border ${getStatusColor(current, max)}`}>
+                      {getStatus(current, max)}
+                    </span>
                   </div>
-                  <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border ${getStatusColor(current, max)}`}>
-                    {getStatus(current, max)}
-                  </span>
-                </div>
 
-                {/* NAME */}
-                <h3 className="text-lg font-bold text-slate-800 leading-tight mb-1">{c.name}</h3>
+                  {/* NAME */}
+                  <h3 className="text-lg font-bold text-slate-800 leading-tight mb-1">{c.name}</h3>
 
-                {/* ADDRESS */}
-                <div className="flex items-start text-xs font-medium mb-1 gap-1">
-                  <MapPin size={12} className="mt-0.5 shrink-0 text-blue-400" />
-                  <span className="text-slate-400 leading-snug">{addrStr}</span>
-                </div>
-
-                {/* OCCUPANCY BAR */}
-                <div className="space-y-2 mb-5 mt-3">
-                  <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
-                    <span>Occupancy</span>
-                    <span className="text-slate-800">{Math.round(percent)}%</span>
+                  {/* ADDRESS */}
+                  <div className="flex items-start text-xs font-medium mb-1 gap-1">
+                    <MapPin size={12} className="mt-0.5 shrink-0 text-blue-400" />
+                    <span className="text-slate-400 leading-snug">{addrStr}</span>
                   </div>
-                  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-1000 ${
-                        percent >= 90 ? "bg-red-500" : percent >= 70 ? "bg-amber-500" : "bg-emerald-500"
-                      }`}
-                      style={{ width: `${percent}%` }}
-                    />
-                  </div>
-                </div>
 
-                {/* STAT TILES */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-100">
-                    <p className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1.5">Evacuees</p>
-                    <div className="flex items-center gap-2">
-                      <Users size={14} className="text-blue-500" />
-                      <span className="text-xs font-bold text-slate-700">{current} / {max}</span>
+                  {/* OCCUPANCY BAR */}
+                  <div className="space-y-2 mb-5 mt-3">
+                    <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
+                      <span>Occupancy</span>
+                      <span className="text-slate-800">{Math.round(percent)}%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-1000 ${
+                          percent >= 90 ? "bg-red-500" : percent >= 70 ? "bg-amber-500" : "bg-emerald-500"
+                        }`}
+                        style={{ width: `${percent}%` }}
+                      />
                     </div>
                   </div>
-                  <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-100">
-                    <p className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1.5">Households</p>
-                    <div className="flex items-center gap-2">
-                      <DoorOpen size={14} className="text-indigo-500" />
-                      <span className="text-xs font-bold text-slate-700">{c.household_count ?? 0}</span>
+
+                  {/* STAT TILES */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-100">
+                      <p className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1.5">Evacuees</p>
+                      <div className="flex items-center gap-2">
+                        <Users size={14} className="text-blue-500" />
+                        <span className="text-xs font-bold text-slate-700">{current} / {max}</span>
+                      </div>
+                    </div>
+                    <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-100">
+                      <p className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1.5">Households</p>
+                      <div className="flex items-center gap-2">
+                        <DoorOpen size={14} className="text-indigo-500" />
+                        <span className="text-xs font-bold text-slate-700">{c.household_count ?? 0}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* FOOTER */}
-              <div className="px-5 py-3.5 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center group-hover:bg-white transition-colors">
-                <div className="flex gap-3">
-                  {canEdit && (
-                    <button
-                      onClick={() => { setSelected(c); setModalOpen(true); }}
-                      className="text-[11px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-tight"
-                    >
-                      Edit
-                    </button>
-                  )}
-                  {canDelete && (
-                    <button
-                      onClick={() => { setSelected(c); setDeleteOpen(true); }}
-                      className="text-[11px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-tight"
-                    >
-                      Delete
-                    </button>
-                  )}
+                {/* FOOTER */}
+                <div className="px-5 py-3.5 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center group-hover:bg-white transition-colors">
+                  <div className="flex gap-3">
+                    {canEdit && (
+                      <button
+                        onClick={() => { setSelected(c); setModalOpen(true); }}
+                        className="text-[11px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-tight"
+                      >
+                        Edit
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button
+                        onClick={() => { setSelected(c); setDeleteOpen(true); }}
+                        className="text-[11px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-tight"
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                  <Link
+                    to={`/evacuation-centers/${c.evacuation_center_id}`}
+                    className="flex items-center gap-1 text-[11px] font-black text-slate-600 uppercase tracking-tighter hover:text-blue-600"
+                  >
+                    Manage <ChevronRight size={14} />
+                  </Link>
                 </div>
-                <Link
-                  to={`/evacuation-centers/${c.evacuation_center_id}`}
-                  className="flex items-center gap-1 text-[11px] font-black text-slate-600 uppercase tracking-tighter hover:text-blue-600"
-                >
-                  Manage <ChevronRight size={14} />
-                </Link>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        ) : (
+          <div className="col-span-full py-16 text-center bg-white border border-slate-200 rounded-3xl p-8 space-y-3">
+            <AlertCircle className="mx-auto text-slate-300" size={32} />
+            <h4 className="text-sm font-bold text-slate-700">No evacuation centers found</h4>
+            <p className="text-xs text-slate-400">Try adjusting your filters or search terms.</p>
+          </div>
+        )}
       </div>
 
       <CenterModal

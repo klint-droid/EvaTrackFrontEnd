@@ -46,6 +46,48 @@ const CATEGORY_OPTIONS = [
 const SEVERITY_OPTIONS = ['low', 'medium', 'high', 'critical'];
 const STATUS_OPTIONS = ['open', 'in_progress', 'resolved', 'closed'];
 
+const RowSkeleton = () => (
+  <tr className="animate-pulse">
+    {/* Issue info */}
+    <td className="px-6 py-4 space-y-2">
+      <div className="h-4 bg-slate-200 rounded w-2/3" />
+      <div className="h-3 bg-slate-100 rounded w-1/3" />
+      <div className="h-3 bg-slate-100 rounded w-5/6 mt-1" />
+    </td>
+    {/* Category */}
+    <td className="px-6 py-4">
+      <div className="h-6 bg-slate-100 rounded-lg w-20" />
+    </td>
+    {/* Severity */}
+    <td className="px-6 py-4">
+      <div className="h-6 bg-slate-100 rounded-lg w-16" />
+    </td>
+    {/* Status */}
+    <td className="px-6 py-4">
+      <div className="h-6 bg-slate-100 rounded-lg w-24" />
+    </td>
+    {/* Center */}
+    <td className="px-6 py-4">
+      <div className="h-4 bg-slate-100 rounded w-24" />
+    </td>
+    {/* Reported By */}
+    <td className="px-6 py-4">
+      <div className="h-4 bg-slate-100 rounded w-20" />
+    </td>
+    {/* Created */}
+    <td className="px-6 py-4">
+      <div className="h-4 bg-slate-100 rounded w-28" />
+    </td>
+    {/* Action */}
+    <td className="px-6 py-4">
+      <div className="flex justify-end gap-2">
+        <div className="w-8 h-8 bg-slate-100 rounded-lg" />
+        <div className="w-8 h-8 bg-slate-100 rounded-lg" />
+      </div>
+    </td>
+  </tr>
+);
+
 export default function CenterIssueReports() {
   const [user, setUser] = useState(null);
   const [reports, setReports] = useState([]);
@@ -476,12 +518,7 @@ export default function CenterIssueReports() {
 
             <tbody className="divide-y divide-slate-50">
               {loading ? (
-                <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center text-slate-400">
-                    <Loader2 className="animate-spin mx-auto mb-2" size={24} />
-                    Loading issue reports...
-                  </td>
-                </tr>
+                [...Array(5)].map((_, i) => <RowSkeleton key={i} />)
               ) : reports.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="px-6 py-14 text-center text-slate-400 font-bold">

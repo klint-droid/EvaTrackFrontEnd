@@ -138,7 +138,7 @@ export default function HouseholdManagement() {
             {/* HEADER */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">Evacuated Households</h1>
+                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">Household Status</h1>
                     <p className="text-xs text-slate-500 font-medium tracking-wide uppercase">
                         Manage and monitor household evacuation status in your assigned evacuation center
                     </p>
@@ -201,11 +201,37 @@ export default function HouseholdManagement() {
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {loading ? (
-                                <tr>
-                                    <td colSpan="6" className="py-20 text-center">
-                                        <Loader2 className="animate-spin mx-auto text-slate-300" size={32} />
-                                    </td>
-                                </tr>
+                                [1, 2, 3, 4, 5].map((i) => (
+                                    <tr key={i} className="animate-pulse">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200/55 flex-shrink-0" />
+                                                <div className="space-y-2">
+                                                    <div className="w-32 h-3.5 bg-slate-200 rounded-md" />
+                                                    <div className="w-20 h-2.5 bg-slate-100 rounded-sm" />
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="w-28 h-4 bg-slate-100 rounded-md" />
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <div className="w-10 h-4 bg-slate-100 rounded-md mx-auto" />
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <div className="w-24 h-6 bg-slate-100 rounded-full mx-auto" />
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="space-y-1.5">
+                                                <div className="w-36 h-3.5 bg-slate-100 rounded-md" />
+                                                <div className="w-24 h-2.5 bg-slate-100/50 rounded-sm" />
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="w-16 h-4 bg-slate-100 rounded-md ml-auto" />
+                                        </td>
+                                    </tr>
+                                ))
                             ) : households.length === 0 ? (
                                 <tr>
                                     <td colSpan="6" className="py-20 text-center text-slate-400 text-sm">

@@ -10,7 +10,9 @@ import {
   ChevronLeft,
   ChevronRight,
   MoreHorizontal,
-  Loader2
+  Loader2,
+  Search,
+  AlertCircle
 } from "lucide-react";
 
 import { getUsers } from "../api/users/getUsers";
@@ -21,6 +23,40 @@ import { assignCenter } from "../api/users/assignCenter";
 import { getCenters } from "../api/evacuation/getCenters";
 import { isAdmin, isSuperAdmin } from "../utils/roles";
 
+const UserRowSkeleton = () => (
+  <tr className="animate-pulse">
+    {/* Name & ID */}
+    <td className="px-6 py-4">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200" />
+        <div className="space-y-1.5 flex-1">
+          <div className="h-4 bg-slate-200 rounded w-28" />
+          <div className="h-2.5 bg-slate-100 rounded w-16" />
+        </div>
+      </div>
+    </td>
+    {/* Contact */}
+    <td className="px-6 py-4">
+      <div className="h-4 bg-slate-100 rounded w-24" />
+    </td>
+    {/* System Role */}
+    <td className="px-6 py-4 text-center">
+      <div className="mx-auto h-6 bg-slate-100 rounded-full w-20" />
+    </td>
+    {/* Station Assignment */}
+    <td className="px-6 py-4">
+      <div className="h-8 bg-slate-100 rounded-lg w-36" />
+    </td>
+    {/* Actions */}
+    <td className="px-6 py-4 text-right">
+      <div className="flex justify-end gap-2">
+        <div className="w-8 h-8 bg-slate-100 rounded-lg animate-pulse" />
+        <div className="w-8 h-8 bg-slate-100 rounded-lg animate-pulse" />
+      </div>
+    </td>
+  </tr>
+);
+
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [centers, setCenters] = useState([]);
@@ -28,7 +64,10 @@ const UserManagement = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [assigningUserId, setAssigningUserId] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
 
   const [newUser, setNewUser] = useState({
     first_name: "",
@@ -64,12 +103,12 @@ const UserManagement = () => {
     return false;
   };
 
-  const fetchUsers = async (page = 1) => {
+  const fetchUsers = async (page = 1, searchQuery = search, role = roleFilter) => {
     try {
       setLoading(true);
-      const res = await getUsers(page);
-      setUsers(res.data.data);
-      setPagination(res.data);
+      const res = await getUsers(page, searchQuery, role);
+      setUsers(res.data);
+      setPagination(res);
     } catch (err) {
       console.error(err);
     } finally {
@@ -89,15 +128,15 @@ const UserManagement = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsers(1, search, roleFilter);
     loadCenters();
-  }, []);
+  }, [roleFilter]);
 
   const handleCreateUser = async () => {
     try {
       const res = await createUser(newUser);
 
-      const createdUser = res.data.user;
+      const createdUser = res.user;
       if(pagination.current_page === 1) {
         setUsers((prev) => [createdUser, ...prev]);
       }
@@ -124,7 +163,7 @@ const UserManagement = () => {
         role: editingUser.role
       });
 
-      const updatedUser = res.data.user;
+      const updatedUser = res.user;
 
       setUsers((prev) =>
         prev.map(u => u.user_id === updatedUser.user_id ? updatedUser : u)
@@ -156,7 +195,7 @@ const UserManagement = () => {
     try{
       const res = await assignCenter(userId, centerId || null);
 
-      const updatedUser = res.data.data;
+      const updatedUser = res.data;
 
       setUsers(prev => prev.map(
           u => u.user_id === userId ? updatedUser : u
@@ -206,6 +245,48 @@ const UserManagement = () => {
 
       {/* ⚡️ TABLE CONTAINER */}
       <div className="bg-white border border-slate-200 rounded-[1.5rem] shadow-sm overflow-hidden">
+        <div className="px-6 py-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/20">
+          <div>
+            <h2 className="text-sm font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
+              <User size={18} className="text-blue-500" />
+              Personnel Directory Log
+            </h2>
+            <p className="text-xs text-slate-400 mt-1">Manage system logins, access control and shelter stations.</p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative group">
+              <input
+                type="text"
+                placeholder="Search name or phone..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") fetchUsers(1, search, roleFilter);
+                }}
+                className="pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all w-full sm:w-48"
+              />
+              <button 
+                onClick={() => fetchUsers(1, search, roleFilter)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors"
+              >
+                <Search size={14} />
+              </button>
+            </div>
+
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:border-slate-300 transition-colors"
+            >
+              <option value="">All Roles</option>
+              <option value="evac_personnel">Personnel</option>
+              <option value="evac_admin">Admin</option>
+              <option value="super_admin">Super Admin</option>
+            </select>
+          </div>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -219,9 +300,13 @@ const UserManagement = () => {
             </thead>
             <tbody className="divide-y divide-slate-50">
               {loading ? (
+                [...Array(5)].map((_, i) => <UserRowSkeleton key={i} />)
+              ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="py-20 text-center">
-                    <Loader2 className="animate-spin mx-auto text-slate-300" size={32} />
+                  <td colSpan="5" className="px-6 py-16 text-center text-slate-400 font-bold">
+                    <AlertCircle className="mx-auto text-slate-300 mb-2" size={32} />
+                    <p className="text-sm font-bold text-slate-700">No personnel found</p>
+                    <p className="text-xs text-slate-400 mt-1">Try adjusting your filters or search terms.</p>
                   </td>
                 </tr>
               ) : users.map((user) => (

@@ -37,7 +37,7 @@ const Sidebar = () => {
 
     const menuItems = [
         { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", roles: ["evac_personnel", "evac_admin", "super_admin"] },
-        { icon: Home, label: "Household", path: "/households", roles: ["evac_admin", "evac_personnel"] },
+        { icon: Home, label: "Household Status", path: "/households", roles: ["evac_admin", "evac_personnel"] },
         { icon: Users, label: "Household Verification", path: "/household-verification", roles: ["evac_personnel", "evac_admin"] },
         { icon: ShieldAlertIcon, label: "Events", path: "/events", roles: ["evac_admin"] },
         { icon: Send, label: "Alerts", path: "/evacuation-alerts", roles: ["evac_personnel", "evac_admin"] },
