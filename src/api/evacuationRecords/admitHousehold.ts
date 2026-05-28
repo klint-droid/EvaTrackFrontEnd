@@ -3,8 +3,9 @@ import type { EvacuationRecord } from "../types";
 
 export interface AdmitHouseholdPayload {
     household_id: string;
-    member_count: number;
+    member_count?: number;
     event_id?: string | null;
+    member_ids?: string[];
 }
 
 export interface AdmitHouseholdResponse {

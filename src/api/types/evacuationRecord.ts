@@ -41,6 +41,8 @@ export interface UnitAllocation {
   
   // Relations:
   unit?: Unit;
+  evacuation_record?: EvacuationRecord;
+  assigner?: User;
 }
 
 /**

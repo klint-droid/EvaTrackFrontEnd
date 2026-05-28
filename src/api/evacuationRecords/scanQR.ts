@@ -4,6 +4,7 @@ import type { EvacuationRecord } from "../types";
 export interface ScanQRPayload {
   household_id: string;
   event_id?: string | null;
+  member_ids?: string[];
 }
 
 export interface ScanQRResponse {
