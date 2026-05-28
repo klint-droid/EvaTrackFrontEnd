@@ -6,3 +6,6 @@ export * from './evacuationCenter';
 export * from './notification';
 export * from './lookup';
 export * from './disasterEvent';
+export * from './evacuationRecord';
+export * from './centerIssueReport';
+export * from './resourceRequest';

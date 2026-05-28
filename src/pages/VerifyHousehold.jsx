@@ -44,6 +44,7 @@ export default function VerifyHousehold() {
   const [qrModalOpen, setQrModalOpen] = useState(false); // Modal for live QR Scanner
   const [scannedData, setScannedData] = useState(null);
   const [memberCount, setMemberCount] = useState("");
+  const [selectedMembers, setSelectedMembers] = useState([]);
 
   const records = Array.isArray(results) ? results : (Array.isArray(results?.data) ? results.data : (results?.data?.data || []));
 
@@ -129,12 +130,29 @@ export default function VerifyHousehold() {
     setLoading(true);
 
     try {
-      const res = await scanQR(householdId);
-      const payload = getPayload(res);
+      const res = await searchHousehold(householdId);
+      const recordsList = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : (res?.data?.data || []));
+      const household = recordsList.find(h => h.household_id === householdId) || recordsList[0];
 
-      showMessage(getMessage(res, "Household verified successfully."));
-
-      navigateToHouseholdDetail(payload);
+      if (household) {
+        setScannedData({
+          household,
+          isQR: true
+        });
+        setMemberCount(household?.member_count || 1);
+        const memberIds = Array.isArray(household?.members) 
+          ? household.members.map(m => m.member_id) 
+          : [];
+        setSelectedMembers(memberIds);
+        setQrModalOpen(false);
+        setAssignmentModal(true);
+      } else {
+        const resScan = await scanQR({ household_id: householdId });
+        const payload = getPayload(resScan);
+        showMessage(getMessage(resScan, "Household verified successfully."));
+        setQrModalOpen(false);
+        navigateToHouseholdDetail(payload);
+      }
     } catch (err) {
       showMessage(err.response?.data?.message || "Scan failed.", "error");
     } finally {
@@ -166,6 +184,10 @@ export default function VerifyHousehold() {
     });
 
     setMemberCount(household?.member_count || 1);
+    const memberIds = Array.isArray(household?.members) 
+      ? household.members.map(m => m.member_id) 
+      : [];
+    setSelectedMembers(memberIds);
     setAssignmentModal(true);
   };
 
@@ -215,7 +237,14 @@ export default function VerifyHousehold() {
   const handleConfirmAdmission = async () => {
     if (loading) return;
 
-    if (!memberCount || Number(memberCount) <= 0) {
+    const hasMembers = scannedData?.household?.members?.length > 0;
+
+    if (hasMembers && selectedMembers.length === 0) {
+      showMessage("Please select at least one member to evacuate.", "error");
+      return;
+    }
+
+    if (!hasMembers && (!memberCount || Number(memberCount) <= 0)) {
       showMessage("Please enter number of members.", "error");
       return;
     }
@@ -233,10 +262,19 @@ export default function VerifyHousehold() {
     setLoading(true);
 
     try {
-      const res = await admitHousehold(
-        scannedData.household.household_id,
-        Number(memberCount)
-      );
+      let res;
+      if (scannedData?.isQR) {
+        res = await scanQR({
+          household_id: scannedData.household.household_id,
+          member_ids: hasMembers ? selectedMembers : undefined,
+        });
+      } else {
+        res = await admitHousehold({
+          household_id: scannedData.household.household_id,
+          member_ids: hasMembers ? selectedMembers : undefined,
+          member_count: !hasMembers ? Number(memberCount) : undefined,
+        });
+      }
 
       const payload = getPayload(res);
 
@@ -245,6 +283,7 @@ export default function VerifyHousehold() {
       setAssignmentModal(false);
       setScannedData(null);
       setMemberCount("");
+      setSelectedMembers([]);
 
       navigateToHouseholdDetail(payload);
     } catch (err) {
@@ -262,6 +301,7 @@ export default function VerifyHousehold() {
 
     setAssignmentModal(false);
     setScannedData(null);
+    setSelectedMembers([]);
   };
 
   return (
@@ -588,22 +628,59 @@ export default function VerifyHousehold() {
                   </p>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
-                    Number of Members
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    placeholder="e.g. 4"
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all"
-                    value={memberCount}
-                    onChange={(e) => setMemberCount(e.target.value)}
-                  />
-                  <p className="text-[10px] text-slate-400 font-medium px-1">
-                    This will be used as the declared evacuee count. You can add individual member details after admission.
-                  </p>
-                </div>
+                {scannedData?.household?.members && scannedData.household.members.length > 0 ? (
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+                      Select Members to Evacuate ({selectedMembers.length} selected)
+                    </label>
+                    <div className="max-h-[200px] overflow-y-auto border border-slate-100 rounded-xl p-3 bg-slate-50/50 space-y-2.5">
+                      {scannedData.household.members.map((member) => {
+                        const isChecked = selectedMembers.includes(member.member_id);
+                        return (
+                          <label key={member.member_id} className="flex items-start gap-3 cursor-pointer group p-1">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {
+                                if (isChecked) {
+                                  setSelectedMembers(selectedMembers.filter(id => id !== member.member_id));
+                                } else {
+                                  setSelectedMembers([...selectedMembers, member.member_id]);
+                                }
+                              }}
+                              className="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-slate-700 leading-tight group-hover:text-indigo-600 transition-colors">
+                                {member.first_name} {member.last_name}
+                              </p>
+                              <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
+                                {member.relationshipDetail?.relationship_name || member.relationship_id || "Family Member"}
+                              </p>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+                      Number of Members
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="e.g. 4"
+                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all"
+                      value={memberCount}
+                      onChange={(e) => setMemberCount(e.target.value)}
+                    />
+                    <p className="text-[10px] text-slate-400 font-medium px-1">
+                      This will be used as the declared evacuee count. You can add individual member details after admission.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-end gap-3">
@@ -615,10 +692,10 @@ export default function VerifyHousehold() {
                 </button>
 
                 <button
-                  disabled={loading || !memberCount}
+                  disabled={loading || (scannedData?.household?.members?.length > 0 ? selectedMembers.length === 0 : !memberCount)}
                   onClick={handleConfirmAdmission}
                   className={`px-5 py-2.5 text-white text-[10px] font-black rounded-lg shadow-lg uppercase tracking-wider flex items-center gap-2 transition-all ${
-                    loading || !memberCount
+                    loading || (scannedData?.household?.members?.length > 0 ? selectedMembers.length === 0 : !memberCount)
                       ? "bg-indigo-300 cursor-not-allowed"
                       : "bg-indigo-600 hover:bg-indigo-700 active:scale-95 shadow-indigo-600/20"
                   }`}

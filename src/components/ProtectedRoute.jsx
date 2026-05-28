@@ -1,6 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import API from "../api";
+import SkeletonDashboard from "./SkeletonDashboard";
 
 const ProtectedRoute = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -21,7 +22,7 @@ const ProtectedRoute = ({ children }) => {
     checkAuth();
   }, []);
 
-  if (loading) return <p>Checking authentication...</p>;
+  if (loading) return <SkeletonDashboard />;
 
   if (!user) return <Navigate to="/" />;
 

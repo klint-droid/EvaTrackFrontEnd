@@ -13,4 +13,8 @@ export interface User {
     created_at: string | null;
     updated_at: string | null;
     deleted_at: string | null;
+
+    // Custom formatting added by backend controller:
+    role?: 'super_admin' | 'evac_admin' | 'evac_personnel' | null;
+    role_label?: string | null;
 }

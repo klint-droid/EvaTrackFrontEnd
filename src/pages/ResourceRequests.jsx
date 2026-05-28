@@ -235,7 +235,11 @@ export default function ResourceRequests() {
           </div>
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pending Requests</p>
-            <p className="text-2xl font-black text-slate-900">{summary.pending || 0}</p>
+            {loading && !requests.length ? (
+              <div className="h-8 bg-slate-200 animate-pulse rounded w-12 mt-1"></div>
+            ) : (
+              <p className="text-2xl font-black text-slate-900">{summary.pending || 0}</p>
+            )}
           </div>
         </div>
 
@@ -245,7 +249,11 @@ export default function ResourceRequests() {
           </div>
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Acknowledged</p>
-            <p className="text-2xl font-black text-slate-900">{summary.acknowledged || 0}</p>
+            {loading && !requests.length ? (
+              <div className="h-8 bg-slate-200 animate-pulse rounded w-12 mt-1"></div>
+            ) : (
+              <p className="text-2xl font-black text-slate-900">{summary.acknowledged || 0}</p>
+            )}
           </div>
         </div>
 
@@ -255,7 +263,11 @@ export default function ResourceRequests() {
           </div>
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Delivered 24h</p>
-            <p className="text-2xl font-black text-slate-900">{summary.delivered_24h || 0}</p>
+            {loading && !requests.length ? (
+              <div className="h-8 bg-slate-200 animate-pulse rounded w-12 mt-1"></div>
+            ) : (
+              <p className="text-2xl font-black text-slate-900">{summary.delivered_24h || 0}</p>
+            )}
           </div>
         </div>
       </div>
@@ -326,12 +338,43 @@ export default function ResourceRequests() {
 
             <tbody className="divide-y divide-slate-50">
               {loading ? (
-                <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center text-slate-400">
-                    <Loader2 className="animate-spin mx-auto mb-2" size={24} />
-                    Loading resource requests...
-                  </td>
-                </tr>
+                Array.from({ length: 5 }).map((_, index) => (
+                  <tr key={index} className="animate-pulse border-b border-slate-50">
+                    {/* 1. Resource Type */}
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-slate-200 rounded w-28 mb-2"></div>
+                      <div className="h-3 bg-slate-100 rounded w-16"></div>
+                    </td>
+                    {/* 2. Type */}
+                    <td className="px-6 py-4">
+                      <div className="h-5 bg-slate-200 rounded-lg w-20"></div>
+                    </td>
+                    {/* 3. Quantity */}
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-slate-200 rounded w-8"></div>
+                    </td>
+                    {/* 4. Urgency */}
+                    <td className="px-6 py-4">
+                      <div className="h-5 bg-slate-200 rounded-lg w-16"></div>
+                    </td>
+                    {/* 5. Status */}
+                    <td className="px-6 py-4">
+                      <div className="h-6 bg-slate-200 rounded-lg w-24"></div>
+                    </td>
+                    {/* 6. Center */}
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-slate-200 rounded w-24"></div>
+                    </td>
+                    {/* 7. Timestamp */}
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-slate-100 rounded w-32"></div>
+                    </td>
+                    {/* 8. Action */}
+                    <td className="px-6 py-4">
+                      <div className="h-5 bg-slate-200 rounded w-5 ml-auto"></div>
+                    </td>
+                  </tr>
+                ))
               ) : requests.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="px-6 py-14 text-center text-slate-400 font-bold">
@@ -359,7 +402,7 @@ export default function ResourceRequests() {
                     <td className="px-6 py-4 text-sm font-bold text-slate-700">{req.quantity}</td>
 
                     <td className="px-6 py-4">
-                      {/* ✅ was req.urgency — relation name is urgencyLevel */}
+                      {/*was req.urgency — relation name is urgencyLevel */}
                       <span className={`px-2.5 py-1 text-[10px] font-black rounded-lg border uppercase ${
                         getUrgencyClass(req.urgency_level?.urgency_key)
                       }`}>
@@ -419,22 +462,6 @@ export default function ResourceRequests() {
             </tbody>
           </table>
         </div>
-      </div>
-
-      {/* Smart Resource Estimation */}
-      <div className="bg-slate-950 text-white rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-            <ShieldAlert size={20} />
-          </div>
-          <div>
-            <h2 className="text-lg font-black">Smart Resource Estimation</h2>
-            <p className="text-xs text-slate-400">Use center population and request history to estimate needs.</p>
-          </div>
-        </div>
-        <p className="text-sm text-slate-300">
-          This section can later compute food packs, water, hygiene kits, blankets, and personnel needs based on current evacuee count.
-        </p>
       </div>
 
       {/* Modal */}
