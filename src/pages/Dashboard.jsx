@@ -203,10 +203,10 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-5 sm:space-y-8 animate-in fade-in duration-500">
       
       {/* 👋 WELCOME BANNER WITH COHESIVE COMPLEMENTARY DESIGN */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-sm">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 rounded-2xl sm:rounded-[2rem] p-5 sm:p-8 text-white relative overflow-hidden shadow-sm">
         <div className="absolute right-0 bottom-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute right-12 top-4 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
         
@@ -216,10 +216,10 @@ const Dashboard = () => {
               <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
               Operations Dashboard
             </div>
-            <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
+            <h1 className="text-xl sm:text-3xl font-black tracking-tight flex flex-wrap items-center gap-2">
               Welcome back, {loading ? <span className="inline-block w-40 h-8 bg-white/20 rounded-xl animate-pulse align-middle" /> : (user?.name || "Operator")}!
             </h1>
-            <p className="text-xs text-slate-300 max-w-xl font-medium leading-relaxed">
+            <p className="text-[10px] sm:text-xs text-slate-300 max-w-xl font-medium leading-relaxed hidden sm:block">
               Here is your situational overview today. Easily monitor shelter capacity ratios, track pending relief dispatches, register evacuees, and broadcast warning logs.
             </p>
           </div>
@@ -246,7 +246,7 @@ const Dashboard = () => {
       </div>
 
       {/* 🔹 STREAMLINED METRICS GRID (COHESIVE LEFT-BORDER ACCENTS) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {[
           { 
             label: "Active Shelters", 
@@ -281,16 +281,16 @@ const Dashboard = () => {
             sub: stats.pendingRequests > 0 ? `${stats.pendingRequests} items awaiting dispatch` : "Fully Supplied"
           },
         ].map((item, i) => (
-          <div key={i} className={`bg-white p-6 rounded-2xl border border-slate-100 ${item.border} shadow-sm hover:shadow-md transition-all group flex flex-col justify-between h-32`}>
+          <div key={i} className={`bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 ${item.border} shadow-sm hover:shadow-md transition-all group flex flex-col justify-between h-28 sm:h-32`}>
             <div className="flex justify-between items-start">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
+              <span className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
               <item.icon size={18} className={item.color} />
             </div>
             <div>
               {loading ? (
                 <div className="w-16 h-7 bg-slate-200 rounded-md animate-pulse animate-duration-1000" />
               ) : (
-                <h2 className="text-2xl font-black text-slate-800 tracking-tight">{item.val.toLocaleString()}</h2>
+                <h2 className="text-lg sm:text-2xl font-black text-slate-800 tracking-tight">{item.val.toLocaleString()}</h2>
               )}
               {loading ? (
                 <div className="w-28 h-3 bg-slate-100 rounded-sm animate-pulse mt-2.5" />
@@ -303,24 +303,24 @@ const Dashboard = () => {
       </div>
 
       {/* 🔹 MAIN GRID LAYOUT */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-8">
         
         {/* ── LEFT OPERATIONS AREA (2/3 width) ── */}
         <div className="lg:col-span-2 space-y-8">
           
           {/* Capacity Utilization Chart */}
-          <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-slate-100 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-3">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-slate-100 rounded-lg text-slate-600">
                   <TrendingUp size={18} />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-800 tracking-tight">Capacity Utilization</h3>
+                  <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight">Capacity Utilization</h3>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active shelter occupancy ratios</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
+              <div className="flex items-center gap-4 text-[10px] sm:text-xs font-bold text-slate-500">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded bg-[#4472C4]" />
                   <span>Max Capacity</span>
@@ -349,22 +349,22 @@ const Dashboard = () => {
                 <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">No center capacity telemetry registered.</p>
               </div>
             ) : (
-              <div className="h-[280px] w-full">
+              <div className="h-[220px] sm:h-[280px] w-full">
                 <CapacityChart data={chartData} />
               </div>
             )}
           </div>
 
           {/* Shelters Breakdown list table */}
-          <div className="bg-white border border-slate-100 rounded-[2rem] shadow-sm overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+          <div className="bg-white border border-slate-100 rounded-2xl sm:rounded-[2rem] shadow-sm overflow-hidden">
+            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 flex items-center justify-between gap-2">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                   <MapPin size={18} />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-800 tracking-tight">Center Breakdown</h3>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Current deployment status by location</p>
+                  <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight">Center Breakdown</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Current deployment status by location</p>
                 </div>
               </div>
               <Link to="/evacuation-centers" className="text-[10px] font-black text-indigo-600 hover:text-indigo-700 tracking-widest uppercase flex items-center gap-1">
@@ -466,7 +466,7 @@ const Dashboard = () => {
         <div className="lg:col-span-1 space-y-6">
 
           {/* Quick Shortcuts Grid */}
-          <div className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm">
+          <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-[2rem] border border-slate-100 shadow-sm">
             <h3 className="text-[10px] font-black text-slate-400 tracking-wider uppercase tracking-widest mb-4 flex items-center gap-2">
               <Activity size={14} className="text-indigo-500" />
               Shortcuts Portal
@@ -496,7 +496,7 @@ const Dashboard = () => {
           </div>
 
           {/* Emergency Broadcast alerts logs */}
-          <div className="bg-white border border-slate-100 rounded-[2rem] p-5 shadow-sm space-y-4">
+          <div className="bg-white border border-slate-100 rounded-2xl sm:rounded-[2rem] p-4 sm:p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                 <Bell size={14} className="text-rose-500" />
@@ -551,7 +551,7 @@ const Dashboard = () => {
           </div>
 
           {/* Incidents and Urgent requests */}
-          <div className="bg-white border border-slate-100 rounded-[2rem] p-5 shadow-sm space-y-5">
+          <div className="bg-white border border-slate-100 rounded-2xl sm:rounded-[2rem] p-4 sm:p-5 shadow-sm space-y-5">
             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
               <ShieldAlert size={14} className="text-orange-500" />
               Active Concerns

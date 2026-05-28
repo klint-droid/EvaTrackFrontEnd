@@ -244,14 +244,14 @@ const UserManagement = () => {
       </div>
 
       {/* ⚡️ TABLE CONTAINER */}
-      <div className="bg-white border border-slate-200 rounded-[1.5rem] shadow-sm overflow-hidden">
-        <div className="px-6 py-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/20">
+      <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-[1.5rem] shadow-sm overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/20">
           <div>
-            <h2 className="text-sm font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
+            <h2 className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
               <User size={18} className="text-blue-500" />
               Personnel Directory Log
             </h2>
-            <p className="text-xs text-slate-400 mt-1">Manage system logins, access control and shelter stations.</p>
+            <p className="text-xs text-slate-400 mt-1 hidden sm:block">Manage system logins, access control and shelter stations.</p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2">
@@ -282,12 +282,12 @@ const UserManagement = () => {
               <option value="">All Roles</option>
               <option value="evac_personnel">Personnel</option>
               <option value="evac_admin">Admin</option>
-              <option value="super_admin">Super Admin</option>
             </select>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* ── DESKTOP TABLE VIEW (md and up) ── */}
+        <div className="overflow-x-auto hidden md:block">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
@@ -394,9 +394,113 @@ const UserManagement = () => {
             </tbody>
           </table>
         </div>
+
+        {/* ── MOBILE CARD VIEW (below md) ── */}
+        <div className="md:hidden">
+          {loading ? (
+            <div className="p-4 space-y-3">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 animate-pulse space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-200" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-4 bg-slate-200 rounded w-32" />
+                      <div className="h-2.5 bg-slate-100 rounded w-16" />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="h-5 bg-slate-100 rounded-full w-20" />
+                    <div className="h-5 bg-slate-100 rounded w-28" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : users.length === 0 ? (
+            <div className="p-8 text-center">
+              <AlertCircle className="mx-auto text-slate-300 mb-2" size={32} />
+              <p className="text-sm font-bold text-slate-700">No personnel found</p>
+              <p className="text-xs text-slate-400 mt-1">Try adjusting your filters or search terms.</p>
+            </div>
+          ) : (
+            <div className="p-3 sm:p-4 space-y-3">
+              {users.map((user) => (
+                <div key={user.user_id} className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-sm transition-all space-y-3">
+                  {/* Top row: Avatar + Name + Role Badge */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-slate-500 font-bold border border-slate-200 shadow-sm flex-shrink-0">
+                        {(user.first_name || user.name || "?").charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-800 leading-tight truncate">
+                          {user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : (user.name || "—")}
+                        </p>
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">ID: {user.user_id}</p>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-widest rounded-full border flex-shrink-0 ${getRoleBadge(user.role)}`}>
+                      {user.role.replace('_', ' ')}
+                    </span>
+                  </div>
+
+                  {/* Info row: Contact */}
+                  <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+                    <span>📞 {formatPhone(user.contact_number)}</span>
+                  </div>
+
+                  {/* Station Assignment (only for personnel) */}
+                  {user.role === "evac_personnel" && (
+                    <div className="space-y-1">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Station</label>
+                      <select
+                        className="w-full text-[11px] font-bold bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 transition-all cursor-pointer"
+                        value={user.assigned_center_id || ""}
+                        disabled={assigningUserId === user.user_id || !canAssign(user)}
+                        onChange={(e) => {
+                          if (e.target.value === user.assigned_center_id) return;
+                          handleAssignCenter(user.user_id, e.target.value);
+                        }}
+                      >
+                        <option value="">Unassigned</option>
+                        {centers.map((c) => (
+                          <option key={c.evacuation_center_id} value={c.evacuation_center_id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                      {assigningUserId === user.user_id && (
+                        <span className="text-[9px] font-black text-blue-500 uppercase animate-pulse">Updating...</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Actions row */}
+                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+                    {canEdit(user) && (
+                      <button 
+                        onClick={() => setEditingUser(user)}
+                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                      >
+                        <Edit3 size={16} />
+                      </button>
+                    )}
+                    {canDelete(user) && (
+                      <button 
+                        onClick={() => handleDeleteUser(user.user_id)}
+                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         
         {/* ⚡️ PAGINATION FOOTER */}
-        <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
             Page {pagination.current_page || 1} of {pagination.last_page || 1}
           </p>

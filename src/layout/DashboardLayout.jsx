@@ -1,13 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import Sidebar from "../components/SideBar";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { Bell, User, LogOut, Settings, Home, ChevronRight } from "lucide-react";
+import { Bell, User, LogOut, Settings, Home, ChevronRight, Menu } from "lucide-react";
 import { logout } from "../api/auth/logout";
 
 const DashboardLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Format the path for the breadcrumb (e.g., /resource-monitoring -> Resource Monitoring)
     const getPageTitle = (pathname) => {
@@ -38,33 +39,44 @@ const DashboardLayout = () => {
     return (
         <div className="flex h-screen bg-[#f8fafc] font-sans text-slate-900">
             {/* SIDEBAR */}
-            <Sidebar />
+            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 
                 {/* ⚡️ REFINED TOP BAR */}
-                <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-40">
+                <header className="h-14 sm:h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-40">
                     
-                    {/* LEFT: Dynamic Breadcrumbs */}
-                    <nav className="flex items-center space-x-3 text-sm">
-                        <div 
-                            onClick={() => navigate("/dashboard")}
-                            className="flex items-center text-slate-400 hover:text-blue-600 cursor-pointer transition-colors"
+                    {/* LEFT: Hamburger + Dynamic Breadcrumbs */}
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        {/* MOBILE HAMBURGER TOGGLE — visible only below lg */}
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="p-2 -ml-1 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors lg:hidden"
+                            aria-label="Open navigation menu"
                         >
-                            <Home size={16} />
-                        </div>
-                        
-                        <ChevronRight size={14} className="text-slate-300" />
-                        
-                        <div className="flex items-center">
-                            <span className="font-bold text-slate-800 tracking-tight capitalize">
-                                {currentPath}
-                            </span>
-                        </div>
-                    </nav>
+                            <Menu size={22} />
+                        </button>
+
+                        <nav className="flex items-center space-x-2 sm:space-x-3 text-sm">
+                            <div 
+                                onClick={() => navigate("/dashboard")}
+                                className="flex items-center text-slate-400 hover:text-blue-600 cursor-pointer transition-colors"
+                            >
+                                <Home size={16} />
+                            </div>
+                            
+                            <ChevronRight size={14} className="text-slate-300" />
+                            
+                            <div className="flex items-center">
+                                <span className="font-bold text-slate-800 tracking-tight capitalize text-xs sm:text-sm truncate max-w-[140px] sm:max-w-none">
+                                    {currentPath}
+                                </span>
+                            </div>
+                        </nav>
+                    </div>
 
                     {/* RIGHT: Actions & Profile */}
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1 sm:space-x-2">
                         
                         {/* Status Indicator (Pulse effect for emergency systems) */}
                         <div className="hidden lg:flex items-center px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100 mr-4">
@@ -77,17 +89,17 @@ const DashboardLayout = () => {
 
                         {/* Action Buttons */}
                         <div className="flex items-center gap-1">
-                            <button className="relative p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">
-                                <Bell size={19} />
-                                <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                            <button className="relative p-2 sm:p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">
+                                <Bell size={18} />
+                                <span className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                             </button>
-                            <button className="p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">
-                                <Settings size={19} />
+                            <button className="p-2 sm:p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors hidden sm:block">
+                                <Settings size={18} />
                             </button>
                         </div>
 
                         {/* Profile Dropdown Area */}
-                        <div className="flex items-center pl-4 ml-2 border-l border-slate-200 gap-3">
+                        <div className="flex items-center pl-2 sm:pl-4 ml-1 sm:ml-2 border-l border-slate-200 gap-2 sm:gap-3">
                             <div className="text-right hidden md:block leading-none">
                                 <p className="text-sm font-bold text-slate-800">
                                     {user?.name || "Command Center"}
@@ -98,8 +110,8 @@ const DashboardLayout = () => {
                             </div>
 
                             <div className="relative group cursor-pointer">
-                                <div className="w-10 h-10 bg-gradient-to-tr from-slate-100 to-slate-200 rounded-xl flex items-center justify-center text-slate-600 border border-slate-200 shadow-sm overflow-hidden group-hover:border-blue-300 transition-all">
-                                    <User size={20} />
+                                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-tr from-slate-100 to-slate-200 rounded-xl flex items-center justify-center text-slate-600 border border-slate-200 shadow-sm overflow-hidden group-hover:border-blue-300 transition-all">
+                                    <User size={18} />
                                 </div>
                                 
                                 {/* Logout Dropdown */}
@@ -123,7 +135,7 @@ const DashboardLayout = () => {
 
                 {/* 🧊 MAIN CONTENT AREA */}
                 <main className="flex-1 overflow-y-auto bg-[#f8fafc]">
-                    <div className="max-w-[1600px] mx-auto p-8">
+                    <div className="max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8">
                         <Outlet />
                     </div>
                 </main>
