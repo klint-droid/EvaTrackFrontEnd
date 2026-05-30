@@ -76,7 +76,8 @@ export default function HouseholdManagement() {
     const fetchCenters = async () => {
         try {
             const res = await getCenters();
-            setCenters(Array.isArray(res.data) ? res.data : res.data?.data ?? []);
+            const data = Array.isArray(res) ? res : (res?.data ?? []);
+            setCenters(data);
         } catch (err) {
             console.error(err);
         }
