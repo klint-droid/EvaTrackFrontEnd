@@ -26,6 +26,11 @@ const renderInsideLabel = (props) => {
 };
 
 export default function Analytics() {
+    // Derive role context from localStorage for UI branching
+    const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const isPersonnel = storedUser?.role === "evac_personnel";
+    const assignedCenter = storedUser?.assigned_center; // { id, name } or null
+
     const [events, setEvents] = useState([]);
     const [selectedEventId, setSelectedEventId] = useState("all");
     const [analytics, setAnalytics] = useState(null);
@@ -94,28 +99,41 @@ export default function Analytics() {
     const selectedEvent = events.find(e => e.event_id === selectedEventId);
 
     return (
-        <div className="min-h-screen bg-[#090d16] text-slate-100 p-6">
+        <div className="space-y-5 sm:space-y-8 animate-in fade-in duration-500">
             
             {/* ── HEADER COMMAND SECTION ── */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-[#0f172a]/60 backdrop-blur-md p-6 rounded-2xl border border-slate-800/80 shadow-lg">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 p-5 sm:p-8 rounded-2xl sm:rounded-[2rem] text-white relative overflow-hidden shadow-sm">
                 <div>
-                    <div className="flex items-center gap-2 text-blue-500 font-bold text-xs uppercase tracking-widest mb-1">
-                        <Sparkles size={14} className="animate-pulse" />
-                        Intelligence Terminal
+                    <div className="flex items-center gap-2 text-indigo-300 font-black text-xs uppercase tracking-widest mb-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                        {isPersonnel && assignedCenter ? 'Center Intelligence' : 'Analytics Command'}
                     </div>
-                    <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400 tracking-tight">
-                        Analytics Command Center
+                    <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">
+                        {isPersonnel && assignedCenter ? `${assignedCenter.name} Analytics` : 'Analytics Command Center'}
                     </h1>
-                    <p className="text-xs text-slate-400 mt-1">
-                        Real-time demographic tracking, evacuation intake trends, and center utilization indices.
+                    <p className="text-[10px] sm:text-xs text-slate-300 max-w-xl font-medium leading-relaxed hidden sm:block">
+                        {isPersonnel && assignedCenter
+                            ? `Demographic tracking, evacuation intake trends, and utilization data for ${assignedCenter.name}.`
+                            : 'Real-time demographic tracking, evacuation intake trends, and center utilization indices.'
+                        }
                     </p>
                 </div>
 
                 <div className="flex items-center gap-3">
+                    {isPersonnel && assignedCenter && (
+                        <div className="flex items-center gap-2 px-4 py-2.5 bg-white/15 border border-white/10 rounded-xl text-xs font-bold text-white">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                            </span>
+                            {assignedCenter.name}
+                        </div>
+                    )}
+
                     <button 
                         onClick={handleRefresh}
                         disabled={loading || refreshing}
-                        className="p-3 bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 hover:text-white rounded-xl border border-slate-700/50 transition-all shadow-md flex items-center justify-center disabled:opacity-50"
+                        className="p-3 bg-white/10 border border-white/10 hover:bg-white/20 active:scale-95 transition-all text-white rounded-xl shadow-sm flex items-center justify-center disabled:opacity-50"
                         title="Force refresh"
                     >
                         <RefreshCw size={18} className={refreshing ? "animate-spin" : ""} />
@@ -125,7 +143,7 @@ export default function Analytics() {
                         <select
                             value={selectedEventId}
                             onChange={(e) => setSelectedEventId(e.target.value)}
-                            className="appearance-none w-64 px-4 py-3 bg-[#1e293b]/90 hover:bg-[#334155]/90 text-slate-200 font-semibold rounded-xl border border-slate-700/80 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all cursor-pointer shadow-md pr-10"
+                            className="appearance-none w-64 px-4 py-3 bg-white/15 hover:bg-white/20 text-white font-semibold rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all cursor-pointer shadow-sm pr-10"
                         >
                             <option value="all">🌐 All Disaster Events (Cross-Event)</option>
                             {events.map(event => (
@@ -134,13 +152,13 @@ export default function Analytics() {
                                 </option>
                             ))}
                         </select>
-                        <ChevronDown size={16} className="absolute right-3.5 top-4 text-slate-400 pointer-events-none" />
+                        <ChevronDown size={16} className="absolute right-3.5 top-4 text-white/60 pointer-events-none" />
                     </div>
                 </div>
             </div>
 
             {error && (
-                <div className="mb-6 p-4 bg-red-950/40 border border-red-800/50 text-red-300 rounded-xl flex items-center gap-3 shadow-md">
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl flex items-center gap-3 shadow-sm">
                     <AlertCircle size={20} className="flex-shrink-0" />
                     <span className="text-sm font-medium">{error}</span>
                 </div>
@@ -151,13 +169,13 @@ export default function Analytics() {
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="h-28 bg-[#0f172a]/40 border border-slate-800 rounded-2xl animate-pulse" />
+                            <div key={i} className="h-28 bg-slate-100 border border-slate-200 rounded-2xl animate-pulse" />
                         ))}
                     </div>
-                    <div className="h-96 bg-[#0f172a]/40 border border-slate-800 rounded-2xl animate-pulse" />
+                    <div className="h-96 bg-slate-100 border border-slate-200 rounded-2xl animate-pulse" />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="h-80 bg-[#0f172a]/40 border border-slate-800 rounded-2xl animate-pulse" />
-                        <div className="h-80 bg-[#0f172a]/40 border border-slate-800 rounded-2xl animate-pulse" />
+                        <div className="h-80 bg-slate-100 border border-slate-200 rounded-2xl animate-pulse" />
+                        <div className="h-80 bg-slate-100 border border-slate-200 rounded-2xl animate-pulse" />
                     </div>
                 </div>
             ) : analytics ? (
@@ -165,15 +183,15 @@ export default function Analytics() {
                     
                     {/* ── EVENT METADATA WIDGET ── */}
                     {selectedEventId !== "all" && selectedEvent && (
-                        <div className="flex flex-wrap items-center gap-4 bg-blue-950/20 border border-blue-900/40 p-4 rounded-xl text-sm">
-                            <span className="flex items-center gap-1.5 text-blue-400 font-semibold">
+                        <div className="flex flex-wrap items-center gap-4 bg-blue-50 border border-blue-100 p-4 rounded-xl text-sm">
+                            <span className="flex items-center gap-1.5 text-blue-600 font-semibold">
                                 <Calendar size={16} /> Selected Disaster Event Status:
                             </span>
-                            <span className="text-slate-300 font-medium">Type: {selectedEvent.type}</span>
-                            <span className="text-slate-500">|</span>
-                            <span className="text-slate-300 font-medium">Started: {selectedEvent.started_at ? new Date(selectedEvent.started_at).toLocaleString() : "N/A"}</span>
-                            <span className="text-slate-500">|</span>
-                            <span className="text-slate-300 font-medium">Ended: {selectedEvent.ended_at ? new Date(selectedEvent.ended_at).toLocaleString() : <span className="text-emerald-400 font-bold animate-pulse">● Active & Ongoing</span>}</span>
+                            <span className="text-slate-700 font-medium">Type: {selectedEvent.type}</span>
+                            <span className="text-slate-300">|</span>
+                            <span className="text-slate-700 font-medium">Started: {selectedEvent.started_at ? new Date(selectedEvent.started_at).toLocaleString() : "N/A"}</span>
+                            <span className="text-slate-300">|</span>
+                            <span className="text-slate-700 font-medium">Ended: {selectedEvent.ended_at ? new Date(selectedEvent.ended_at).toLocaleString() : <span className="text-emerald-600 font-bold animate-pulse">● Active & Ongoing</span>}</span>
                         </div>
                     )}
 
@@ -181,65 +199,65 @@ export default function Analytics() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         
                         {/* HOUSEHOLDS CARD */}
-                        <div className="bg-[#0f172a]/40 border border-slate-800/80 backdrop-blur-sm p-6 rounded-2xl shadow-md hover:border-slate-700/60 transition-all flex items-center justify-between group">
+                        <div className="bg-white border border-slate-100 border-l-4 border-l-blue-500 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
                             <div>
-                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-                                    Total Households
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                                    {isPersonnel ? 'Center Households' : 'Total Households'}
                                 </p>
-                                <h3 className="text-3xl font-extrabold text-white tracking-tight group-hover:text-blue-400 transition-colors">
+                                <h3 className="text-2xl font-black text-slate-800 tracking-tight">
                                     {analytics.summary.total_households.toLocaleString()}
                                 </h3>
-                                <p className="text-[10px] text-slate-500 mt-1">Unique household profiles registered</p>
+                                <p className="text-[10px] text-slate-500 font-bold mt-1">{isPersonnel ? 'Households registered at your center' : 'Unique household profiles registered'}</p>
                             </div>
-                            <div className="p-4 bg-blue-500/10 rounded-xl text-blue-400 border border-blue-500/20 group-hover:bg-blue-500 group-hover:text-white transition-all">
+                            <div className="p-4 bg-blue-50 rounded-xl text-blue-600 border border-blue-100">
                                 <Home size={22} />
                             </div>
                         </div>
 
                         {/* POPULATION CARD */}
-                        <div className="bg-[#0f172a]/40 border border-slate-800/80 backdrop-blur-sm p-6 rounded-2xl shadow-md hover:border-slate-700/60 transition-all flex items-center justify-between group">
+                        <div className="bg-white border border-slate-100 border-l-4 border-l-emerald-500 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
                             <div>
-                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-                                    Total Evacuated Individuals
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                                    {isPersonnel ? 'Center Evacuated' : 'Total Evacuated Individuals'}
                                 </p>
-                                <h3 className="text-3xl font-extrabold text-white tracking-tight group-hover:text-emerald-400 transition-colors">
+                                <h3 className="text-2xl font-black text-slate-800 tracking-tight">
                                     {analytics.summary.total_individuals.toLocaleString()}
                                 </h3>
-                                <p className="text-[10px] text-slate-500 mt-1">Total physical individuals processed</p>
+                                <p className="text-[10px] text-slate-500 font-bold mt-1">{isPersonnel ? 'Individuals processed at your center' : 'Total physical individuals processed'}</p>
                             </div>
-                            <div className="p-4 bg-emerald-500/10 rounded-xl text-emerald-400 border border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                            <div className="p-4 bg-emerald-50 rounded-xl text-emerald-600 border border-emerald-100">
                                 <Users size={22} />
                             </div>
                         </div>
 
                         {/* ACTIVE CENTERS CARD */}
-                        <div className="bg-[#0f172a]/40 border border-slate-800/80 backdrop-blur-sm p-6 rounded-2xl shadow-md hover:border-slate-700/60 transition-all flex items-center justify-between group">
+                        <div className="bg-white border border-slate-100 border-l-4 border-l-amber-500 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
                             <div>
-                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
                                     Active Evacuation Centers
                                 </p>
-                                <h3 className="text-3xl font-extrabold text-white tracking-tight group-hover:text-amber-400 transition-colors">
+                                <h3 className="text-2xl font-black text-slate-800 tracking-tight">
                                     {analytics.summary.active_centers}
                                 </h3>
-                                <p className="text-[10px] text-slate-500 mt-1">Currently operating facilities</p>
+                                <p className="text-[10px] text-slate-500 font-bold mt-1">Currently operating facilities</p>
                             </div>
-                            <div className="p-4 bg-amber-500/10 rounded-xl text-amber-400 border border-amber-500/20 group-hover:bg-amber-500 group-hover:text-white transition-all">
+                            <div className="p-4 bg-amber-50 rounded-xl text-amber-600 border border-amber-100">
                                 <Activity size={22} />
                             </div>
                         </div>
 
                         {/* CAPACITY UTILIZATION CARD */}
-                        <div className="bg-[#0f172a]/40 border border-slate-800/80 backdrop-blur-sm p-6 rounded-2xl shadow-md hover:border-slate-700/60 transition-all flex items-center justify-between group">
+                        <div className="bg-white border border-slate-100 border-l-4 border-l-purple-500 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
                             <div>
-                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
                                     Capacity Utilization
                                 </p>
-                                <h3 className="text-3xl font-extrabold text-white tracking-tight group-hover:text-purple-400 transition-colors">
+                                <h3 className="text-2xl font-black text-slate-800 tracking-tight">
                                     {analytics.summary.avg_occupancy_pct}%
                                 </h3>
-                                <p className="text-[10px] text-slate-500 mt-1">Average capacity occupied</p>
+                                <p className="text-[10px] text-slate-500 font-bold mt-1">Average capacity occupied</p>
                             </div>
-                            <div className="p-4 bg-purple-500/10 rounded-xl text-purple-400 border border-purple-500/20 group-hover:bg-purple-500 group-hover:text-white transition-all">
+                            <div className="p-4 bg-purple-50 rounded-xl text-purple-600 border border-purple-100">
                                 <TrendingUp size={22} />
                             </div>
                         </div>
@@ -247,10 +265,10 @@ export default function Analytics() {
                     </div>
 
                     {/* ── 2. EVACUATION INTAKE TRENDS CHART ── */}
-                    <div className="bg-[#0f172a]/40 border border-slate-800/80 p-6 rounded-2xl shadow-lg">
+                    <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm">
                         <div className="flex items-center gap-2 mb-6">
-                            <BarChart3 className="text-blue-500" size={20} />
-                            <h3 className="text-lg font-bold text-white">Daily Evacuation Intake Curves</h3>
+                            <BarChart3 className="text-indigo-600" size={20} />
+                            <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight">Daily Evacuation Intake Curves</h3>
                         </div>
 
                         <div className="h-80 w-full">
@@ -267,11 +285,11 @@ export default function Analytics() {
                                                 <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                                        <XAxis dataKey="date" stroke="#64748b" fontSize={11} tickLine={false} />
-                                        <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                        <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                                        <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
                                         <Tooltip 
-                                            contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "12px", color: "#f8fafc" }}
+                                            contentStyle={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0", borderRadius: "12px", color: "#1e293b" }}
                                             labelFormatter={(label) => `Date: ${label}`}
                                         />
                                         <Legend verticalAlign="top" height={36} iconType="circle" />
@@ -292,10 +310,10 @@ export default function Analytics() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         
                         {/* AGE & VULNERABILITIES */}
-                        <div className="bg-[#0f172a]/40 border border-slate-800/80 p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+                        <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm flex flex-col justify-between">
                             <div>
-                                <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                                    <Users size={18} className="text-purple-400" />
+                                <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight mb-6 flex items-center gap-2">
+                                    <Users size={18} className="text-purple-600" />
                                     Age Distribution & Vulnerability
                                 </h3>
 
@@ -318,7 +336,7 @@ export default function Analytics() {
                                                     ))}
                                                 </Pie>
                                                 <Tooltip 
-                                                    contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "10px" }}
+                                                    contentStyle={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0", borderRadius: "10px", color: "#1e293b" }}
                                                 />
                                             </PieChart>
                                         </ResponsiveContainer>
@@ -330,9 +348,9 @@ export default function Analytics() {
                                             <div key={item.group} className="flex items-center justify-between text-sm">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: AGE_COLORS[idx] }} />
-                                                    <span className="text-slate-400">{item.group}</span>
+                                                    <span className="text-slate-500 font-medium">{item.group}</span>
                                                 </div>
-                                                <span className="font-semibold text-white">{item.count}</span>
+                                                <span className="font-bold text-slate-800">{item.count}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -340,19 +358,19 @@ export default function Analytics() {
                             </div>
 
                             {/* Vulnerable groups segment */}
-                            <div className="mt-8 border-t border-slate-800/50 pt-6">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
+                            <div className="mt-8 border-t border-slate-100 pt-6">
+                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
                                     Vulnerable Profiles & Care Lists
                                 </h4>
                                 {analytics.demographics.vulnerable_groups.length > 0 ? (
                                     <div className="grid grid-cols-2 gap-4">
                                         {analytics.demographics.vulnerable_groups.map((group) => (
-                                            <div key={group.key} className="bg-slate-900/60 border border-slate-800/60 p-3.5 rounded-xl flex items-center justify-between">
+                                            <div key={group.key} className="bg-slate-50 border border-slate-100 p-3.5 rounded-xl flex items-center justify-between">
                                                 <div>
-                                                    <span className="text-xs text-slate-400">{group.label}</span>
-                                                    <h5 className="text-lg font-bold text-white mt-0.5">{group.count}</h5>
+                                                    <span className="text-xs text-slate-500 font-bold">{group.label}</span>
+                                                    <h5 className="text-lg font-black text-slate-800 mt-0.5">{group.count}</h5>
                                                 </div>
-                                                <div className="text-[10px] text-blue-400 font-bold px-2 py-0.5 bg-blue-500/10 rounded-full border border-blue-500/20">
+                                                <div className="text-[10px] text-indigo-600 font-bold px-2 py-0.5 bg-indigo-50 rounded-full border border-indigo-100">
                                                     Care List
                                                 </div>
                                             </div>
@@ -365,22 +383,22 @@ export default function Analytics() {
                         </div>
 
                         {/* GENDER & HOUSEHOLD STATUS DISTRIBUTION */}
-                        <div className="bg-[#0f172a]/40 border border-slate-800/80 p-6 rounded-2xl shadow-lg space-y-6">
+                        <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm space-y-6">
                             <div>
-                                <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                                    <TrendingUp size={18} className="text-emerald-400" />
+                                <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight mb-6 flex items-center gap-2">
+                                    <TrendingUp size={18} className="text-emerald-600" />
                                     Gender & Household Status Profile
                                 </h3>
 
                                 <div className="space-y-6">
                                     {/* Gender Balance Progress Bars */}
                                     <div>
-                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
                                             Gender Balance Ratio
                                         </h4>
-                                        <div className="flex items-center justify-between text-xs text-slate-400 mb-1.5">
-                                            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-400" /> Male ({analytics.demographics.gender[0]?.count || 0})</span>
-                                            <span className="flex items-center gap-1.5">Female ({analytics.demographics.gender[1]?.count || 0}) <span className="w-2.5 h-2.5 rounded-full bg-pink-400" /></span>
+                                        <div className="flex items-center justify-between text-xs text-slate-500 font-bold mb-1.5">
+                                            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Male ({analytics.demographics.gender[0]?.count || 0})</span>
+                                            <span className="flex items-center gap-1.5">Female ({analytics.demographics.gender[1]?.count || 0}) <span className="w-2.5 h-2.5 rounded-full bg-pink-500" /></span>
                                         </div>
                                         
                                         {/* Progress Bar Component */}
@@ -391,7 +409,7 @@ export default function Analytics() {
                                             const mPct = tot > 0 ? (m / tot) * 100 : 50;
                                             const fPct = tot > 0 ? (f / tot) * 100 : 50;
                                             return (
-                                                <div className="w-full h-3.5 bg-slate-900 rounded-full overflow-hidden flex border border-slate-800">
+                                                <div className="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden flex border border-slate-200">
                                                     <div style={{ width: `${mPct}%` }} className="bg-blue-500 h-full transition-all duration-500" title="Male" />
                                                     <div style={{ width: `${fPct}%` }} className="bg-pink-500 h-full transition-all duration-500" title="Female" />
                                                 </div>
@@ -400,19 +418,19 @@ export default function Analytics() {
                                     </div>
 
                                     {/* Household Status Distribution Graph */}
-                                    <div className="pt-4 border-t border-slate-800/50">
-                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
+                                    <div className="pt-4 border-t border-slate-100">
+                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
                                             Household Evacuation Lifecycle Statuses
                                         </h4>
                                         <div className="h-44 w-full">
                                             {analytics.status_distribution.length > 0 ? (
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <BarChart data={analytics.status_distribution} layout="vertical" margin={{ top: 0, right: 10, left: 10, bottom: 0 }}>
-                                                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
-                                                        <XAxis type="number" stroke="#64748b" fontSize={10} tickLine={false} />
-                                                        <YAxis dataKey="status_label" type="category" stroke="#64748b" fontSize={11} width={85} tickLine={false} />
+                                                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                                                        <XAxis type="number" stroke="#94a3b8" fontSize={10} tickLine={false} />
+                                                        <YAxis dataKey="status_label" type="category" stroke="#94a3b8" fontSize={11} width={85} tickLine={false} />
                                                         <Tooltip 
-                                                            contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "10px" }}
+                                                            contentStyle={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0", borderRadius: "10px", color: "#1e293b" }}
                                                         />
                                                         <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={16}>
                                                             {analytics.status_distribution.map((entry, index) => (
@@ -434,10 +452,10 @@ export default function Analytics() {
                     </div>
 
                     {/* ── 4. CENTER PERFORMANCE & OCCUPANCY UTILIZATION ── */}
-                    <div className="bg-[#0f172a]/40 border border-slate-800/80 p-6 rounded-2xl shadow-lg">
+                    <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm">
                         <div className="flex items-center gap-2 mb-6">
-                            <Activity className="text-emerald-500" size={20} />
-                            <h3 className="text-lg font-bold text-white">Evacuation Center Performance Dashboard</h3>
+                            <Activity className="text-emerald-600" size={20} />
+                            <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight">{isPersonnel ? 'Your Center Performance' : 'Evacuation Center Performance Dashboard'}</h3>
                         </div>
 
                         {analytics.center_performance.length > 0 ? (
@@ -463,17 +481,17 @@ export default function Analytics() {
                                             if (!active || !payload || !payload.length) return null;
                                             const entry = chartData.find((d) => d.name === label);
                                             return (
-                                                <div className="bg-[#0f172a] border border-slate-700/80 rounded-xl shadow-lg p-4 text-xs text-slate-200">
-                                                    <p className="font-bold text-white mb-2">{label}</p>
+                                                <div className="bg-white border border-slate-200 rounded-xl shadow-lg p-4 text-xs text-slate-700">
+                                                    <p className="font-bold text-slate-800 mb-2">{label}</p>
                                                     <div className="flex items-center gap-2 mb-1">
-                                                        <span className="w-2.5 h-2.5 rounded-sm bg-[#3b82f6] inline-block" />
-                                                        <span className="text-slate-400">Total Capacity:</span>
-                                                        <span className="font-bold text-white">{entry?.rawCapacity}</span>
+                                                        <span className="w-2.5 h-2.5 rounded-sm bg-[#e2e8f0] inline-block" />
+                                                        <span className="text-slate-500">Total Capacity:</span>
+                                                        <span className="font-bold text-slate-800">{entry?.rawCapacity}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         <span className="w-2.5 h-2.5 rounded-sm bg-[#10b981] inline-block" />
-                                                        <span className="text-slate-400">Current Occupancy:</span>
-                                                        <span className="font-bold text-white">{entry?.rawOccupancy}</span>
+                                                        <span className="text-slate-500">Current Occupancy:</span>
+                                                        <span className="font-bold text-slate-800">{entry?.rawOccupancy}</span>
                                                     </div>
                                                 </div>
                                             );
@@ -482,9 +500,9 @@ export default function Analytics() {
                                         return (
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} barCategoryGap="30%" barSize={60}>
-                                                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                                                    <XAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} />
-                                                    <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                                                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} />
+                                                    <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
                                                     <Tooltip content={<CustomCenterTooltip />} cursor={{ fill: "rgba(148,163,184,0.04)" }} />
                                                     <Legend 
                                                         verticalAlign="top" 
@@ -492,12 +510,12 @@ export default function Analytics() {
                                                         iconType="square" 
                                                         iconSize={10}
                                                         formatter={(value) => (
-                                                            <span className="text-slate-400 text-xs font-semibold">
+                                                            <span className="text-slate-500 text-xs font-semibold">
                                                                 {value === "capacity" ? "Capacity Limit" : "Active Occupancy"}
                                                             </span>
                                                         )}
                                                     />
-                                                    <Bar name="capacity" dataKey="capacity" stackId="stack" fill="#1e293b" radius={[0, 0, 0, 0]}>
+                                                    <Bar name="capacity" dataKey="capacity" stackId="stack" fill="#e2e8f0" radius={[0, 0, 0, 0]}>
                                                         <LabelList dataKey="rawCapacity" content={renderInsideLabel} />
                                                     </Bar>
                                                     <Bar name="occupancy" dataKey="occupancy" stackId="stack" fill="#10b981" radius={[4, 4, 0, 0]}>
@@ -511,27 +529,27 @@ export default function Analytics() {
 
                                 {/* Centers detail utilization list */}
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-sm text-left text-slate-300">
-                                        <thead className="text-xs uppercase bg-slate-900/80 text-slate-400 border-b border-slate-800">
+                                    <table className="w-full text-sm text-left text-slate-600">
+                                        <thead className="text-xs uppercase bg-slate-50 text-slate-500 border-b border-slate-100">
                                             <tr>
-                                                <th className="px-6 py-4 font-semibold">Evacuation Center</th>
-                                                <th className="px-6 py-4 font-semibold text-center">Households</th>
-                                                <th className="px-6 py-4 font-semibold text-center">Occupants</th>
-                                                <th className="px-6 py-4 font-semibold text-center">Total Capacity</th>
-                                                <th className="px-6 py-4 font-semibold">Capacity Index</th>
-                                                <th className="px-6 py-4 font-semibold text-right">Status</th>
+                                                <th className="px-6 py-4 font-black">Evacuation Center</th>
+                                                <th className="px-6 py-4 font-black text-center">Households</th>
+                                                <th className="px-6 py-4 font-black text-center">Occupants</th>
+                                                <th className="px-6 py-4 font-black text-center">Total Capacity</th>
+                                                <th className="px-6 py-4 font-black">Capacity Index</th>
+                                                <th className="px-6 py-4 font-black text-right">Status</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-800/40">
+                                        <tbody className="divide-y divide-slate-100">
                                             {analytics.center_performance.map((center) => (
-                                                <tr key={center.center_id} className="hover:bg-slate-900/30 transition-colors">
-                                                    <td className="px-6 py-4 font-bold text-white">{center.name}</td>
-                                                    <td className="px-6 py-4 text-center font-medium">{center.households}</td>
-                                                    <td className="px-6 py-4 text-center font-semibold text-slate-100">{center.occupancy}</td>
-                                                    <td className="px-6 py-4 text-center font-medium text-slate-400">{center.capacity}</td>
+                                                <tr key={center.center_id} className="hover:bg-slate-50/80 transition-colors">
+                                                    <td className="px-6 py-4 font-black text-slate-800">{center.name}</td>
+                                                    <td className="px-6 py-4 text-center font-bold text-slate-700">{center.households}</td>
+                                                    <td className="px-6 py-4 text-center font-black text-slate-800">{center.occupancy}</td>
+                                                    <td className="px-6 py-4 text-center font-bold text-slate-400">{center.capacity}</td>
                                                     <td className="px-6 py-4 min-w-[200px]">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
+                                                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
                                                                 <div 
                                                                     style={{ width: `${Math.min(center.utilization_pct, 100)}%` }} 
                                                                     className={`h-full rounded-full transition-all duration-500
@@ -540,7 +558,7 @@ export default function Analytics() {
                                                                     `}
                                                                 />
                                                             </div>
-                                                            <span className="text-xs font-bold text-slate-400 min-w-[35px]">{center.utilization_pct}%</span>
+                                                            <span className="text-xs font-black text-slate-400 min-w-[35px]">{center.utilization_pct}%</span>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
@@ -574,10 +592,10 @@ export default function Analytics() {
 
                 </div>
             ) : (
-                <div className="h-[60vh] flex flex-col items-center justify-center text-slate-500">
+                 <div className="h-[60vh] flex flex-col items-center justify-center text-slate-400 bg-white border border-slate-100 rounded-2xl shadow-sm">
                     <AlertTriangle size={48} className="text-amber-500 mb-2" />
-                    <h3 className="text-lg font-bold text-slate-300">Terminal Offline</h3>
-                    <p className="text-sm mt-1">Unable to construct metrics due to missing database response.</p>
+                    <h3 className="text-lg font-black text-slate-800">Terminal Offline</h3>
+                    <p className="text-sm font-bold text-slate-400 mt-1">Unable to construct metrics due to missing database response.</p>
                 </div>
             )}
 

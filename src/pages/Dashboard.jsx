@@ -41,6 +41,11 @@ let dashboardCacheTime = 0;
 const CACHE_DURATION = 30000; // 30 seconds cache expiration
 
 const Dashboard = () => {
+  // Derive role context from localStorage for UI branching
+  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const isPersonnel = storedUser?.role === "evac_personnel";
+  const assignedCenter = storedUser?.assigned_center; // { id, name } or null
+
   const [user, setUser] = useState(dashboardCache?.user || null);
   const [chartData, setChartData] = useState(dashboardCache?.chartData || []);
   const [stats, setStats] = useState(dashboardCache?.stats || {
@@ -214,13 +219,16 @@ const Dashboard = () => {
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-indigo-300">
               <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-              Operations Dashboard
+              {isPersonnel && assignedCenter ? `${assignedCenter.name} — Center Dashboard` : 'Operations Dashboard'}
             </div>
             <h1 className="text-xl sm:text-3xl font-black tracking-tight flex flex-wrap items-center gap-2">
               Welcome back, {loading ? <span className="inline-block w-40 h-8 bg-white/20 rounded-xl animate-pulse align-middle" /> : (user?.name || "Operator")}!
             </h1>
             <p className="text-[10px] sm:text-xs text-slate-300 max-w-xl font-medium leading-relaxed hidden sm:block">
-              Here is your situational overview today. Easily monitor shelter capacity ratios, track pending relief dispatches, register evacuees, and broadcast warning logs.
+              {isPersonnel && assignedCenter
+                ? `Viewing real-time operations for ${assignedCenter.name}. Monitor capacity, track pending logistics, and manage evacuees for your assigned center.`
+                : 'Here is your situational overview today. Easily monitor shelter capacity ratios, track pending relief dispatches, register evacuees, and broadcast warning logs.'
+              }
             </p>
           </div>
 
@@ -249,15 +257,15 @@ const Dashboard = () => {
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {[
           { 
-            label: "Active Shelters", 
+            label: isPersonnel ? "Your Center" : "Active Shelters", 
             val: stats.totalCenters, 
             icon: Home, 
             border: "border-l-4 border-indigo-500",
             color: "text-indigo-600",
-            sub: "Fully Operational"
+            sub: isPersonnel && assignedCenter ? assignedCenter.name : "Fully Operational"
           },
           { 
-            label: "Total Occupancy", 
+            label: isPersonnel ? "Center Occupancy" : "Total Occupancy", 
             val: stats.totalOccupied, 
             icon: Users, 
             border: "border-l-4 border-violet-500",
@@ -265,7 +273,7 @@ const Dashboard = () => {
             sub: stats.totalCapacity > 0 ? `${stats.totalOccupied.toLocaleString()} / ${stats.totalCapacity.toLocaleString()} registered (${occupancyRate}%)` : "No slots registered"
           },
           { 
-            label: "Active Concerns", 
+            label: isPersonnel ? "Center Concerns" : "Active Concerns", 
             val: stats.openIssues, 
             icon: AlertTriangle, 
             border: stats.openIssues > 0 ? "border-l-4 border-rose-500 animate-pulse" : "border-l-4 border-emerald-500",
@@ -273,7 +281,7 @@ const Dashboard = () => {
             sub: stats.openIssues > 0 ? "Field Action Required" : "All Systems Clear"
           },
           { 
-            label: "Pending Logistics", 
+            label: isPersonnel ? "Center Logistics" : "Pending Logistics", 
             val: stats.pendingRequests, 
             icon: Package, 
             border: stats.pendingRequests > 0 ? "border-l-4 border-amber-500" : "border-l-4 border-emerald-500",
@@ -316,8 +324,8 @@ const Dashboard = () => {
                   <TrendingUp size={18} />
                 </div>
                 <div>
-                  <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight">Capacity Utilization</h3>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active shelter occupancy ratios</p>
+                  <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight">{isPersonnel ? 'Center Capacity' : 'Capacity Utilization'}</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{isPersonnel && assignedCenter ? `${assignedCenter.name} occupancy` : 'Active shelter occupancy ratios'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-4 text-[10px] sm:text-xs font-bold text-slate-500">
@@ -363,14 +371,16 @@ const Dashboard = () => {
                   <MapPin size={18} />
                 </div>
                 <div>
-                  <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight">Center Breakdown</h3>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Current deployment status by location</p>
+                  <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight">{isPersonnel ? 'Your Center Status' : 'Center Breakdown'}</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">{isPersonnel && assignedCenter ? `${assignedCenter.name} deployment status` : 'Current deployment status by location'}</p>
                 </div>
               </div>
-              <Link to="/evacuation-centers" className="text-[10px] font-black text-indigo-600 hover:text-indigo-700 tracking-widest uppercase flex items-center gap-1">
-                View Centers
-                <ArrowRight size={12} />
-              </Link>
+              {!isPersonnel && (
+                <Link to="/evacuation-centers" className="text-[10px] font-black text-indigo-600 hover:text-indigo-700 tracking-widest uppercase flex items-center gap-1">
+                  View Centers
+                  <ArrowRight size={12} />
+                </Link>
+              )}
             </div>
 
             <div className="overflow-x-auto">
