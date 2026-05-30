@@ -198,7 +198,7 @@ export default function HouseholdDetail() {
         [];
 
     const verifiedMemberIds = new Set(evacuatedMembers.map(item => item.member_id));
-    const showMemberEvacuationStatus = isEvacuationContext && isEvacuated;
+    const showMemberEvacuationStatus = isEvacuated;
 
     // ─── Render ───────────────────────────────────────────────────────
 
