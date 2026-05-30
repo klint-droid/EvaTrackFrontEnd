@@ -206,7 +206,7 @@ export default function VerifyHousehold() {
     setLoading(true);
 
     try {
-      const res = await createHousehold(headName, memberCount);
+      const res = await createHousehold({ household_name: headName });
       const payload = getPayload(res);
 
       const household =
