@@ -96,7 +96,7 @@ export default function AlertDetailModal({ notifId, onClose }) {
                             {/* Badges row */}
                             <div className="flex flex-wrap gap-1.5">
                                 <Badge cls={statusStyle(alert.status)}>
-                                    {alert.status}
+                                    {alert.status === 'cancelled' ? 'stopped' : alert.status}
                                 </Badge>
                                 <Badge cls={urgencyStyle(alert.urgency_level?.urgency_key)}>
                                     {alert.urgency_level?.urgency_label}
