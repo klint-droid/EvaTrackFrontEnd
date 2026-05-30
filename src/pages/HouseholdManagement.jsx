@@ -44,8 +44,9 @@ export default function HouseholdManagement() {
     const canEditHousehold = (h) => {
         if (isSuperAdminUser || isAdminUser) return true;
         if (currentUser?.role === 'evac_personnel') {
-            const currentCenterId = h.current_evacuation?.center_id || h.currentEvacuation?.center_id;
-            return currentCenterId === currentUser.assigned_center_id;
+            const currentEvac = h.current_evacuation || h.currentEvacuation;
+            const currentCenterId = currentEvac?.center_id || currentEvac?.center?.evacuation_center_id;
+            return !currentCenterId || currentCenterId === currentUser.assigned_center_id;
         }
         return false;
     };

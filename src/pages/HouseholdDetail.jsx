@@ -45,9 +45,16 @@ export default function HouseholdDetail() {
     const isAdminUser = isAdmin();
     const isPersonnelUser = isPersonnel();
 
-    const activeEvacuation = household?.current_evacuation || household?.currentEvacuation;
+    const targetCenterId = centerIdFromUrl || 
+                           evacuationContext?.center_id || 
+                           evacuationContext?.center?.evacuation_center_id ||
+                           household?.current_evacuation?.center_id || 
+                           household?.current_evacuation?.center?.evacuation_center_id ||
+                           household?.currentEvacuation?.center_id ||
+                           household?.currentEvacuation?.center?.evacuation_center_id;
+
     const isHouseholdManageable = isSuperAdminUser || isAdminUser || 
-        (isPersonnelUser && activeEvacuation?.center_id === currentUser?.assigned_center_id);
+        (isPersonnelUser && (!targetCenterId || targetCenterId === currentUser?.assigned_center_id));
 
     const canEdit = isHouseholdManageable;
     const canDelete = isSuperAdminUser || isAdminUser;
