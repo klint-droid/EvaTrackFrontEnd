@@ -53,8 +53,10 @@ export default function HouseholdDetail() {
                            household?.currentEvacuation?.center_id ||
                            household?.currentEvacuation?.center?.evacuation_center_id;
 
+    const assignedCenterId = currentUser?.assigned_center?.id || currentUser?.assigned_center_id;
+
     const isHouseholdManageable = isSuperAdminUser || isAdminUser || 
-        (isPersonnelUser && (!targetCenterId || targetCenterId === currentUser?.assigned_center_id));
+        (isPersonnelUser && (!targetCenterId || targetCenterId === assignedCenterId));
 
     const canEdit = isHouseholdManageable;
     const canDelete = isSuperAdminUser || isAdminUser;

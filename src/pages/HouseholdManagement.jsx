@@ -46,7 +46,8 @@ export default function HouseholdManagement() {
         if (currentUser?.role === 'evac_personnel') {
             const currentEvac = h.current_evacuation || h.currentEvacuation;
             const currentCenterId = currentEvac?.center_id || currentEvac?.center?.evacuation_center_id;
-            return !currentCenterId || currentCenterId === currentUser.assigned_center_id;
+            const assignedCenterId = currentUser?.assigned_center?.id || currentUser?.assigned_center_id;
+            return !currentCenterId || currentCenterId === assignedCenterId;
         }
         return false;
     };
