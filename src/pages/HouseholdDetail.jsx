@@ -39,8 +39,18 @@ export default function HouseholdDetail() {
     const [editingMember, setEditingMember] = useState(null);
     const [statusUpdatingMemberId, setStatusUpdatingMemberId] = useState(null);
 
-    const canEdit = isAdmin() || isSuperAdmin() || isPersonnel();
-    const canDelete = isAdmin() || isSuperAdmin();
+    const storedUser = localStorage.getItem("user");
+    const currentUser = storedUser ? JSON.parse(storedUser) : null;
+    const isSuperAdminUser = isSuperAdmin();
+    const isAdminUser = isAdmin();
+    const isPersonnelUser = isPersonnel();
+
+    const activeEvacuation = household?.current_evacuation || household?.currentEvacuation;
+    const isHouseholdManageable = isSuperAdminUser || isAdminUser || 
+        (isPersonnelUser && activeEvacuation?.center_id === currentUser?.assigned_center_id);
+
+    const canEdit = isHouseholdManageable;
+    const canDelete = isSuperAdminUser || isAdminUser;
     const isEvacuationContext = !!evacuationIdFromUrl;
 
     // ─── Fetchers ─────────────────────────────────────────────────────

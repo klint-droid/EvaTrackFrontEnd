@@ -36,7 +36,21 @@ export default function HouseholdManagement() {
     });
     const [searchInput, setSearchInput] = useState('');
 
-    const canEdit = isAdmin() || isSuperAdmin();
+    const storedUser = localStorage.getItem("user");
+    const currentUser = storedUser ? JSON.parse(storedUser) : null;
+    const isSuperAdminUser = isSuperAdmin();
+    const isAdminUser = isAdmin();
+
+    const canEditHousehold = (h) => {
+        if (isSuperAdminUser || isAdminUser) return true;
+        if (currentUser?.role === 'evac_personnel') {
+            const currentCenterId = h.current_evacuation?.center_id || h.currentEvacuation?.center_id;
+            return currentCenterId === currentUser.assigned_center_id;
+        }
+        return false;
+    };
+
+    const canDeleteHousehold = isSuperAdminUser || isAdminUser;
 
     const fetchHouseholds = async (page = 1, overrideFilters = null) => {
         setLoading(true);
@@ -296,16 +310,24 @@ export default function HouseholdManagement() {
                                             >
                                                 <Eye size={16} />
                                             </button>
-                                            {canEdit && (
+                                            {canEditHousehold(h) ? (
                                                 <button
                                                     onClick={() => setEditingHousehold({ ...h })}
                                                     className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                                                    title="Edit"
+                                                    title="Edit Household Info"
+                                                >
+                                                    <Edit3 size={16} />
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    disabled
+                                                    className="p-2 text-slate-300 cursor-not-allowed opacity-40"
+                                                    title="Read-Only: Managed by assigned center"
                                                 >
                                                     <Edit3 size={16} />
                                                 </button>
                                             )}
-                                            {canEdit && (
+                                            {canDeleteHousehold && (
                                                 <button
                                                     onClick={() => handleDelete(h.household_id)}
                                                     className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"

@@ -22,6 +22,7 @@ import { deleteUser as deleteUserAPI } from "../api/users/deleteUser";
 import { assignCenter } from "../api/users/assignCenter";
 import { getCenters } from "../api/evacuation/getCenters";
 import { isAdmin, isSuperAdmin } from "../utils/roles";
+import AlertConfirmModal from "../components/AlertConfirmModal";
 
 const UserRowSkeleton = () => (
   <tr className="animate-pulse">
@@ -65,6 +66,9 @@ const UserManagement = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [assigningUserId, setAssigningUserId] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Custom alert confirm modal state
+  const [deleteConfirmState, setDeleteConfirmState] = useState({ isOpen: false, userId: null, isLoading: false });
 
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
@@ -176,16 +180,22 @@ const UserManagement = () => {
     }
   };
 
-  const handleDeleteUser = async (id) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+  const triggerDeleteUser = (id) => {
+    setDeleteConfirmState({ isOpen: true, userId: id, isLoading: false });
+  };
+
+  const handleDeleteUser = async () => {
+    const id = deleteConfirmState.userId;
+    if (!id) return;
 
     try {
+      setDeleteConfirmState((prev) => ({ ...prev, isLoading: true }));
       await deleteUserAPI(id);
-
       setUsers((prev) => prev.filter(u => u.user_id !== id));
-
+      setDeleteConfirmState({ isOpen: false, userId: null, isLoading: false });
     } catch (err) {
       alert(err.response?.data?.message || "Delete Failed");
+      setDeleteConfirmState((prev) => ({ ...prev, isLoading: false }));
     }
   };
 
@@ -378,7 +388,7 @@ const UserManagement = () => {
                       )}
                       {canDelete(user) && (
                         <button 
-                          onClick={() => handleDeleteUser(user.user_id)}
+                          onClick={() => triggerDeleteUser(user.user_id)}
                           className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                         >
                           <Trash2 size={16} />
@@ -486,7 +496,7 @@ const UserManagement = () => {
                     )}
                     {canDelete(user) && (
                       <button 
-                        onClick={() => handleDeleteUser(user.user_id)}
+                        onClick={() => triggerDeleteUser(user.user_id)}
                         className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                       >
                         <Trash2 size={16} />
@@ -649,6 +659,19 @@ const UserManagement = () => {
         </div>,
         document.body
       )}
+
+      {/* ⚡️ CUSTOM ALERT CONFIRMATION DIALOG (No default browser dialogs) */}
+      <AlertConfirmModal
+        isOpen={deleteConfirmState.isOpen}
+        title="Delete Personnel Account"
+        message="Are you sure you want to delete this personnel account? This action is permanent and will immediately terminate their system access and shelter credentials."
+        confirmText="Delete Account"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={deleteConfirmState.isLoading}
+        onConfirm={handleDeleteUser}
+        onClose={() => setDeleteConfirmState({ isOpen: false, userId: null, isLoading: false })}
+      />
     </div>
   );
 };
