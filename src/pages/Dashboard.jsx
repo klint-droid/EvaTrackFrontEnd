@@ -103,6 +103,18 @@ const Dashboard = () => {
         console.error("Failed to load evacuation centers:", centersRes.reason);
       }
 
+      // If personnel, restrict dashboard views strictly to their assigned center
+      if (isPersonnel) {
+        const assignedId = storedUser?.assigned_center?.id || storedUser?.assigned_center_id;
+        if (assignedId) {
+          const targetId = Number(assignedId) || assignedId;
+          centers = centers.filter(c => {
+            const centerId = Number(c.evacuation_center_id) || c.evacuation_center_id;
+            return centerId === targetId;
+          });
+        }
+      }
+
       const capacities = centers.map(c => ({
         name: c.name,
         current: Number(c.current_occupancy) || 0,
