@@ -56,10 +56,10 @@ export default function EventManagement() {
             <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 pb-5 mb-8">
                 <div className="mb-4 md:mb-0">
                     <h1 className="text-2xl font-extrabold text-slate-900 flex items-center gap-2">
-                        <Activity className="text-blue-800 w-7 h-7" /> Barangay Incident Operations
+                        <Activity className="text-blue-800 w-7 h-7" /> Disaster Events
                     </h1>
                     <p className="text-sm text-slate-500 mt-1">
-                        Monitor active emergency incidents, dispatch resources, and allocate shelters.
+                        Create and manage disaster events.
                     </p>
                 </div>
                 <button
@@ -126,7 +126,7 @@ export default function EventManagement() {
                     {/* 3. Active Incident Hero Panel */}
                     <div className="mb-8">
                         <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse"></span> Active Alerts
+                            <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse"></span> Active Events
                         </h2>
                         
                         {activeEvents.length === 0 ? (

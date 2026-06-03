@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Home, MapPin, Users, Plus, Search,
-  ChevronRight, DoorOpen, AlertCircle
+  ChevronRight, DoorOpen, AlertCircle, UserCheck
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -9,7 +9,7 @@ import { getCenters }    from "../../api/evacuation/getCenters";
 import { deleteCenter }  from "../../api/evacuation/deleteCenter";
 import { createCenter }  from "../../api/evacuation/createCenter";
 import { updateCenter }  from "../../api/evacuation/updateCenter";
-import { isAdmin, isSuperAdmin } from "../../utils/roles";
+import { isAdmin, isSuperAdmin, isPersonnel, getAssignedCenterId } from "../../utils/roles";
 
 import CenterModal  from "../../components/evacuation/CenterModal";
 import { DeleteModal } from "../../components/evacuation/DeleteModal";
@@ -115,6 +115,8 @@ export default function EvacuationList() {
     fetchCenters();
   };
 
+  const assignedCenterId = getAssignedCenterId();
+
   const processedCenters = centers
     .filter((c) => {
       const addrStr = (c.osm_address || "").toLowerCase();
@@ -124,6 +126,13 @@ export default function EvacuationList() {
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
+      // 1. Force the assigned center to the top
+      if (assignedCenterId) {
+        if (a.evacuation_center_id === assignedCenterId) return -1;
+        if (b.evacuation_center_id === assignedCenterId) return 1;
+      }
+
+      // 2. Fallback sorting
       if (sortBy === "name")
         return a.name.localeCompare(b.name);
       if (sortBy === "capacity")
@@ -191,6 +200,27 @@ export default function EvacuationList() {
         </div>
       </div>
 
+      {/* ACTIVE DUTY STATION QUICK LAUNCH */}
+      {assignedCenterId && isPersonnel() && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-blue-50 border border-blue-200 rounded-2xl animate-in slide-in-from-top-4 duration-300">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-md shadow-blue-500/10">
+              <UserCheck size={20} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-800">Active Duty Station Assigned</p>
+              <p className="text-xs text-slate-500">You are currently assigned to manage evacuation records for this center.</p>
+            </div>
+          </div>
+          <Link
+            to={`/evacuation-centers/${assignedCenterId}`}
+            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all active:scale-95 self-start sm:self-auto"
+          >
+            Launch Workstation <ChevronRight size={14} />
+          </Link>
+        </div>
+      )}
+
       {/* GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {loading ? (
@@ -201,22 +231,39 @@ export default function EvacuationList() {
             const max      = Number(c.capacity) || 0;
             const percent  = max ? (current / max) * 100 : 0;
             const addrStr  = c.osm_address || "Address not on record.";
+            const isAssigned = c.evacuation_center_id === assignedCenterId;
 
             return (
               <div
                 key={c.evacuation_center_id}
-                className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden animate-in fade-in-50 duration-300"
+                className={`group bg-white rounded-2xl border transition-all duration-300 flex flex-col overflow-hidden animate-in fade-in-50 duration-300 ${
+                  isAssigned
+                    ? "border-blue-500 ring-4 ring-blue-500/10 shadow-lg shadow-blue-500/5 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/10"
+                    : "border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1"
+                }`}
               >
                 <div className="p-5 flex-1">
 
                   {/* TOP ROW */}
                   <div className="flex justify-between items-start mb-4">
-                    <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-300 ${
+                      isAssigned
+                        ? "bg-blue-600 text-white"
+                        : "bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white"
+                    }`}>
                       <Home size={20} />
                     </div>
-                    <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border ${getStatusColor(current, max)}`}>
-                      {getStatus(current, max)}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {isAssigned && (
+                        <span className="flex items-center gap-1 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider rounded bg-blue-50 border border-blue-200 text-blue-700">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          My Station
+                        </span>
+                      )}
+                      <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border ${getStatusColor(current, max)}`}>
+                        {getStatus(current, max)}
+                      </span>
+                    </div>
                   </div>
 
                   {/* NAME */}

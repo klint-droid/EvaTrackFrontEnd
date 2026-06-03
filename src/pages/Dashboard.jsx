@@ -269,12 +269,14 @@ const Dashboard = () => {
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {[
           { 
-            label: isPersonnel ? "Your Center" : "Active Shelters", 
-            val: stats.totalCenters, 
-            icon: Home, 
+            label: isPersonnel ? "Available Slots" : "Active Shelters", 
+            val: isPersonnel ? Math.max(stats.totalCapacity - stats.totalOccupied, 0) : stats.totalCenters, 
+            icon: isPersonnel ? DoorOpen : Home, 
             border: "border-l-4 border-indigo-500",
             color: "text-indigo-600",
-            sub: isPersonnel && assignedCenter ? assignedCenter.name : "Fully Operational"
+            sub: isPersonnel && assignedCenter 
+              ? `${Math.max(stats.totalCapacity - stats.totalOccupied, 0).toLocaleString()} slots available` 
+              : "Fully Operational"
           },
           { 
             label: isPersonnel ? "Center Occupancy" : "Total Occupancy", 
@@ -509,7 +511,7 @@ const Dashboard = () => {
                 <span className="text-xs font-black">Request Supplies</span>
                 <span className="text-[8px] text-slate-400 mt-0.5">Order Logistics Packs</span>
               </Link>
-              <Link to="/households" className="flex flex-col items-center justify-center p-4 bg-indigo-50/30 hover:bg-indigo-50 text-indigo-700 border border-indigo-100/50 hover:border-indigo-200 rounded-2xl transition-all text-center group active:scale-95">
+              <Link to="/household-verification" className="flex flex-col items-center justify-center p-4 bg-indigo-50/30 hover:bg-indigo-50 text-indigo-700 border border-indigo-100/50 hover:border-indigo-200 rounded-2xl transition-all text-center group active:scale-95">
                 <Users size={18} className="mb-2 text-indigo-600 group-hover:-translate-y-0.5 transition-transform" />
                 <span className="text-xs font-black">Register Family</span>
                 <span className="text-[8px] text-slate-400 mt-0.5">Enroll Evacuee listings</span>

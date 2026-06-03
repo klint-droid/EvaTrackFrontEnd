@@ -332,7 +332,7 @@ export default function CenterIssueReports() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 text-left">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -350,7 +350,7 @@ export default function CenterIssueReports() {
             className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-2xl text-sm font-black hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-600/20"
           >
             <Plus size={18} />
-            New Issue Report
+            Report Issue
           </button>
         )}
       </div>
@@ -420,7 +420,7 @@ export default function CenterIssueReports() {
           <div>
             <h2 className="text-sm font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
               <AlertTriangle size={17} className="text-blue-500" />
-              Issue Report Log
+              Evacuation Center Issue Reports
             </h2>
             <p className="text-xs text-slate-400 mt-1">
               Submitted reports are tracked by center and severity.
