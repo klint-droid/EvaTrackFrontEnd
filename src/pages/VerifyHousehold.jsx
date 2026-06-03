@@ -206,7 +206,7 @@ export default function VerifyHousehold() {
     setLoading(true);
 
     try {
-      const res = await createHousehold(headName, memberCount);
+      const res = await createHousehold({ household_name: headName });
       const payload = getPayload(res);
 
       const household =
@@ -305,12 +305,12 @@ export default function VerifyHousehold() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+          <h1 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
             <Fingerprint className="text-indigo-600" size={28} />
             Household Verification
           </h1>
@@ -337,7 +337,7 @@ export default function VerifyHousehold() {
       </div>
 
       {/* Simplified Tabs: Verify Registry & Manual Entry */}
-      <div className="flex p-1 bg-slate-200/50 rounded-2xl w-full md:w-fit">
+      <div className="flex p-1 bg-slate-200/50 rounded-2xl w-full sm:w-fit">
         {[
           { id: "admit", label: "Registry Admission", icon: Search },
           { id: "manual", label: "On-Site Registration", icon: UserPlus },
@@ -345,7 +345,7 @@ export default function VerifyHousehold() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
               tab === t.id
                 ? "bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200"
                 : "text-slate-500 hover:text-slate-700 hover:bg-white/40"
@@ -378,10 +378,10 @@ export default function VerifyHousehold() {
       )}
 
       {/* Main Screen Wrapper */}
-      <div className="bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden min-h-[380px] flex flex-col relative">
+      <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-[2rem] shadow-sm overflow-hidden min-h-[320px] sm:min-h-[380px] flex flex-col relative">
 
         {tab === "admit" && (
-          <div className="p-8 space-y-6">
+          <div className="p-5 sm:p-8 space-y-5 sm:space-y-6">
             
             {/* Title */}
             <div className="space-y-1">
@@ -484,7 +484,7 @@ export default function VerifyHousehold() {
         )}
 
         {tab === "manual" && (
-          <div className="p-8 flex flex-col items-center justify-center flex-1 min-h-[380px]">
+          <div className="p-5 sm:p-8 flex flex-col items-center justify-center flex-1 min-h-[320px] sm:min-h-[380px]">
             <div className="max-w-md w-full p-6 bg-slate-50/40 border border-slate-100 rounded-3xl space-y-6">
               <div className="text-center space-y-1 mb-2">
                 <h2 className="text-base font-black text-slate-800 tracking-tight flex items-center justify-center gap-2">
@@ -550,7 +550,7 @@ export default function VerifyHousehold() {
               onClick={() => setQrModalOpen(false)}
             />
 
-            <div className="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 p-6 flex flex-col items-center">
+            <div className="relative bg-white rounded-2xl sm:rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 p-5 sm:p-6 flex flex-col items-center">
               <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-5">
                 <h3 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-1.5">
                   <QrCode size={15} className="text-indigo-600 animate-pulse" />

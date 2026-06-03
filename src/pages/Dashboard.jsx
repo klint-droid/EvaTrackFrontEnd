@@ -33,11 +33,22 @@ import { getCenterIssueReports } from "../api/centerIssueReports/getCenterIssueR
 import { getResourceRequests } from "../api/resourceRequests/getResourceRequests";
 import { getUser } from "../api/auth/getUser";
 import CapacityChart from "../components/dashboard/CapacityChart";
+import DashboardSkeleton from "../components/dashboard/DashboardSkeleton";
+
+// Module-level cache to persist dashboard metrics across route navigation
+let dashboardCache = null;
+let dashboardCacheTime = 0;
+const CACHE_DURATION = 30000; // 30 seconds cache expiration
 
 const Dashboard = () => {
-  const [user, setUser] = useState(null);
-  const [chartData, setChartData] = useState([]);
-  const [stats, setStats] = useState({
+  // Derive role context from localStorage for UI branching
+  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const isPersonnel = storedUser?.role === "evac_personnel";
+  const assignedCenter = storedUser?.assigned_center; // { id, name } or null
+
+  const [user, setUser] = useState(dashboardCache?.user || null);
+  const [chartData, setChartData] = useState(dashboardCache?.chartData || []);
+  const [stats, setStats] = useState(dashboardCache?.stats || {
     totalCenters: 0,
     totalCapacity: 0,
     totalOccupied: 0,
@@ -45,33 +56,63 @@ const Dashboard = () => {
     pendingRequests: 0,
     openIssues: 0,
   });
-  const [recentAlerts, setRecentAlerts] = useState([]);
-  const [recentRequests, setRecentRequests] = useState([]);
-  const [recentIssues, setRecentIssues] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [recentAlerts, setRecentAlerts] = useState(dashboardCache?.recentAlerts || []);
+  const [recentRequests, setRecentRequests] = useState(dashboardCache?.recentRequests || []);
+  const [recentIssues, setRecentIssues] = useState(dashboardCache?.recentIssues || []);
+  const [loading, setLoading] = useState(!dashboardCache);
 
   useEffect(() => {
-    loadDashboard();
+    const now = Date.now();
+    const isCacheExpired = !dashboardCacheTime || (now - dashboardCacheTime > CACHE_DURATION);
+    
+    // Automatically load in the background if cache is stale
+    if (isCacheExpired) {
+      loadDashboard(false);
+    }
   }, []);
 
-  const loadDashboard = async () => {
-    setLoading(true);
+  const loadDashboard = async (forceRefresh = false) => {
+    if (!dashboardCache || forceRefresh) {
+      setLoading(true);
+    }
     try {
-      // 1. Fetch User Context
-      try {
-        const userRes = await getUser();
-        setUser(userRes?.data || userRes);
-      } catch (err) {
-        console.error("Failed to load user profile:", err);
+      const [userRes, centersRes, alertsRes, issuesRes, requestsRes] = await Promise.allSettled([
+        getUser(),
+        getCenters(),
+        getAlerts(1),
+        getCenterIssueReports({ limit: 10 }),
+        getResourceRequests({ limit: 10 })
+      ]);
+
+      // 1. Process User Context
+      let currentUser = user;
+      if (userRes.status === 'fulfilled') {
+        const res = userRes.value;
+        currentUser = res?.data || res;
+        setUser(currentUser);
+      } else {
+        console.error("Failed to load user profile:", userRes.reason);
       }
 
-      // 2. Fetch Evacuation Centers
+      // 2. Process Evacuation Centers
       let centers = [];
-      try {
-        const centersRes = await getCenters();
-        centers = Array.isArray(centersRes) ? centersRes : (centersRes?.data ?? []);
-      } catch (err) {
-        console.error("Failed to load evacuation centers:", err);
+      if (centersRes.status === 'fulfilled') {
+        const res = centersRes.value;
+        centers = Array.isArray(res) ? res : (res?.data ?? []);
+      } else {
+        console.error("Failed to load evacuation centers:", centersRes.reason);
+      }
+
+      // If personnel, restrict dashboard views strictly to their assigned center
+      if (isPersonnel) {
+        const assignedId = storedUser?.assigned_center?.id || storedUser?.assigned_center_id;
+        if (assignedId) {
+          const targetId = Number(assignedId) || assignedId;
+          centers = centers.filter(c => {
+            const centerId = Number(c.evacuation_center_id) || c.evacuation_center_id;
+            return centerId === targetId;
+          });
+        }
       }
 
       const capacities = centers.map(c => ({
@@ -88,49 +129,65 @@ const Dashboard = () => {
       const totalOccupied = capacities.reduce((sum, c) => sum + c.current, 0);
       const totalHouseholds = capacities.reduce((sum, c) => sum + c.households, 0);
 
-      // 3. Fetch Recent Broadcast Alerts
+      // 3. Process Recent Broadcast Alerts
       let alertsList = [];
-      try {
-        const alertsRes = await getAlerts(1);
-        alertsList = alertsRes?.data || alertsRes || [];
-      } catch (err) {
-        console.error("Failed to load alerts:", err);
+      if (alertsRes.status === 'fulfilled') {
+        const res = alertsRes.value;
+        alertsList = res?.data || res || [];
+      } else {
+        console.error("Failed to load alerts:", alertsRes.reason);
       }
 
-      // 4. Fetch Center Issue Reports
+      // 4. Process Center Issue Reports
       let issuesList = [];
       let openIssuesCount = 0;
-      try {
-        const issuesRes = await getCenterIssueReports();
-        issuesList = issuesRes?.data || [];
-        openIssuesCount = issuesRes?.summary?.open ?? issuesList.filter(i => i.status === 'open').length;
-      } catch (err) {
-        console.error("Failed to load issue reports:", err);
+      if (issuesRes.status === 'fulfilled') {
+        const res = issuesRes.value;
+        issuesList = res?.data || [];
+        openIssuesCount = res?.summary?.open ?? issuesList.filter(i => i.status === 'open').length;
+      } else {
+        console.error("Failed to load issue reports:", issuesRes.reason);
       }
 
-      // 5. Fetch Resource Requests
+      // 5. Process Resource Requests
       let requestsList = [];
       let pendingRequestsCount = 0;
-      try {
-        const requestsRes = await getResourceRequests();
-        requestsList = requestsRes?.data || [];
-        pendingRequestsCount = requestsRes?.summary?.pending ?? requestsList.filter(r => r.status?.status_key === 'pending' || r.status === 'pending').length;
-      } catch (err) {
-        console.error("Failed to load resource requests:", err);
+      if (requestsRes.status === 'fulfilled') {
+        const res = requestsRes.value;
+        requestsList = res?.data || [];
+        pendingRequestsCount = res?.summary?.pending ?? requestsList.filter(r => r.status?.status_key === 'pending' || r.status === 'pending').length;
+      } else {
+        console.error("Failed to load resource requests:", requestsRes.reason);
       }
 
-      setStats({
+      const newStats = {
         totalCenters,
         totalCapacity,
         totalOccupied,
         totalHouseholds,
         pendingRequests: pendingRequestsCount,
         openIssues: openIssuesCount,
-      });
+      };
 
-      setRecentAlerts(Array.isArray(alertsList) ? alertsList.slice(0, 4) : []);
-      setRecentRequests(Array.isArray(requestsList) ? requestsList.filter(r => r.status?.status_key === 'pending' || r.status === 'pending').slice(0, 3) : []);
-      setRecentIssues(Array.isArray(issuesList) ? issuesList.filter(i => i.status === 'open').slice(0, 3) : []);
+      const finalAlerts = Array.isArray(alertsList) ? alertsList.slice(0, 4) : [];
+      const finalRequests = Array.isArray(requestsList) ? requestsList.filter(r => r.status?.status_key === 'pending' || r.status === 'pending').slice(0, 3) : [];
+      const finalIssues = Array.isArray(issuesList) ? issuesList.filter(i => i.status === 'open').slice(0, 3) : [];
+
+      setStats(newStats);
+      setRecentAlerts(finalAlerts);
+      setRecentRequests(finalRequests);
+      setRecentIssues(finalIssues);
+
+      // Cache the result
+      dashboardCache = {
+        user: currentUser,
+        chartData: capacities,
+        stats: newStats,
+        recentAlerts: finalAlerts,
+        recentRequests: finalRequests,
+        recentIssues: finalIssues,
+      };
+      dashboardCacheTime = Date.now();
 
     } catch (err) {
       console.error("Dashboard operations metrics error:", err);
@@ -163,10 +220,10 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-5 sm:space-y-8 animate-in fade-in duration-500">
       
       {/* 👋 WELCOME BANNER WITH COHESIVE COMPLEMENTARY DESIGN */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-sm">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 rounded-2xl sm:rounded-[2rem] p-5 sm:p-8 text-white relative overflow-hidden shadow-sm">
         <div className="absolute right-0 bottom-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute right-12 top-4 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
         
@@ -174,19 +231,22 @@ const Dashboard = () => {
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-indigo-300">
               <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-              Operations Dashboard
+              {isPersonnel && assignedCenter ? `${assignedCenter.name} — Center Dashboard` : 'Operations Dashboard'}
             </div>
-            <h1 className="text-3xl font-black tracking-tight">
-              Welcome back, {user?.name || "Operator"}!
+            <h1 className="text-xl sm:text-3xl font-black tracking-tight flex flex-wrap items-center gap-2">
+              Welcome back, {loading ? <span className="inline-block w-40 h-8 bg-white/20 rounded-xl animate-pulse align-middle" /> : (user?.name || "Operator")}!
             </h1>
-            <p className="text-xs text-slate-300 max-w-xl font-medium leading-relaxed">
-              Here is your situational overview today. Easily monitor shelter capacity ratios, track pending relief dispatches, register evacuees, and broadcast warning logs.
+            <p className="text-[10px] sm:text-xs text-slate-300 max-w-xl font-medium leading-relaxed hidden sm:block">
+              {isPersonnel && assignedCenter
+                ? `Viewing real-time operations for ${assignedCenter.name}. Monitor capacity, track pending logistics, and manage evacuees for your assigned center.`
+                : 'Here is your situational overview today. Easily monitor shelter capacity ratios, track pending relief dispatches, register evacuees, and broadcast warning logs.'
+              }
             </p>
           </div>
 
           <div className="flex items-center gap-3 self-start md:self-auto">
             <button 
-              onClick={loadDashboard}
+              onClick={() => loadDashboard(true)}
               disabled={loading}
               className="p-3 bg-white/10 border border-white/10 hover:bg-white/20 active:scale-95 transition-all text-white rounded-xl shadow-sm flex items-center justify-center disabled:opacity-50"
               title="Refresh Dashboard Data"
@@ -206,18 +266,18 @@ const Dashboard = () => {
       </div>
 
       {/* 🔹 STREAMLINED METRICS GRID (COHESIVE LEFT-BORDER ACCENTS) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {[
           { 
-            label: "Active Shelters", 
+            label: isPersonnel ? "Your Center" : "Active Shelters", 
             val: stats.totalCenters, 
             icon: Home, 
             border: "border-l-4 border-indigo-500",
             color: "text-indigo-600",
-            sub: "Fully Operational"
+            sub: isPersonnel && assignedCenter ? assignedCenter.name : "Fully Operational"
           },
           { 
-            label: "Total Occupancy", 
+            label: isPersonnel ? "Center Occupancy" : "Total Occupancy", 
             val: stats.totalOccupied, 
             icon: Users, 
             border: "border-l-4 border-violet-500",
@@ -225,7 +285,7 @@ const Dashboard = () => {
             sub: stats.totalCapacity > 0 ? `${stats.totalOccupied.toLocaleString()} / ${stats.totalCapacity.toLocaleString()} registered (${occupancyRate}%)` : "No slots registered"
           },
           { 
-            label: "Active Concerns", 
+            label: isPersonnel ? "Center Concerns" : "Active Concerns", 
             val: stats.openIssues, 
             icon: AlertTriangle, 
             border: stats.openIssues > 0 ? "border-l-4 border-rose-500 animate-pulse" : "border-l-4 border-emerald-500",
@@ -233,7 +293,7 @@ const Dashboard = () => {
             sub: stats.openIssues > 0 ? "Field Action Required" : "All Systems Clear"
           },
           { 
-            label: "Pending Logistics", 
+            label: isPersonnel ? "Center Logistics" : "Pending Logistics", 
             val: stats.pendingRequests, 
             icon: Package, 
             border: stats.pendingRequests > 0 ? "border-l-4 border-amber-500" : "border-l-4 border-emerald-500",
@@ -241,38 +301,46 @@ const Dashboard = () => {
             sub: stats.pendingRequests > 0 ? `${stats.pendingRequests} items awaiting dispatch` : "Fully Supplied"
           },
         ].map((item, i) => (
-          <div key={i} className={`bg-white p-6 rounded-2xl border border-slate-100 ${item.border} shadow-sm hover:shadow-md transition-all group flex flex-col justify-between h-32`}>
+          <div key={i} className={`bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 ${item.border} shadow-sm hover:shadow-md transition-all group flex flex-col justify-between h-28 sm:h-32`}>
             <div className="flex justify-between items-start">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
+              <span className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
               <item.icon size={18} className={item.color} />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-slate-800 tracking-tight">{item.val.toLocaleString()}</h2>
-              <p className="text-[10px] text-slate-500 font-bold mt-1 tracking-tight truncate">{item.sub}</p>
+              {loading ? (
+                <div className="w-16 h-7 bg-slate-200 rounded-md animate-pulse animate-duration-1000" />
+              ) : (
+                <h2 className="text-lg sm:text-2xl font-black text-slate-800 tracking-tight">{item.val.toLocaleString()}</h2>
+              )}
+              {loading ? (
+                <div className="w-28 h-3 bg-slate-100 rounded-sm animate-pulse mt-2.5" />
+              ) : (
+                <p className="text-[10px] text-slate-500 font-bold mt-1 tracking-tight truncate">{item.sub}</p>
+              )}
             </div>
           </div>
         ))}
       </div>
 
       {/* 🔹 MAIN GRID LAYOUT */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-8">
         
         {/* ── LEFT OPERATIONS AREA (2/3 width) ── */}
         <div className="lg:col-span-2 space-y-8">
           
           {/* Capacity Utilization Chart */}
-          <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-slate-100 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-3">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-slate-100 rounded-lg text-slate-600">
                   <TrendingUp size={18} />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-800 tracking-tight">Capacity Utilization</h3>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active shelter occupancy ratios</p>
+                  <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight">{isPersonnel ? 'Center Capacity' : 'Capacity Utilization'}</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{isPersonnel && assignedCenter ? `${assignedCenter.name} occupancy` : 'Active shelter occupancy ratios'}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
+              <div className="flex items-center gap-4 text-[10px] sm:text-xs font-bold text-slate-500">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded bg-[#4472C4]" />
                   <span>Max Capacity</span>
@@ -284,33 +352,47 @@ const Dashboard = () => {
               </div>
             </div>
             
-            {chartData.length === 0 ? (
+            {loading ? (
+              <div className="h-[280px] flex items-end justify-between px-6 pb-2 pt-4 animate-pulse">
+                {[1, 2, 3, 4, 5, 6].map((bar) => (
+                  <div key={bar} className="w-14 flex flex-col items-center gap-3">
+                    <div className="w-full flex items-end gap-1.5 h-44">
+                      <div className="w-1/2 bg-slate-100 rounded-t-md" style={{ height: `${30 + Math.random() * 60}%` }} />
+                      <div className="w-1/2 bg-slate-200 rounded-t-md" style={{ height: `${10 + Math.random() * 40}%` }} />
+                    </div>
+                    <div className="w-10 h-3 bg-slate-100 rounded-sm" />
+                  </div>
+                ))}
+              </div>
+            ) : chartData.length === 0 ? (
               <div className="h-[280px] flex items-center justify-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
                 <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">No center capacity telemetry registered.</p>
               </div>
             ) : (
-              <div className="h-[280px] w-full">
+              <div className="h-[220px] sm:h-[280px] w-full">
                 <CapacityChart data={chartData} />
               </div>
             )}
           </div>
 
           {/* Shelters Breakdown list table */}
-          <div className="bg-white border border-slate-100 rounded-[2rem] shadow-sm overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+          <div className="bg-white border border-slate-100 rounded-2xl sm:rounded-[2rem] shadow-sm overflow-hidden">
+            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 flex items-center justify-between gap-2">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                   <MapPin size={18} />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-800 tracking-tight">Center Breakdown</h3>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Current deployment status by location</p>
+                  <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight">{isPersonnel ? 'Your Center Status' : 'Center Breakdown'}</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">{isPersonnel && assignedCenter ? `${assignedCenter.name} deployment status` : 'Current deployment status by location'}</p>
                 </div>
               </div>
-              <Link to="/evacuation-centers" className="text-[10px] font-black text-indigo-600 hover:text-indigo-700 tracking-widest uppercase flex items-center gap-1">
-                View Centers
-                <ArrowRight size={12} />
-              </Link>
+              {!isPersonnel && (
+                <Link to="/evacuation-centers" className="text-[10px] font-black text-indigo-600 hover:text-indigo-700 tracking-widest uppercase flex items-center gap-1">
+                  View Centers
+                  <ArrowRight size={12} />
+                </Link>
+              )}
             </div>
 
             <div className="overflow-x-auto">
@@ -324,7 +406,25 @@ const Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {chartData.length === 0 ? (
+                  {loading ? (
+                    [1, 2, 3].map((row) => (
+                      <tr key={row} className="animate-pulse">
+                        <td className="px-6 py-4.5">
+                          <div className="w-36 h-3.5 bg-slate-200 rounded-md" />
+                          <div className="w-24 h-2 bg-slate-100 rounded-sm mt-1.5" />
+                        </td>
+                        <td className="px-6 py-4.5">
+                          <div className="w-24 h-4 bg-slate-100 rounded-md mx-auto" />
+                        </td>
+                        <td className="px-6 py-4.5 text-center">
+                          <div className="w-12 h-4 bg-slate-100 rounded-md mx-auto" />
+                        </td>
+                        <td className="px-6 py-4.5 text-right">
+                          <div className="w-16 h-5 bg-slate-100 rounded-full ml-auto" />
+                        </td>
+                      </tr>
+                    ))
+                  ) : chartData.length === 0 ? (
                     <tr>
                       <td colSpan="4" className="py-12 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">
                         No center deployment records registered.
@@ -345,8 +445,8 @@ const Dashboard = () => {
                           <td className="px-6 py-4.5">
                             <div className="flex flex-col items-center gap-1.5 max-w-[140px] mx-auto">
                               <div className="flex justify-between w-full text-[9px] font-mono font-bold text-slate-400">
-                                <span>{c.current} occupied</span>
-                                <span>{Math.round(percent)}%</span>
+                                  <span>{c.current} occupied</span>
+                                  <span>{Math.round(percent)}%</span>
                               </div>
                               <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                                 <div 
@@ -388,7 +488,7 @@ const Dashboard = () => {
         <div className="lg:col-span-1 space-y-6">
 
           {/* Quick Shortcuts Grid */}
-          <div className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm">
+          <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-[2rem] border border-slate-100 shadow-sm">
             <h3 className="text-[10px] font-black text-slate-400 tracking-wider uppercase tracking-widest mb-4 flex items-center gap-2">
               <Activity size={14} className="text-indigo-500" />
               Shortcuts Portal
@@ -418,7 +518,7 @@ const Dashboard = () => {
           </div>
 
           {/* Emergency Broadcast alerts logs */}
-          <div className="bg-white border border-slate-100 rounded-[2rem] p-5 shadow-sm space-y-4">
+          <div className="bg-white border border-slate-100 rounded-2xl sm:rounded-[2rem] p-4 sm:p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                 <Bell size={14} className="text-rose-500" />
@@ -430,7 +530,22 @@ const Dashboard = () => {
               </span>
             </div>
             
-            {recentAlerts.length === 0 ? (
+            {loading ? (
+              <div className="space-y-3.5 animate-pulse">
+                {[1, 2, 3].map((alert) => (
+                  <div key={alert} className="flex items-start gap-3 border-b border-slate-50 pb-3 last:border-0 last:pb-0">
+                    <span className="w-2 h-2 rounded-full mt-1.5 bg-slate-200 flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="w-full h-3.5 bg-slate-200 rounded-md" />
+                      <div className="flex gap-2">
+                        <div className="w-12 h-3 bg-slate-100 rounded-sm" />
+                        <div className="w-16 h-3 bg-slate-100 rounded-sm" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : recentAlerts.length === 0 ? (
               <p className="text-xs text-slate-400 py-6 text-center border border-dashed border-slate-100 rounded-xl">No active transmissions logged.</p>
             ) : (
               <div className="space-y-3.5">
@@ -458,7 +573,7 @@ const Dashboard = () => {
           </div>
 
           {/* Incidents and Urgent requests */}
-          <div className="bg-white border border-slate-100 rounded-[2rem] p-5 shadow-sm space-y-5">
+          <div className="bg-white border border-slate-100 rounded-2xl sm:rounded-[2rem] p-4 sm:p-5 shadow-sm space-y-5">
             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
               <ShieldAlert size={14} className="text-orange-500" />
               Active Concerns
@@ -471,7 +586,20 @@ const Dashboard = () => {
                 <Link to="/center-issue-reports" className="text-[8px] font-black text-indigo-500 hover:underline uppercase">View All</Link>
               </div>
 
-              {recentIssues.length === 0 ? (
+              {loading ? (
+                <div className="space-y-2.5 animate-pulse">
+                  {[1, 2].map((item) => (
+                    <div key={item} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-start gap-2.5">
+                      <div className="w-6 h-6 bg-slate-200 rounded-lg flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="w-32 h-3 bg-slate-200 rounded-sm" />
+                        <div className="w-20 h-2 bg-slate-100 rounded-sm" />
+                      </div>
+                      <div className="w-12 h-4 bg-slate-200 rounded-full" />
+                    </div>
+                  ))}
+                </div>
+              ) : recentIssues.length === 0 ? (
                 <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center gap-2.5">
                   <CheckCircle2 size={14} className="text-emerald-500" />
                   <span className="text-[9px] font-bold text-emerald-800 uppercase tracking-wide">No active center incidents</span>
@@ -506,7 +634,20 @@ const Dashboard = () => {
                 <Link to="/resource-requests" className="text-[8px] font-black text-indigo-500 hover:underline uppercase">View All</Link>
               </div>
 
-              {recentRequests.length === 0 ? (
+              {loading ? (
+                <div className="space-y-2.5 animate-pulse">
+                  {[1, 2].map((item) => (
+                    <div key={item} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-start gap-2.5">
+                      <div className="w-6 h-6 bg-slate-200 rounded-lg flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="w-32 h-3 bg-slate-200 rounded-sm" />
+                        <div className="w-20 h-2 bg-slate-100 rounded-sm" />
+                      </div>
+                      <div className="w-12 h-4 bg-slate-200 rounded-full" />
+                    </div>
+                  ))}
+                </div>
+              ) : recentRequests.length === 0 ? (
                 <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center gap-2.5">
                   <CheckCircle2 size={14} className="text-emerald-500" />
                   <span className="text-[9px] font-bold text-emerald-800 uppercase tracking-wide">All supply requests fulfilled</span>

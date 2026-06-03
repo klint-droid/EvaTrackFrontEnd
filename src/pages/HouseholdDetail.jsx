@@ -39,8 +39,27 @@ export default function HouseholdDetail() {
     const [editingMember, setEditingMember] = useState(null);
     const [statusUpdatingMemberId, setStatusUpdatingMemberId] = useState(null);
 
-    const canEdit = isAdmin() || isSuperAdmin() || isPersonnel();
-    const canDelete = isAdmin() || isSuperAdmin();
+    const storedUser = localStorage.getItem("user");
+    const currentUser = storedUser ? JSON.parse(storedUser) : null;
+    const isSuperAdminUser = isSuperAdmin();
+    const isAdminUser = isAdmin();
+    const isPersonnelUser = isPersonnel();
+
+    const targetCenterId = centerIdFromUrl || 
+                           evacuationContext?.center_id || 
+                           evacuationContext?.center?.evacuation_center_id ||
+                           household?.current_evacuation?.center_id || 
+                           household?.current_evacuation?.center?.evacuation_center_id ||
+                           household?.currentEvacuation?.center_id ||
+                           household?.currentEvacuation?.center?.evacuation_center_id;
+
+    const assignedCenterId = currentUser?.assigned_center?.id || currentUser?.assigned_center_id;
+
+    const isHouseholdManageable = isSuperAdminUser || isAdminUser || 
+        (isPersonnelUser && (!targetCenterId || targetCenterId === assignedCenterId));
+
+    const canEdit = isHouseholdManageable;
+    const canDelete = isSuperAdminUser || isAdminUser;
     const isEvacuationContext = !!evacuationIdFromUrl;
 
     // ─── Fetchers ─────────────────────────────────────────────────────
@@ -179,7 +198,7 @@ export default function HouseholdDetail() {
         [];
 
     const verifiedMemberIds = new Set(evacuatedMembers.map(item => item.member_id));
-    const showMemberEvacuationStatus = isEvacuationContext && isEvacuated;
+    const showMemberEvacuationStatus = isEvacuated;
 
     // ─── Render ───────────────────────────────────────────────────────
 

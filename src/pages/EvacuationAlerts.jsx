@@ -222,7 +222,7 @@ export default function EvacuationAlerts() {
                                         <span className="text-[8px] font-mono text-slate-400">ID: {alert.notif_id}</span>
                                     </div>
                                     <span className={`flex-shrink-0 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider rounded-full border ${getStatusStyle(alert.status)}`}>
-                                        {alert.status}
+                                        {alert.status === 'cancelled' ? 'stopped' : alert.status}
                                     </span>
                                 </div>
                             ))}
@@ -274,7 +274,7 @@ export default function EvacuationAlerts() {
                         <option value="failed">Failed</option>
                         <option value="scheduled">Scheduled</option>
                         <option value="pending">Pending</option>
-                        <option value="cancelled">Cancelled</option>
+                        <option value="cancelled">Stopped</option>
                     </select>
 
                     {/* Channel */}
@@ -385,11 +385,19 @@ export default function EvacuationAlerts() {
                                     <td className="px-6 py-4.5">
                                         <div>
                                             <span className={`px-2.5 py-1 text-[8px] font-black uppercase tracking-widest rounded-full border ${getStatusStyle(alert.status)}`}>
-                                                {alert.status}
+                                                {alert.status === 'cancelled' ? 'stopped' : alert.status}
                                             </span>
                                             {alert.is_recurring && (
-                                                <p className="text-[8px] text-blue-600 font-extrabold mt-1.5 flex items-center gap-1">
-                                                    <RefreshCw size={8} className="animate-spin duration-1000" />
+                                                <p className={`text-[8px] font-extrabold mt-1.5 flex items-center gap-1 ${
+                                                    alert.status === 'cancelled' || alert.status === 'failed'
+                                                        ? 'text-slate-400'
+                                                        : 'text-blue-600'
+                                                }`}>
+                                                    {alert.status !== 'cancelled' && alert.status !== 'failed' ? (
+                                                        <RefreshCw size={8} className="animate-spin duration-1000" />
+                                                    ) : (
+                                                        <RefreshCw size={8} />
+                                                    )}
                                                     <span className="uppercase tracking-widest">{alert.recurrence_type}</span>
                                                 </p>
                                             )}
