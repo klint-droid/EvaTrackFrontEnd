@@ -41,6 +41,15 @@ let dashboardCache = null;
 let dashboardCacheTime = 0;
 const CACHE_DURATION = 30000; // 30 seconds cache expiration
 
+const MOCK_BARS = [
+  { height1: "65%", height2: "25%" },
+  { height1: "45%", height2: "15%" },
+  { height1: "80%", height2: "35%" },
+  { height1: "55%", height2: "20%" },
+  { height1: "70%", height2: "40%" },
+  { height1: "50%", height2: "30%" }
+];
+
 const Dashboard = () => {
   // Derive role context from localStorage for UI branching
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
@@ -270,7 +279,7 @@ const Dashboard = () => {
   const displayTotalCenters = filteredCenters.length;
   const displayTotalCapacity = chartData.reduce((sum, c) => sum + c.max, 0);
   const displayTotalOccupied = chartData.reduce((sum, c) => sum + c.current, 0);
-  const displayTotalHouseholds = chartData.reduce((sum, c) => sum + c.households, 0);
+
 
   const displayPendingRequests = selectedEventId === "all_history"
     ? stats.pendingRequests
@@ -490,11 +499,11 @@ const Dashboard = () => {
             
             {loading ? (
               <div className="h-[280px] flex items-end justify-between px-6 pb-2 pt-4 animate-pulse">
-                {[1, 2, 3, 4, 5, 6].map((bar) => (
-                  <div key={bar} className="w-14 flex flex-col items-center gap-3">
+                {MOCK_BARS.map((bar, idx) => (
+                  <div key={idx} className="w-14 flex flex-col items-center gap-3">
                     <div className="w-full flex items-end gap-1.5 h-44">
-                      <div className="w-1/2 bg-slate-100 rounded-t-md" style={{ height: `${30 + Math.random() * 60}%` }} />
-                      <div className="w-1/2 bg-slate-200 rounded-t-md" style={{ height: `${10 + Math.random() * 40}%` }} />
+                      <div className="w-1/2 bg-slate-100 rounded-t-md" style={{ height: bar.height1 }} />
+                      <div className="w-1/2 bg-slate-200 rounded-t-md" style={{ height: bar.height2 }} />
                     </div>
                     <div className="w-10 h-3 bg-slate-100 rounded-sm" />
                   </div>

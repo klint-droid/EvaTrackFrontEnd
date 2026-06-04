@@ -247,13 +247,13 @@ export default function HouseholdDetail() {
                         Basic Information
                     </p>
                     {[
-                        { icon: Users,  label: 'Members', value: `${household.member_count || household.members?.length || 0} people` },
-                        { icon: Phone,  label: 'Contact', value: household.contact_number || '—' },
-                        { icon: MapPin, label: 'Address', value: household.address?.full_address || '—' },
-                    ].map(({ icon: Icon, label, value }) => (
+                        { icon: <Users size={16} className="text-blue-600" />,  label: 'Members', value: `${household.member_count || household.members?.length || 0} people` },
+                        { icon: <Phone size={16} className="text-blue-600" />,  label: 'Contact', value: household.contact_number || '—' },
+                        { icon: <MapPin size={16} className="text-blue-600" />, label: 'Address', value: household.address?.full_address || '—' },
+                    ].map(({ icon, label, value }) => (
                         <div key={label} className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                                <Icon size={16} className="text-blue-600" />
+                                {icon}
                             </div>
                             <div>
                                 <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest">{label}</p>
@@ -271,14 +271,14 @@ export default function HouseholdDetail() {
                     {isEvacuated ? (
                         <>
                             {[
-                                { icon: Building,     label: 'Center',           value: evacuation.center?.name || '—' },
-                                { icon: DoorOpen,     label: 'Unit',             value: evacuation.unit_allocation?.unit?.name || 'No unit assigned' },
-                                { icon: CheckCircle,  label: 'Event',            value: evacuation.event?.name || '—' },
-                                { icon: Users,        label: 'Verified Members', value: `${evacuatedMembers.length || evacuation.evacuated_count || 0} verified` },
-                            ].map(({ icon: Icon, label, value }) => (
+                                { icon: <Building size={16} className="text-green-600" />,     label: 'Center',           value: evacuation.center?.name || '—' },
+                                { icon: <DoorOpen size={16} className="text-green-600" />,     label: 'Unit',             value: evacuation.unit_allocation?.unit?.name || 'No unit assigned' },
+                                { icon: <CheckCircle size={16} className="text-green-600" />,  label: 'Event',            value: evacuation.event?.name || '—' },
+                                { icon: <Users size={16} className="text-green-600" />,        label: 'Verified Members', value: `${evacuatedMembers.length || evacuation.evacuated_count || 0} verified` },
+                            ].map(({ icon, label, value }) => (
                                 <div key={label} className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                                        <Icon size={16} className="text-green-600" />
+                                        {icon}
                                     </div>
                                     <div>
                                         <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest">{label}</p>

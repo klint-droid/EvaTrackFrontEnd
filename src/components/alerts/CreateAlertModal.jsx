@@ -150,7 +150,6 @@ export default function CreateAlertModal({ onClose, onSent }) {
         }
     };
 
-    const selectedUrgency = urgencyLevels.find(u => u.urgency_id === form.urgency_level_id);
     const broadcastLabel = form.is_recurring
         ? 'Schedule Recurring Alert'
         : form.scheduled_at
@@ -364,9 +363,9 @@ export default function CreateAlertModal({ onClose, onSent }) {
                         <Label>Broadcast Channels</Label>
                         <div className="grid grid-cols-2 gap-3.5">
                             {[
-                                { value: 'push', label: 'Mobile Push Broadcast', description: 'Immediate App Alert', Icon: Smartphone },
-                                { value: 'sms',  label: 'Direct SMS Gateway', description: 'SMS Mobile Alert', Icon: MessageSquare },
-                            ].map(({ value, label, description, Icon }) => {
+                                { value: 'push', label: 'Mobile Push Broadcast', description: 'Immediate App Alert', icon: <Smartphone size={16} /> },
+                                { value: 'sms',  label: 'Direct SMS Gateway', description: 'SMS Mobile Alert', icon: <MessageSquare size={16} /> },
+                            ].map(({ value, label, description, icon }) => {
                                 const isActive = form.channel === value || form.channel === 'both';
                                 return (
                                     <button
@@ -390,7 +389,7 @@ export default function CreateAlertModal({ onClose, onSent }) {
                                         <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
                                             isActive ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-400'
                                         }`}>
-                                            <Icon size={16} />
+                                            {icon}
                                         </div>
                                         <div className="space-y-0.5">
                                             <p className={`text-xs font-bold leading-tight ${isActive ? 'text-slate-900' : 'text-slate-600'}`}>

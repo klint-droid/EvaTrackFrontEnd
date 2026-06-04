@@ -21,7 +21,7 @@ import { getUnitsByCenter } from '../../api/units/getUnitsByCenter';
 import { deleteUnit } from '../../api/units/deleteUnit';
 import { getUnitAllocations } from '../../api/allocations/getUnitAllocations';
 import { unassignHousehold } from '../../api/allocations/unassignHousehold';
-import { getCapacity } from '../../api/evacuation/getCapacity';
+
 
 import { getRecordsByCenter } from '../../api/evacuationRecords/getRecordsByCenter';
 import { deleteRecord } from '../../api/evacuationRecords/deleteRecord';

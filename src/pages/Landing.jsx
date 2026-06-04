@@ -134,7 +134,7 @@ const Landing = () => {
 
             {centers.slice(0, 4).map((center, index) => {
               const pos = mockPositions[index % mockPositions.length];
-              const { status, color } = getCenterStatus(center.current_occupancy, center.capacity);
+              const { color } = getCenterStatus(center.current_occupancy, center.capacity);
               const colorClass =
                 color === "emerald"
                   ? "bg-emerald-400 ring-emerald-400/20"

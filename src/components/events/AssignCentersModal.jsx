@@ -21,7 +21,7 @@ export default function AssignCentersModal({ event, onClose, onSaved }) {
                     .filter(c => c.current_event_id === event.event_id)
                     .map(c => c.evacuation_center_id);
                 setSelected(alreadyAssigned);
-            } catch (err) {
+            } catch {
                 setError('Failed to load centers.');
             } finally {
                 setLoading(false);

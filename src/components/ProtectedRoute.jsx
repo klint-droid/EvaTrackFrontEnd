@@ -21,7 +21,7 @@ const ProtectedRoute = ({ children }) => {
     const checkAuth = async () => {
       try {
         await API.get("/api/user");
-      } catch (err) {
+      } catch {
         setUser(null);
         localStorage.removeItem("token");
         localStorage.removeItem("user");
