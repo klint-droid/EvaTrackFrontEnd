@@ -372,10 +372,9 @@ const Dashboard = () => {
               className="px-4 py-2.5 bg-white/10 border border-white/10 hover:bg-white/15 transition-all text-white text-xs font-bold rounded-xl shadow-sm focus:outline-none cursor-pointer"
             >
               <option value="all" className="bg-slate-900 text-white">All Active Events</option>
-              <option value="all_history" className="bg-slate-900 text-white">All Events (Including Ended)</option>
-              {activeEvents.map(evt => (
+              {activeEvents.filter(evt => !evt.ended_at).map(evt => (
                 <option key={evt.event_id} value={evt.event_id} className="bg-slate-900 text-white">
-                  {evt.name} {evt.ended_at ? '(Ended)' : '(Active)'}
+                  {evt.name}
                 </option>
               ))}
             </select>
