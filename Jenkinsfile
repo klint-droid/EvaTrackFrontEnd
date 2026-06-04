@@ -1,7 +1,5 @@
-// Test comment to trigger Jenkins build
 pipeline {
     agent any
-
 
     /* Optional: Specify Node.js tool version configured in Jenkins settings */
     // tools {
@@ -17,21 +15,21 @@ pipeline {
 
         stage('Verify Environment') {
             steps {
-                sh 'node -v'
-                sh 'npm -v'
+                bat 'node -v'
+                bat 'npm -v'
             }
         }
 
         stage('Frontend - Code Quality') {
             steps {
                 echo 'Installing dependencies...'
-                sh 'npm ci'
+                bat 'npm ci'
 
                 echo 'Running static analysis lint...'
-                sh 'npm run lint'
+                bat 'npm run lint'
 
                 echo 'Compiling production build...'
-                sh 'npm run build'
+                bat 'npm run build'
             }
         }
     }
