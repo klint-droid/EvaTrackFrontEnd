@@ -120,16 +120,15 @@ const Dashboard = () => {
       }
       setCenters(centersList);
 
-      // Process Active Events
-      let activeEventsList = [];
+      // Process Events
+      let eventsList = [];
       if (eventsRes.status === 'fulfilled') {
         const res = eventsRes.value;
-        const allEvents = res?.data || res || [];
-        activeEventsList = allEvents.filter(e => !e.ended_at);
+        eventsList = res?.data || res || [];
       } else {
         console.error("Failed to load events:", eventsRes.reason);
       }
-      setActiveEvents(activeEventsList);
+      setActiveEvents(eventsList);
 
       const capacities = centersList.map(c => ({
         name: c.name,
@@ -209,9 +208,13 @@ const Dashboard = () => {
     }
   };
 
-  const filteredCenters = selectedEventId === "all"
+  const activeEventsList = activeEvents.filter(e => !e.ended_at);
+
+  const filteredCenters = selectedEventId === "all_history"
     ? centers
-    : centers.filter(c => c.current_event_id === selectedEventId);
+    : selectedEventId === "all"
+      ? centers.filter(c => c.current_event_id !== null)
+      : centers.filter(c => c.current_event_id === selectedEventId);
 
   const chartData = filteredCenters.map(c => ({
     name: c.name,
@@ -220,30 +223,100 @@ const Dashboard = () => {
     households: Number(c.household_count) || 0,
   }));
 
-  const eventCenterIds = new Set(filteredCenters.map(c => c.evacuation_center_id));
-
-  const displayRequests = selectedEventId === "all"
+  const displayRequests = selectedEventId === "all_history"
     ? recentRequests.filter(r => r.status?.status_key === 'pending' || r.status === 'pending').slice(0, 3)
-    : recentRequests.filter(r => (r.status?.status_key === 'pending' || r.status === 'pending') && eventCenterIds.has(r.evacuation_center_id)).slice(0, 3);
+    : selectedEventId === "all"
+      ? recentRequests.filter(r => {
+          if (r.status?.status_key !== 'pending' && r.status !== 'pending') return false;
+          const reqTime = new Date(r.created_at).getTime();
+          return activeEventsList.some(evt => {
+            const startTime = new Date(evt.started_at).getTime();
+            const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+            return reqTime >= startTime && reqTime <= endTime;
+          });
+        }).slice(0, 3)
+      : recentRequests.filter(r => {
+          if (r.status?.status_key !== 'pending' && r.status !== 'pending') return false;
+          const evt = activeEvents.find(e => e.event_id === selectedEventId);
+          if (!evt) return false;
+          const reqTime = new Date(r.created_at).getTime();
+          const startTime = new Date(evt.started_at).getTime();
+          const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+          return reqTime >= startTime && reqTime <= endTime;
+        }).slice(0, 3);
 
-  const displayIssues = selectedEventId === "all"
+  const displayIssues = selectedEventId === "all_history"
     ? recentIssues.filter(i => i.status === 'open').slice(0, 3)
-    : recentIssues.filter(i => i.status === 'open' && eventCenterIds.has(i.evacuation_center_id)).slice(0, 3);
+    : selectedEventId === "all"
+      ? recentIssues.filter(i => {
+          if (i.status !== 'open') return false;
+          const issueTime = new Date(i.created_at).getTime();
+          return activeEventsList.some(evt => {
+            const startTime = new Date(evt.started_at).getTime();
+            const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+            return issueTime >= startTime && issueTime <= endTime;
+          });
+        }).slice(0, 3)
+      : recentIssues.filter(i => {
+          if (i.status !== 'open') return false;
+          const evt = activeEvents.find(e => e.event_id === selectedEventId);
+          if (!evt) return false;
+          const issueTime = new Date(i.created_at).getTime();
+          const startTime = new Date(evt.started_at).getTime();
+          const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+          return issueTime >= startTime && issueTime <= endTime;
+        }).slice(0, 3);
 
   const displayTotalCenters = filteredCenters.length;
   const displayTotalCapacity = chartData.reduce((sum, c) => sum + c.max, 0);
   const displayTotalOccupied = chartData.reduce((sum, c) => sum + c.current, 0);
   const displayTotalHouseholds = chartData.reduce((sum, c) => sum + c.households, 0);
 
-  const displayPendingRequests = selectedEventId === "all"
+  const displayPendingRequests = selectedEventId === "all_history"
     ? stats.pendingRequests
-    : recentRequests.filter(r => (r.status?.status_key === 'pending' || r.status === 'pending') && eventCenterIds.has(r.evacuation_center_id)).length;
+    : selectedEventId === "all"
+      ? recentRequests.filter(r => {
+          if (r.status?.status_key !== 'pending' && r.status !== 'pending') return false;
+          const reqTime = new Date(r.created_at).getTime();
+          return activeEventsList.some(evt => {
+            const startTime = new Date(evt.started_at).getTime();
+            const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+            return reqTime >= startTime && reqTime <= endTime;
+          });
+        }).length
+      : recentRequests.filter(r => {
+          if (r.status?.status_key !== 'pending' && r.status !== 'pending') return false;
+          const evt = activeEvents.find(e => e.event_id === selectedEventId);
+          if (!evt) return false;
+          const reqTime = new Date(r.created_at).getTime();
+          const startTime = new Date(evt.started_at).getTime();
+          const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+          return reqTime >= startTime && reqTime <= endTime;
+        }).length;
 
-  const displayOpenIssues = selectedEventId === "all"
+  const displayOpenIssues = selectedEventId === "all_history"
     ? stats.openIssues
-    : recentIssues.filter(i => i.status === 'open' && eventCenterIds.has(i.evacuation_center_id)).length;
+    : selectedEventId === "all"
+      ? recentIssues.filter(i => {
+          if (i.status !== 'open') return false;
+          const issueTime = new Date(i.created_at).getTime();
+          return activeEventsList.some(evt => {
+            const startTime = new Date(evt.started_at).getTime();
+            const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+            return issueTime >= startTime && issueTime <= endTime;
+          });
+        }).length
+      : recentIssues.filter(i => {
+          if (i.status !== 'open') return false;
+          const evt = activeEvents.find(e => e.event_id === selectedEventId);
+          if (!evt) return false;
+          const issueTime = new Date(i.created_at).getTime();
+          const startTime = new Date(evt.started_at).getTime();
+          const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+          return issueTime >= startTime && issueTime <= endTime;
+        }).length;
 
-  const availableSlots = Math.max(displayTotalCapacity - displayTotalOccupied, 0);
+  const displayAvailableSlots = Math.max(displayTotalCapacity - displayTotalOccupied, 0);
   const occupancyRate = displayTotalCapacity > 0 ? Math.round((displayTotalOccupied / displayTotalCapacity) * 100) : 0;
 
   const getAlertUrgencyStyle = (key) => {
@@ -299,9 +372,10 @@ const Dashboard = () => {
               className="px-4 py-2.5 bg-white/10 border border-white/10 hover:bg-white/15 transition-all text-white text-xs font-bold rounded-xl shadow-sm focus:outline-none cursor-pointer"
             >
               <option value="all" className="bg-slate-900 text-white">All Active Events</option>
+              <option value="all_history" className="bg-slate-900 text-white">All Events (Including Ended)</option>
               {activeEvents.map(evt => (
                 <option key={evt.event_id} value={evt.event_id} className="bg-slate-900 text-white">
-                  {evt.name}
+                  {evt.name} {evt.ended_at ? '(Ended)' : '(Active)'}
                 </option>
               ))}
             </select>

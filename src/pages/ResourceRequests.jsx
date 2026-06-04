@@ -82,7 +82,7 @@ export default function ResourceRequests() {
     try {
       const res = await getEvents();
       const list = res.data || res || [];
-      setActiveEvents(list.filter(e => !e.ended_at));
+      setActiveEvents(list);
     } catch (err) {
       console.error(err);
     }
@@ -116,19 +116,37 @@ export default function ResourceRequests() {
     fetchRequests();
   }, [statusFilter, typeFilter]);
 
-  const displayedRequests = selectedEventId === "all"
-    ? requests
-    : requests.filter(req => req.center?.current_event_id == selectedEventId);
+  const activeEventsList = activeEvents.filter(e => !e.ended_at);
 
-  const pendingCount = selectedEventId === "all"
+  const displayedRequests = selectedEventId === "all_history"
+    ? requests
+    : selectedEventId === "all"
+      ? requests.filter(req => {
+          const reqTime = new Date(req.created_at).getTime();
+          return activeEventsList.some(evt => {
+            const startTime = new Date(evt.started_at).getTime();
+            const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+            return reqTime >= startTime && reqTime <= endTime;
+          });
+        })
+      : requests.filter(req => {
+          const evt = activeEvents.find(e => e.event_id === selectedEventId);
+          if (!evt) return false;
+          const reqTime = new Date(req.created_at).getTime();
+          const startTime = new Date(evt.started_at).getTime();
+          const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+          return reqTime >= startTime && reqTime <= endTime;
+        });
+
+  const pendingCount = selectedEventId === "all_history"
     ? summary.pending || 0
     : displayedRequests.filter(r => r.status?.status_key === 'pending' || r.status === 'pending').length;
 
-  const acknowledgedCount = selectedEventId === "all"
+  const acknowledgedCount = selectedEventId === "all_history"
     ? summary.acknowledged || 0
     : displayedRequests.filter(r => r.status?.status_key === 'acknowledged' || r.status === 'acknowledged').length;
 
-  const deliveredCount = selectedEventId === "all"
+  const deliveredCount = selectedEventId === "all_history"
     ? summary.delivered_24h || 0
     : displayedRequests.filter(r => r.status?.status_key === 'delivered' || r.status === 'delivered').length;
 
@@ -350,9 +368,10 @@ export default function ResourceRequests() {
               className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none max-w-[200px] truncate"
             >
               <option value="all">All Active Events</option>
+              <option value="all_history">All Events (Including Ended)</option>
               {activeEvents.map(event => (
                 <option key={event.event_id} value={event.event_id}>
-                  {event.name}
+                  {event.name} {event.ended_at ? '(Ended)' : '(Active)'}
                 </option>
               ))}
             </select>
