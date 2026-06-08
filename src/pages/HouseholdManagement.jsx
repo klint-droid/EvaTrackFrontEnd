@@ -10,7 +10,7 @@ import {
     Users,
     X
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 
@@ -23,12 +23,13 @@ import { isAdmin, isSuperAdmin } from "../utils/roles";
 
 export default function HouseholdManagement() {
     const navigate = useNavigate();
+    const isMounted = useRef(false);
 
     const [households, setHouseholds] = useState([]);
     const [centers, setCenters] = useState([]);
     const [events, setEvents] = useState([]);
     const [pagination, setPagination] = useState({});
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [editingHousehold, setEditingHousehold] = useState(null);
 
     const [filters, setFilters] = useState({
@@ -92,28 +93,23 @@ export default function HouseholdManagement() {
             const res = await getEvents();
             const list = res.data || [];
             setEvents(list);
-
-            const activeEvent = list.find(evt => !evt.ended_at);
-            if (activeEvent) {
-                const newFilters = { ...filters, event_id: activeEvent.event_id };
-                setFilters(newFilters);
-                fetchHouseholds(1, newFilters);
-            } else {
-                fetchHouseholds(1, filters);
-            }
         } catch (err) {
             console.error(err);
-            fetchHouseholds(1, filters);
         }
     };
 
     useEffect(() => {
+        fetchHouseholds(1, filters);
         fetchEvents();
         fetchCenters();
     }, []);
 
     // debounced search
     useEffect(() => {
+        if (!isMounted.current) {
+            isMounted.current = true;
+            return;
+        }
         const timeout = setTimeout(() => {
             const newFilters = { ...filters, q: searchInput };
             setFilters(newFilters);
@@ -183,7 +179,7 @@ export default function HouseholdManagement() {
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="space-y-6 animate-in fade-in duration-500 text-left">
 
             {/* HEADER */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -214,7 +210,7 @@ export default function HouseholdManagement() {
                     <select
                         value={filters.event_id}
                         onChange={e => handleFilterChange('event_id', e.target.value)}
-                        className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:border-blue-300 transition-colors"
+                        className="w-44 px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:border-blue-300 transition-colors"
                     >
                         <option value="">All Events</option>
                         {events.map(evt => (
@@ -235,7 +231,7 @@ export default function HouseholdManagement() {
                     <select
                         value={filters.center_id}
                         onChange={e => handleFilterChange('center_id', e.target.value)}
-                        className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:border-blue-300 transition-colors"
+                        className="w-48 px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:border-blue-300 transition-colors"
                     >
                         <option value="">All Centers</option>
                         {centers.map(c => (
