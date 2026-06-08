@@ -5,6 +5,7 @@ export interface GetHouseholdsParams {
     q?: string;
     status?: 'evacuated' | 'not_evacuated';
     center_id?: string;
+    event_id?: string;
 }
 
 export const getHouseholds = async (page: number = 1, params: GetHouseholdsParams = {}): Promise<PaginatedResponse<Household>> => {
