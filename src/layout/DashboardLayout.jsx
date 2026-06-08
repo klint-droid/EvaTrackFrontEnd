@@ -87,16 +87,7 @@ const DashboardLayout = () => {
                             <span className="text-[10px] font-bold uppercase tracking-wider">Live Monitoring</span>
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-1">
-                            <button className="relative p-2 sm:p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">
-                                <Bell size={18} />
-                                <span className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                            </button>
-                            <button className="p-2 sm:p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors hidden sm:block">
-                                <Settings size={18} />
-                            </button>
-                        </div>
+                       
 
                         {/* Profile Dropdown Area */}
                         <div className="flex items-center pl-2 sm:pl-4 ml-1 sm:ml-2 border-l border-slate-200 gap-2 sm:gap-3">
