@@ -14,21 +14,6 @@ import { isAdmin, isSuperAdmin, isPersonnel, getAssignedCenterId } from "../../u
 import CenterModal  from "../../components/evacuation/CenterModal";
 import { DeleteModal } from "../../components/evacuation/DeleteModal";
 
-
-function getStatus(current, max) {
-  const ratio = max ? current / max : 0;
-  if (ratio >= 0.9) return "Critical";
-  if (ratio >= 0.7) return "High Occupancy";
-  return "Operational";
-}
-
-function getStatusColor(current, max) {
-  const ratio = max ? current / max : 0;
-  if (ratio >= 0.9) return "text-red-600 bg-red-50 border-red-100";
-  if (ratio >= 0.7) return "text-amber-600 bg-amber-50 border-amber-100";
-  return "text-emerald-600 bg-emerald-50 border-emerald-100";
-}
-
 const CenterSkeleton = () => (
   <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-4 animate-pulse flex flex-col justify-between h-[308px]">
     <div className="space-y-4 flex-1">
@@ -121,7 +106,6 @@ export default function EvacuationList() {
     .filter((c) => {
       const addrStr = (c.osm_address || "").toLowerCase();
       const matchesSearch = `${c.name} ${addrStr}`.toLowerCase().includes(search.toLowerCase());
-      const status = getStatus(c.current_occupancy ?? 0, c.capacity ?? 0);
       const matchesStatus = filterStatus === "All Status" || status === filterStatus;
       return matchesSearch && matchesStatus;
     })
@@ -260,8 +244,12 @@ export default function EvacuationList() {
                           My Station
                         </span>
                       )}
-                      <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border ${getStatusColor(current, max)}`}>
-                        {getStatus(current, max)}
+                      <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border ${
+                        c.current_event
+                          ? "text-blue-600 bg-blue-50 border-blue-100"
+                          : "text-slate-500 bg-slate-100 border-slate-200"
+                      }`}>
+                        {c.current_event?.name || <span className="text-slate-400">No Active Event</span>}
                       </span>
                     </div>
                   </div>

@@ -26,6 +26,7 @@ import { unassignHousehold } from '../../api/allocations/unassignHousehold';
 import { getRecordsByCenter } from '../../api/evacuationRecords/getRecordsByCenter';
 import { deleteRecord } from '../../api/evacuationRecords/deleteRecord';
 import { exportCenterData } from '../../api/evacuationRecords/exportCenterData';
+import { getEvents } from '../../api/events/getEvents';
 
 import UnitModal from '../../components/units/UnitModal';
 import AssignHouseholdModal from '../../components/units/AssignHouseholdModal';
@@ -44,6 +45,8 @@ export default function EvacuationDetail() {
     const [center, setCenter] = useState(null);
     const [units, setUnits] = useState([]);
     const [evacuatedHouseholds, setEvacuatedHouseholds] = useState([]);
+    const [events, setEvents] = useState([]);
+    const [selectedEventId, setSelectedEventId] = useState("");
     const [loading, setLoading] = useState(true);
     const [householdsLoading, setHouseholdsLoading] = useState(false);
 
@@ -106,10 +109,20 @@ export default function EvacuationDetail() {
         }
     };
 
-    const fetchEvacuatedHouseholds = async () => {
+    const fetchEvents = async () => {
+        try {
+            const res = await getEvents();
+            setEvents(res.data || []);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const fetchEvacuatedHouseholds = async (eventIdFilter = selectedEventId) => {
         try {
             setHouseholdsLoading(true);
-            const res = await getRecordsByCenter(id);
+            const eventParam = eventIdFilter === "all" || !eventIdFilter ? null : eventIdFilter;
+            const res = await getRecordsByCenter(id, null, eventParam);
             setEvacuatedHouseholds(res.data || []);
         } catch (err) {
             console.error(err);
@@ -122,7 +135,7 @@ export default function EvacuationDetail() {
         await Promise.all([
             fetchCenter(),
             fetchUnits(),
-            fetchEvacuatedHouseholds(),
+            fetchEvents(),
         ]);
 
         setLoading(false);
@@ -131,6 +144,18 @@ export default function EvacuationDetail() {
     useEffect(() => {
         fetchPageData();
     }, [id]);
+
+    useEffect(() => {
+        if (center) {
+            setSelectedEventId(center.current_event_id || "all");
+        }
+    }, [center]);
+
+    useEffect(() => {
+        if (selectedEventId) {
+            fetchEvacuatedHouseholds(selectedEventId);
+        }
+    }, [selectedEventId]);
 
     const fetchAllocations = async (unitId) => {
         try {
@@ -225,6 +250,13 @@ export default function EvacuationDetail() {
                         <ArrowLeft size={20} />
                     </button>
                     <h1 className="text-2xl font-bold text-slate-900 leading-none">{center.name}</h1>
+                    <span className={`ml-3 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border ${
+                        center.current_event
+                          ? "text-blue-600 bg-blue-50 border-blue-100"
+                          : "text-slate-500 bg-slate-50 border-slate-200"
+                    }`}>
+                        {center.current_event?.name || "No Event Assigned"}
+                    </span>
                 </div>
                 <p className="text-sm text-slate-500 pl-10 text-left">
                     {center.osm_address}
@@ -486,9 +518,23 @@ export default function EvacuationDetail() {
                         </div>
 
                         <div className="flex items-center gap-2">
+                            {/* Event Filter Dropdown */}
+                            <select
+                                value={selectedEventId}
+                                onChange={(e) => setSelectedEventId(e.target.value)}
+                                className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:border-blue-300 transition-colors"
+                            >
+                                <option value="all">All Events</option>
+                                {events.map(evt => (
+                                    <option key={evt.event_id} value={evt.event_id}>
+                                        {evt.name} {evt.ended_at ? "(Ended)" : "(Active)"}
+                                    </option>
+                                ))}
+                            </select>
+
                             <button
-                                onClick={fetchEvacuatedHouseholds}
-                                className="flex items-center gap-2 px-3 py-2 text-sm border rounded-lg hover:bg-slate-50 cursor-pointer"
+                                onClick={() => fetchEvacuatedHouseholds(selectedEventId)}
+                                className="flex items-center gap-2 px-3 py-2.5 text-xs font-bold border rounded-xl hover:bg-slate-50 cursor-pointer"
                             >
                                 <RefreshCw size={15} />
                                 Refresh
