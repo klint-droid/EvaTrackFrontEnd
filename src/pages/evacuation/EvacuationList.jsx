@@ -65,7 +65,6 @@ export default function EvacuationList() {
   const [deleteOpen, setDeleteOpen]   = useState(false);
   const [selected, setSelected]       = useState(null);
   const [sortBy, setSortBy]           = useState("name");
-  const [filterStatus, setFilterStatus] = useState("All Status");
 
   const canCreate = isAdmin() || isSuperAdmin();
   const canEdit   = isAdmin() || isSuperAdmin();
@@ -106,14 +105,15 @@ export default function EvacuationList() {
     .filter((c) => {
       const addrStr = (c.osm_address || "").toLowerCase();
       const matchesSearch = `${c.name} ${addrStr}`.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus = filterStatus === "All Status" || status === filterStatus;
-      return matchesSearch && matchesStatus;
+      return matchesSearch;
     })
     .sort((a, b) => {
       // 1. Force the assigned center to the top
       if (assignedCenterId) {
-        if (a.evacuation_center_id === assignedCenterId) return -1;
-        if (b.evacuation_center_id === assignedCenterId) return 1;
+        const aAssigned = String(a.evacuation_center_id) === String(assignedCenterId);
+        const bAssigned = String(b.evacuation_center_id) === String(assignedCenterId);
+        if (aAssigned && !bAssigned) return -1;
+        if (!aAssigned && bAssigned) return 1;
       }
 
       // 2. Fallback sorting
@@ -163,16 +163,6 @@ export default function EvacuationList() {
         </div>
         <div className="flex gap-2">
           <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:border-blue-300 transition-colors"
-          >
-            <option value="All Status">All Status</option>
-            <option value="Operational">Operational</option>
-            <option value="High Occupancy">High Occupancy</option>
-            <option value="Critical">Critical</option>
-          </select>
-          <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
             className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:border-blue-300 transition-colors"
@@ -215,7 +205,7 @@ export default function EvacuationList() {
             const max      = Number(c.capacity) || 0;
             const percent  = max ? (current / max) * 100 : 0;
             const addrStr  = c.osm_address || "Address not on record.";
-            const isAssigned = c.evacuation_center_id === assignedCenterId;
+            const isAssigned = assignedCenterId && String(c.evacuation_center_id) === String(assignedCenterId);
 
             return (
               <div
@@ -241,12 +231,12 @@ export default function EvacuationList() {
                       {isAssigned && (
                         <span className="flex items-center gap-1 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider rounded bg-blue-50 border border-blue-200 text-blue-700">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          My Station
+                          My Assigned Center
                         </span>
                       )}
-                      <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border ${
+                      <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border animate-pulse ${
                         c.current_event
-                          ? "text-blue-600 bg-blue-50 border-blue-100"
+                          ? "text-red-600 bg-red-50 border-red-100"
                           : "text-slate-500 bg-slate-100 border-slate-200"
                       }`}>
                         {c.current_event?.name || <span className="text-slate-400">No Active Event</span>}
