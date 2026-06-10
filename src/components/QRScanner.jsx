@@ -65,7 +65,7 @@ function QRScanner({ onScan }) {
       }
     };
 
-    // ⏱ Delay to ensure DOM is ready
+    // Delay to ensure DOM is ready
     const timeout = setTimeout(startScanner, 300);
 
     return () => {

@@ -122,6 +122,10 @@ export default function ResourceRequests() {
     ? requests
     : selectedEventId === "all"
       ? requests.filter(req => {
+          const isCenterAssignedToActiveEvent = req.center?.current_event_id &&
+            activeEventsList.some(evt => evt.event_id === req.center.current_event_id);
+          if (isCenterAssignedToActiveEvent) return true;
+
           const reqTime = new Date(req.created_at).getTime();
           return activeEventsList.some(evt => {
             const startTime = new Date(evt.started_at).getTime();
@@ -132,6 +136,11 @@ export default function ResourceRequests() {
       : requests.filter(req => {
           const evt = activeEvents.find(e => e.event_id === selectedEventId);
           if (!evt) return false;
+
+          if (!evt.ended_at) {
+            return req.center?.current_event_id === selectedEventId;
+          }
+
           const reqTime = new Date(req.created_at).getTime();
           const startTime = new Date(evt.started_at).getTime();
           const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;

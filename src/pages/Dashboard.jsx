@@ -237,6 +237,10 @@ const Dashboard = () => {
     : selectedEventId === "all"
       ? recentRequests.filter(r => {
           if (r.status?.status_key !== 'pending' && r.status !== 'pending') return false;
+          const isCenterAssignedToActiveEvent = r.center?.current_event_id &&
+            activeEventsList.some(evt => evt.event_id === r.center.current_event_id);
+          if (isCenterAssignedToActiveEvent) return true;
+
           const reqTime = new Date(r.created_at).getTime();
           return activeEventsList.some(evt => {
             const startTime = new Date(evt.started_at).getTime();
@@ -248,6 +252,11 @@ const Dashboard = () => {
           if (r.status?.status_key !== 'pending' && r.status !== 'pending') return false;
           const evt = activeEvents.find(e => e.event_id === selectedEventId);
           if (!evt) return false;
+
+          if (!evt.ended_at) {
+            return r.center?.current_event_id === selectedEventId;
+          }
+
           const reqTime = new Date(r.created_at).getTime();
           const startTime = new Date(evt.started_at).getTime();
           const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
@@ -259,6 +268,10 @@ const Dashboard = () => {
     : selectedEventId === "all"
       ? recentIssues.filter(i => {
           if (i.status !== 'open') return false;
+          const isCenterAssignedToActiveEvent = i.center?.current_event_id &&
+            activeEventsList.some(evt => evt.event_id === i.center.current_event_id);
+          if (isCenterAssignedToActiveEvent) return true;
+
           const issueTime = new Date(i.created_at).getTime();
           return activeEventsList.some(evt => {
             const startTime = new Date(evt.started_at).getTime();
@@ -270,6 +283,11 @@ const Dashboard = () => {
           if (i.status !== 'open') return false;
           const evt = activeEvents.find(e => e.event_id === selectedEventId);
           if (!evt) return false;
+
+          if (!evt.ended_at) {
+            return i.center?.current_event_id === selectedEventId;
+          }
+
           const issueTime = new Date(i.created_at).getTime();
           const startTime = new Date(evt.started_at).getTime();
           const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
@@ -286,6 +304,10 @@ const Dashboard = () => {
     : selectedEventId === "all"
       ? recentRequests.filter(r => {
           if (r.status?.status_key !== 'pending' && r.status !== 'pending') return false;
+          const isCenterAssignedToActiveEvent = r.center?.current_event_id &&
+            activeEventsList.some(evt => evt.event_id === r.center.current_event_id);
+          if (isCenterAssignedToActiveEvent) return true;
+
           const reqTime = new Date(r.created_at).getTime();
           return activeEventsList.some(evt => {
             const startTime = new Date(evt.started_at).getTime();
@@ -297,6 +319,11 @@ const Dashboard = () => {
           if (r.status?.status_key !== 'pending' && r.status !== 'pending') return false;
           const evt = activeEvents.find(e => e.event_id === selectedEventId);
           if (!evt) return false;
+
+          if (!evt.ended_at) {
+            return r.center?.current_event_id === selectedEventId;
+          }
+
           const reqTime = new Date(r.created_at).getTime();
           const startTime = new Date(evt.started_at).getTime();
           const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
@@ -308,6 +335,10 @@ const Dashboard = () => {
     : selectedEventId === "all"
       ? recentIssues.filter(i => {
           if (i.status !== 'open') return false;
+          const isCenterAssignedToActiveEvent = i.center?.current_event_id &&
+            activeEventsList.some(evt => evt.event_id === i.center.current_event_id);
+          if (isCenterAssignedToActiveEvent) return true;
+
           const issueTime = new Date(i.created_at).getTime();
           return activeEventsList.some(evt => {
             const startTime = new Date(evt.started_at).getTime();
@@ -319,6 +350,11 @@ const Dashboard = () => {
           if (i.status !== 'open') return false;
           const evt = activeEvents.find(e => e.event_id === selectedEventId);
           if (!evt) return false;
+
+          if (!evt.ended_at) {
+            return i.center?.current_event_id === selectedEventId;
+          }
+
           const issueTime = new Date(i.created_at).getTime();
           const startTime = new Date(evt.started_at).getTime();
           const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
