@@ -126,7 +126,20 @@ export default function VerifyHousehold() {
       });
   }, [user]);
 
-  const handleScan = async (householdId) => {
+  const handleScan = async (rawScan) => {
+    // QR codes encode a full JSON object — extract household_id and metadata from it if present
+    let householdId = rawScan;
+    let qrParsed = null;
+    try {
+      const parsed = JSON.parse(rawScan);
+      if (parsed?.household_id) {
+        householdId = parsed.household_id;
+        qrParsed = parsed; // retain full QR payload for fallback use
+      }
+    } catch (_) {
+      // Not JSON — treat as a plain household ID string
+    }
+
     setLoading(true);
 
     try {
@@ -135,6 +148,7 @@ export default function VerifyHousehold() {
       const household = recordsList.find(h => h.household_id === householdId) || recordsList[0];
 
       if (household) {
+        // ✅ Path A: full household data found via search → open confirmation modal
         setScannedData({
           household,
           isQR: true
@@ -144,17 +158,29 @@ export default function VerifyHousehold() {
           ? household.members.map(m => m.member_id) 
           : [];
         setSelectedMembers(memberIds);
-        setQrModalOpen(false);
+        // FIX #3: Show success notification before opening the modal
+        showMessage("QR scanned successfully. Confirm admission below.");
         setAssignmentModal(true);
       } else {
-        const resScan = await scanQR({ household_id: householdId });
-        const payload = getPayload(resScan);
-        showMessage(getMessage(resScan, "Household verified successfully."));
-        setQrModalOpen(false);
-        navigateToHouseholdDetail(payload);
+        // FIX #2: Path B: household not returned by search — build minimal object from QR data
+        // and open the same confirmation modal instead of skipping it
+        const minimalHousehold = {
+          household_id: householdId,
+          household_name: qrParsed?.household_name || householdId,
+        };
+        setScannedData({
+          household: minimalHousehold,
+          isQR: true,
+        });
+        setMemberCount(1);
+        setSelectedMembers([]);
+        showMessage("QR scanned. Confirm member count to proceed.");
+        setAssignmentModal(true);
       }
     } catch (err) {
-      showMessage(err.response?.data?.message || "Scan failed.", "error");
+      showMessage(err.response?.data?.message || "Scan failed. Please try again.", "error");
+      // FIX #1: Reopen the QR scanner so the user can try again without manually clicking the button
+      setQrModalOpen(true);
     } finally {
       setLoading(false);
     }

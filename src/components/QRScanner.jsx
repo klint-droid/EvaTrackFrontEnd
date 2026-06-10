@@ -12,8 +12,25 @@ function QRScanner({ onScan }) {
         const scanner = new Html5Qrcode("reader");
         scannerRef.current = scanner;
 
+        let cameraId = null;
+        try {
+          const devices = await Html5Qrcode.getCameras();
+          if (devices && devices.length > 0) {
+            // Find a back/rear camera if available
+            const backCamera = devices.find((device) => {
+              const label = device.label.toLowerCase();
+              return label.includes("back") || label.includes("rear") || label.includes("environment");
+            });
+            cameraId = backCamera ? backCamera.id : devices[0].id;
+          }
+        } catch (camErr) {
+          console.warn("Failed to get cameras, falling back to facingMode constraint:", camErr);
+        }
+
+        const constraint = cameraId ? cameraId : { facingMode: "environment" };
+
         await scanner.start(
-          { facingMode: "environment" },
+          constraint,
           {
             fps: 10,
             qrbox: 250,
