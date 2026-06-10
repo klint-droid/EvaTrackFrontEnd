@@ -1,3 +1,5 @@
+import type { DisasterEvent } from "./disasterEvent";
+
 export interface Center {
   evacuation_center_id: string;
   name: string;
@@ -5,6 +7,10 @@ export interface Center {
   latitude: number;
   longitude: number;
   osm_address: string;
+  current_event_id?: string | null;
+  current_event?: DisasterEvent | null;
+  household_count?: number;
+  current_occupancy?: number;
 }
 
 export interface CreateCenterPayload {

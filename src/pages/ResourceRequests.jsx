@@ -11,7 +11,7 @@ import { createResourceRequest } from '../api/resourceRequests/createResourceReq
 import { updateResourceRequestStatus } from '../api/resourceRequests/updateResourceRequestStatus';
 import { deleteResourceRequest } from '../api/resourceRequests/deleteResourceRequest';
 import { getCenters } from '../api/evacuation/getCenters'; // ✅ add this import
-
+import { getEvents } from '../api/events/getEvents';
 import { isAdmin, isSuperAdmin, isPersonnel } from '../utils/roles';
 
 const EMPTY_FORM = {
@@ -36,6 +36,8 @@ export default function ResourceRequests() {
 
   const [urgencyLevels, setUrgencyLevels] = useState([]);
   const [centers, setCenters] = useState([]);           // ✅ added
+  const [activeEvents, setActiveEvents] = useState([]);
+  const [selectedEventId, setSelectedEventId] = useState("all");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -76,6 +78,16 @@ export default function ResourceRequests() {
     }
   };
 
+  const fetchActiveEvents = async () => {
+    try {
+      const res = await getEvents();
+      const list = res.data || res || [];
+      setActiveEvents(list);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const fetchRequests = async () => {
     try {
       setLoading(true);
@@ -96,12 +108,47 @@ export default function ResourceRequests() {
 
   useEffect(() => {
     fetchUrgencyLevels();
+    fetchActiveEvents();
     if (canUpdateStatus) fetchCenters();
   }, []);
 
   useEffect(() => {
     fetchRequests();
   }, [statusFilter, typeFilter]);
+
+  const activeEventsList = activeEvents.filter(e => !e.ended_at);
+
+  const displayedRequests = selectedEventId === "all_history"
+    ? requests
+    : selectedEventId === "all"
+      ? requests.filter(req => {
+          const reqTime = new Date(req.created_at).getTime();
+          return activeEventsList.some(evt => {
+            const startTime = new Date(evt.started_at).getTime();
+            const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+            return reqTime >= startTime && reqTime <= endTime;
+          });
+        })
+      : requests.filter(req => {
+          const evt = activeEvents.find(e => e.event_id === selectedEventId);
+          if (!evt) return false;
+          const reqTime = new Date(req.created_at).getTime();
+          const startTime = new Date(evt.started_at).getTime();
+          const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+          return reqTime >= startTime && reqTime <= endTime;
+        });
+
+  const pendingCount = selectedEventId === "all_history"
+    ? summary.pending || 0
+    : displayedRequests.filter(r => r.status?.status_key === 'pending' || r.status === 'pending').length;
+
+  const acknowledgedCount = selectedEventId === "all_history"
+    ? summary.acknowledged || 0
+    : displayedRequests.filter(r => r.status?.status_key === 'acknowledged' || r.status === 'acknowledged').length;
+
+  const deliveredCount = selectedEventId === "all_history"
+    ? summary.delivered_24h || 0
+    : displayedRequests.filter(r => r.status?.status_key === 'delivered' || r.status === 'delivered').length;
 
   const openModal = () => {
     setForm({
@@ -196,7 +243,7 @@ export default function ResourceRequests() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 text-left">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -238,7 +285,7 @@ export default function ResourceRequests() {
             {loading && !requests.length ? (
               <div className="h-8 bg-slate-200 animate-pulse rounded w-12 mt-1"></div>
             ) : (
-              <p className="text-2xl font-black text-slate-900">{summary.pending || 0}</p>
+              <p className="text-2xl font-black text-slate-900">{pendingCount}</p>
             )}
           </div>
         </div>
@@ -252,7 +299,7 @@ export default function ResourceRequests() {
             {loading && !requests.length ? (
               <div className="h-8 bg-slate-200 animate-pulse rounded w-12 mt-1"></div>
             ) : (
-              <p className="text-2xl font-black text-slate-900">{summary.acknowledged || 0}</p>
+              <p className="text-2xl font-black text-slate-900">{acknowledgedCount}</p>
             )}
           </div>
         </div>
@@ -266,7 +313,7 @@ export default function ResourceRequests() {
             {loading && !requests.length ? (
               <div className="h-8 bg-slate-200 animate-pulse rounded w-12 mt-1"></div>
             ) : (
-              <p className="text-2xl font-black text-slate-900">{summary.delivered_24h || 0}</p>
+              <p className="text-2xl font-black text-slate-900">{deliveredCount}</p>
             )}
           </div>
         </div>
@@ -312,6 +359,20 @@ export default function ResourceRequests() {
               <option value="">All Status</option>
               {STATUS_OPTIONS.map(status => (
                 <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+
+            <select
+              value={selectedEventId}
+              onChange={(e) => setSelectedEventId(e.target.value)}
+              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none max-w-[200px] truncate"
+            >
+              <option value="all">All Active Events</option>
+              <option value="all_history">All Events (Including Ended)</option>
+              {activeEvents.map(event => (
+                <option key={event.event_id} value={event.event_id}>
+                  {event.name} {event.ended_at ? '(Ended)' : '(Active)'}
+                </option>
               ))}
             </select>
 
@@ -375,14 +436,14 @@ export default function ResourceRequests() {
                     </td>
                   </tr>
                 ))
-              ) : requests.length === 0 ? (
+              ) : displayedRequests.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="px-6 py-14 text-center text-slate-400 font-bold">
                     No resource requests found.
                   </td>
                 </tr>
               ) : (
-                requests.map(req => (
+                displayedRequests.map(req => (
                   <tr key={req.request_id} className="hover:bg-slate-50/60">
                     <td className="px-6 py-4">
                       <p className="text-sm font-black text-slate-800">{req.resource_type}</p>

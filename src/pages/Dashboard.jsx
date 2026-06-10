@@ -32,6 +32,7 @@ import { getAlerts } from "../api/alerts/getAlerts";
 import { getCenterIssueReports } from "../api/centerIssueReports/getCenterIssueReports";
 import { getResourceRequests } from "../api/resourceRequests/getResourceRequests";
 import { getUser } from "../api/auth/getUser";
+import { getEvents } from "../api/events/getEvents";
 import CapacityChart from "../components/dashboard/CapacityChart";
 import DashboardSkeleton from "../components/dashboard/DashboardSkeleton";
 
@@ -40,6 +41,15 @@ let dashboardCache = null;
 let dashboardCacheTime = 0;
 const CACHE_DURATION = 30000; // 30 seconds cache expiration
 
+const MOCK_BARS = [
+  { height1: "65%", height2: "25%" },
+  { height1: "45%", height2: "15%" },
+  { height1: "80%", height2: "35%" },
+  { height1: "55%", height2: "20%" },
+  { height1: "70%", height2: "40%" },
+  { height1: "50%", height2: "30%" }
+];
+
 const Dashboard = () => {
   // Derive role context from localStorage for UI branching
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
@@ -47,7 +57,9 @@ const Dashboard = () => {
   const assignedCenter = storedUser?.assigned_center; // { id, name } or null
 
   const [user, setUser] = useState(dashboardCache?.user || null);
-  const [chartData, setChartData] = useState(dashboardCache?.chartData || []);
+  const [centers, setCenters] = useState(dashboardCache?.centers || []);
+  const [activeEvents, setActiveEvents] = useState(dashboardCache?.activeEvents || []);
+  const [selectedEventId, setSelectedEventId] = useState("all");
   const [stats, setStats] = useState(dashboardCache?.stats || {
     totalCenters: 0,
     totalCapacity: 0,
@@ -76,12 +88,13 @@ const Dashboard = () => {
       setLoading(true);
     }
     try {
-      const [userRes, centersRes, alertsRes, issuesRes, requestsRes] = await Promise.allSettled([
+      const [userRes, centersRes, alertsRes, issuesRes, requestsRes, eventsRes] = await Promise.allSettled([
         getUser(),
         getCenters(),
         getAlerts(1),
         getCenterIssueReports({ limit: 10 }),
-        getResourceRequests({ limit: 10 })
+        getResourceRequests({ limit: 10 }),
+        getEvents()
       ]);
 
       // 1. Process User Context
@@ -95,10 +108,10 @@ const Dashboard = () => {
       }
 
       // 2. Process Evacuation Centers
-      let centers = [];
+      let centersList = [];
       if (centersRes.status === 'fulfilled') {
         const res = centersRes.value;
-        centers = Array.isArray(res) ? res : (res?.data ?? []);
+        centersList = Array.isArray(res) ? res : (res?.data ?? []);
       } else {
         console.error("Failed to load evacuation centers:", centersRes.reason);
       }
@@ -108,23 +121,32 @@ const Dashboard = () => {
         const assignedId = storedUser?.assigned_center?.id || storedUser?.assigned_center_id;
         if (assignedId) {
           const targetId = Number(assignedId) || assignedId;
-          centers = centers.filter(c => {
+          centersList = centersList.filter(c => {
             const centerId = Number(c.evacuation_center_id) || c.evacuation_center_id;
             return centerId === targetId;
           });
         }
       }
+      setCenters(centersList);
 
-      const capacities = centers.map(c => ({
+      // Process Events
+      let eventsList = [];
+      if (eventsRes.status === 'fulfilled') {
+        const res = eventsRes.value;
+        eventsList = res?.data || res || [];
+      } else {
+        console.error("Failed to load events:", eventsRes.reason);
+      }
+      setActiveEvents(eventsList);
+
+      const capacities = centersList.map(c => ({
         name: c.name,
         current: Number(c.current_occupancy) || 0,
         max: Number(c.capacity) || 0,
         households: Number(c.household_count) || 0,
       }));
 
-      setChartData(capacities);
-
-      const totalCenters = centers.length;
+      const totalCenters = centersList.length;
       const totalCapacity = capacities.reduce((sum, c) => sum + c.max, 0);
       const totalOccupied = capacities.reduce((sum, c) => sum + c.current, 0);
       const totalHouseholds = capacities.reduce((sum, c) => sum + c.households, 0);
@@ -170,22 +192,21 @@ const Dashboard = () => {
       };
 
       const finalAlerts = Array.isArray(alertsList) ? alertsList.slice(0, 4) : [];
-      const finalRequests = Array.isArray(requestsList) ? requestsList.filter(r => r.status?.status_key === 'pending' || r.status === 'pending').slice(0, 3) : [];
-      const finalIssues = Array.isArray(issuesList) ? issuesList.filter(i => i.status === 'open').slice(0, 3) : [];
 
       setStats(newStats);
       setRecentAlerts(finalAlerts);
-      setRecentRequests(finalRequests);
-      setRecentIssues(finalIssues);
+      setRecentRequests(requestsList);
+      setRecentIssues(issuesList);
 
       // Cache the result
       dashboardCache = {
         user: currentUser,
-        chartData: capacities,
+        centers: centersList,
+        activeEvents: activeEventsList,
         stats: newStats,
         recentAlerts: finalAlerts,
-        recentRequests: finalRequests,
-        recentIssues: finalIssues,
+        recentRequests: requestsList,
+        recentIssues: issuesList,
       };
       dashboardCacheTime = Date.now();
 
@@ -196,8 +217,116 @@ const Dashboard = () => {
     }
   };
 
-  const availableSlots = Math.max(stats.totalCapacity - stats.totalOccupied, 0);
-  const occupancyRate = stats.totalCapacity > 0 ? Math.round((stats.totalOccupied / stats.totalCapacity) * 100) : 0;
+  const activeEventsList = activeEvents.filter(e => !e.ended_at);
+
+  const filteredCenters = selectedEventId === "all_history"
+    ? centers
+    : selectedEventId === "all"
+      ? centers.filter(c => c.current_event_id !== null)
+      : centers.filter(c => c.current_event_id === selectedEventId);
+
+  const chartData = filteredCenters.map(c => ({
+    name: c.name,
+    current: Number(c.current_occupancy) || 0,
+    max: Number(c.capacity) || 0,
+    households: Number(c.household_count) || 0,
+  }));
+
+  const displayRequests = selectedEventId === "all_history"
+    ? recentRequests.filter(r => r.status?.status_key === 'pending' || r.status === 'pending').slice(0, 3)
+    : selectedEventId === "all"
+      ? recentRequests.filter(r => {
+          if (r.status?.status_key !== 'pending' && r.status !== 'pending') return false;
+          const reqTime = new Date(r.created_at).getTime();
+          return activeEventsList.some(evt => {
+            const startTime = new Date(evt.started_at).getTime();
+            const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+            return reqTime >= startTime && reqTime <= endTime;
+          });
+        }).slice(0, 3)
+      : recentRequests.filter(r => {
+          if (r.status?.status_key !== 'pending' && r.status !== 'pending') return false;
+          const evt = activeEvents.find(e => e.event_id === selectedEventId);
+          if (!evt) return false;
+          const reqTime = new Date(r.created_at).getTime();
+          const startTime = new Date(evt.started_at).getTime();
+          const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+          return reqTime >= startTime && reqTime <= endTime;
+        }).slice(0, 3);
+
+  const displayIssues = selectedEventId === "all_history"
+    ? recentIssues.filter(i => i.status === 'open').slice(0, 3)
+    : selectedEventId === "all"
+      ? recentIssues.filter(i => {
+          if (i.status !== 'open') return false;
+          const issueTime = new Date(i.created_at).getTime();
+          return activeEventsList.some(evt => {
+            const startTime = new Date(evt.started_at).getTime();
+            const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+            return issueTime >= startTime && issueTime <= endTime;
+          });
+        }).slice(0, 3)
+      : recentIssues.filter(i => {
+          if (i.status !== 'open') return false;
+          const evt = activeEvents.find(e => e.event_id === selectedEventId);
+          if (!evt) return false;
+          const issueTime = new Date(i.created_at).getTime();
+          const startTime = new Date(evt.started_at).getTime();
+          const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+          return issueTime >= startTime && issueTime <= endTime;
+        }).slice(0, 3);
+
+  const displayTotalCenters = filteredCenters.length;
+  const displayTotalCapacity = chartData.reduce((sum, c) => sum + c.max, 0);
+  const displayTotalOccupied = chartData.reduce((sum, c) => sum + c.current, 0);
+
+
+  const displayPendingRequests = selectedEventId === "all_history"
+    ? stats.pendingRequests
+    : selectedEventId === "all"
+      ? recentRequests.filter(r => {
+          if (r.status?.status_key !== 'pending' && r.status !== 'pending') return false;
+          const reqTime = new Date(r.created_at).getTime();
+          return activeEventsList.some(evt => {
+            const startTime = new Date(evt.started_at).getTime();
+            const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+            return reqTime >= startTime && reqTime <= endTime;
+          });
+        }).length
+      : recentRequests.filter(r => {
+          if (r.status?.status_key !== 'pending' && r.status !== 'pending') return false;
+          const evt = activeEvents.find(e => e.event_id === selectedEventId);
+          if (!evt) return false;
+          const reqTime = new Date(r.created_at).getTime();
+          const startTime = new Date(evt.started_at).getTime();
+          const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+          return reqTime >= startTime && reqTime <= endTime;
+        }).length;
+
+  const displayOpenIssues = selectedEventId === "all_history"
+    ? stats.openIssues
+    : selectedEventId === "all"
+      ? recentIssues.filter(i => {
+          if (i.status !== 'open') return false;
+          const issueTime = new Date(i.created_at).getTime();
+          return activeEventsList.some(evt => {
+            const startTime = new Date(evt.started_at).getTime();
+            const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+            return issueTime >= startTime && issueTime <= endTime;
+          });
+        }).length
+      : recentIssues.filter(i => {
+          if (i.status !== 'open') return false;
+          const evt = activeEvents.find(e => e.event_id === selectedEventId);
+          if (!evt) return false;
+          const issueTime = new Date(i.created_at).getTime();
+          const startTime = new Date(evt.started_at).getTime();
+          const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+          return issueTime >= startTime && issueTime <= endTime;
+        }).length;
+
+  const displayAvailableSlots = Math.max(displayTotalCapacity - displayTotalOccupied, 0);
+  const occupancyRate = displayTotalCapacity > 0 ? Math.round((displayTotalOccupied / displayTotalCapacity) * 100) : 0;
 
   const getAlertUrgencyStyle = (key) => {
     switch (key) {
@@ -245,6 +374,20 @@ const Dashboard = () => {
           </div>
 
           <div className="flex items-center gap-3 self-start md:self-auto">
+            {/* Active Event Filter Dropdown */}
+            <select
+              value={selectedEventId}
+              onChange={(e) => setSelectedEventId(e.target.value)}
+              className="px-4 py-2.5 bg-white/10 border border-white/10 hover:bg-white/15 transition-all text-white text-xs font-bold rounded-xl shadow-sm focus:outline-none cursor-pointer"
+            >
+              <option value="all" className="bg-slate-900 text-white">All Active Events</option>
+              {activeEvents.filter(evt => !evt.ended_at).map(evt => (
+                <option key={evt.event_id} value={evt.event_id} className="bg-slate-900 text-white">
+                  {evt.name}
+                </option>
+              ))}
+            </select>
+
             <button 
               onClick={() => loadDashboard(true)}
               disabled={loading}
@@ -269,36 +412,38 @@ const Dashboard = () => {
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {[
           { 
-            label: isPersonnel ? "Your Center" : "Active Shelters", 
-            val: stats.totalCenters, 
-            icon: Home, 
+            label: isPersonnel ? "Available Slots" : "Active Shelters", 
+            val: isPersonnel ? displayAvailableSlots : displayTotalCenters, 
+            icon: isPersonnel ? DoorOpen : Home, 
             border: "border-l-4 border-indigo-500",
             color: "text-indigo-600",
-            sub: isPersonnel && assignedCenter ? assignedCenter.name : "Fully Operational"
+            sub: isPersonnel && assignedCenter 
+              ? `${displayAvailableSlots.toLocaleString()} slots available` 
+              : "Fully Operational"
           },
           { 
             label: isPersonnel ? "Center Occupancy" : "Total Occupancy", 
-            val: stats.totalOccupied, 
+            val: displayTotalOccupied, 
             icon: Users, 
             border: "border-l-4 border-violet-500",
             color: "text-violet-600",
-            sub: stats.totalCapacity > 0 ? `${stats.totalOccupied.toLocaleString()} / ${stats.totalCapacity.toLocaleString()} registered (${occupancyRate}%)` : "No slots registered"
+            sub: displayTotalCapacity > 0 ? `${displayTotalOccupied.toLocaleString()} / ${displayTotalCapacity.toLocaleString()} registered (${occupancyRate}%)` : "No slots registered"
           },
           { 
             label: isPersonnel ? "Center Concerns" : "Active Concerns", 
-            val: stats.openIssues, 
+            val: displayOpenIssues, 
             icon: AlertTriangle, 
-            border: stats.openIssues > 0 ? "border-l-4 border-rose-500 animate-pulse" : "border-l-4 border-emerald-500",
-            color: stats.openIssues > 0 ? "text-rose-600" : "text-emerald-600",
-            sub: stats.openIssues > 0 ? "Field Action Required" : "All Systems Clear"
+            border: displayOpenIssues > 0 ? "border-l-4 border-rose-500 animate-pulse" : "border-l-4 border-emerald-500",
+            color: displayOpenIssues > 0 ? "text-rose-600" : "text-emerald-600",
+            sub: displayOpenIssues > 0 ? "Field Action Required" : "All Systems Clear"
           },
           { 
             label: isPersonnel ? "Center Logistics" : "Pending Logistics", 
-            val: stats.pendingRequests, 
+            val: displayPendingRequests, 
             icon: Package, 
-            border: stats.pendingRequests > 0 ? "border-l-4 border-amber-500" : "border-l-4 border-emerald-500",
-            color: stats.pendingRequests > 0 ? "text-amber-600" : "text-emerald-600",
-            sub: stats.pendingRequests > 0 ? `${stats.pendingRequests} items awaiting dispatch` : "Fully Supplied"
+            border: displayPendingRequests > 0 ? "border-l-4 border-amber-500" : "border-l-4 border-emerald-500",
+            color: displayPendingRequests > 0 ? "text-amber-600" : "text-emerald-600",
+            sub: displayPendingRequests > 0 ? `${displayPendingRequests} items awaiting dispatch` : "Fully Supplied"
           },
         ].map((item, i) => (
           <div key={i} className={`bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 ${item.border} shadow-sm hover:shadow-md transition-all group flex flex-col justify-between h-28 sm:h-32`}>
@@ -354,11 +499,11 @@ const Dashboard = () => {
             
             {loading ? (
               <div className="h-[280px] flex items-end justify-between px-6 pb-2 pt-4 animate-pulse">
-                {[1, 2, 3, 4, 5, 6].map((bar) => (
-                  <div key={bar} className="w-14 flex flex-col items-center gap-3">
+                {MOCK_BARS.map((bar, idx) => (
+                  <div key={idx} className="w-14 flex flex-col items-center gap-3">
                     <div className="w-full flex items-end gap-1.5 h-44">
-                      <div className="w-1/2 bg-slate-100 rounded-t-md" style={{ height: `${30 + Math.random() * 60}%` }} />
-                      <div className="w-1/2 bg-slate-200 rounded-t-md" style={{ height: `${10 + Math.random() * 40}%` }} />
+                      <div className="w-1/2 bg-slate-100 rounded-t-md" style={{ height: bar.height1 }} />
+                      <div className="w-1/2 bg-slate-200 rounded-t-md" style={{ height: bar.height2 }} />
                     </div>
                     <div className="w-10 h-3 bg-slate-100 rounded-sm" />
                   </div>
@@ -509,7 +654,7 @@ const Dashboard = () => {
                 <span className="text-xs font-black">Request Supplies</span>
                 <span className="text-[8px] text-slate-400 mt-0.5">Order Logistics Packs</span>
               </Link>
-              <Link to="/households" className="flex flex-col items-center justify-center p-4 bg-indigo-50/30 hover:bg-indigo-50 text-indigo-700 border border-indigo-100/50 hover:border-indigo-200 rounded-2xl transition-all text-center group active:scale-95">
+              <Link to="/household-verification" className="flex flex-col items-center justify-center p-4 bg-indigo-50/30 hover:bg-indigo-50 text-indigo-700 border border-indigo-100/50 hover:border-indigo-200 rounded-2xl transition-all text-center group active:scale-95">
                 <Users size={18} className="mb-2 text-indigo-600 group-hover:-translate-y-0.5 transition-transform" />
                 <span className="text-xs font-black">Register Family</span>
                 <span className="text-[8px] text-slate-400 mt-0.5">Enroll Evacuee listings</span>
@@ -582,7 +727,7 @@ const Dashboard = () => {
             {/* Active Incident Concerns (Issues) */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Incidents ({recentIssues.length})</span>
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Incidents ({displayIssues.length})</span>
                 <Link to="/center-issue-reports" className="text-[8px] font-black text-indigo-500 hover:underline uppercase">View All</Link>
               </div>
 
@@ -599,14 +744,14 @@ const Dashboard = () => {
                     </div>
                   ))}
                 </div>
-              ) : recentIssues.length === 0 ? (
+              ) : displayIssues.length === 0 ? (
                 <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center gap-2.5">
                   <CheckCircle2 size={14} className="text-emerald-500" />
                   <span className="text-[9px] font-bold text-emerald-800 uppercase tracking-wide">No active center incidents</span>
                 </div>
               ) : (
                 <div className="space-y-2.5">
-                  {recentIssues.map((issue, idx) => {
+                  {displayIssues.map((issue, idx) => {
                     const CategoryIcon = getCategoryIcon(issue.category);
                     return (
                       <div key={issue.report_id || idx} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-start gap-2.5 hover:bg-slate-100/50 transition-colors">
@@ -630,7 +775,7 @@ const Dashboard = () => {
             {/* Logistics Needs (Requests) */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Logistics Needs ({recentRequests.length})</span>
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Logistics Needs ({displayRequests.length})</span>
                 <Link to="/resource-requests" className="text-[8px] font-black text-indigo-500 hover:underline uppercase">View All</Link>
               </div>
 
@@ -647,14 +792,14 @@ const Dashboard = () => {
                     </div>
                   ))}
                 </div>
-              ) : recentRequests.length === 0 ? (
+              ) : displayRequests.length === 0 ? (
                 <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center gap-2.5">
                   <CheckCircle2 size={14} className="text-emerald-500" />
                   <span className="text-[9px] font-bold text-emerald-800 uppercase tracking-wide">All supply requests fulfilled</span>
                 </div>
               ) : (
                 <div className="space-y-2.5">
-                  {recentRequests.map((req, idx) => (
+                  {displayRequests.map((req, idx) => (
                     <div key={req.request_id || idx} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-start gap-2.5 hover:bg-slate-100/50 transition-colors">
                       <div className="w-6 h-6 bg-slate-200 text-slate-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                         <Package size={12} />

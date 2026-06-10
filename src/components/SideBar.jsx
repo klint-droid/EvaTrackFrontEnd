@@ -45,7 +45,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         { icon: Home, label: "Centers", path: "/evacuation-centers", roles: ["evac_personnel", "evac_admin"] },
         { icon: Package, label: "Resources", path: "/resource-requests", roles: ["evac_personnel", "evac_admin"] },
         { icon: BarChart3, label: "Analytics", path: "/analytics", roles: ["evac_personnel", "evac_admin"] },
-        { icon: AlertTriangle, label: "Issue Reports", path: "/center-issue-reports", roles: ["evac_admin", "evac_personnel"] },
+        { icon: AlertTriangle, label: "Center Issues", path: "/center-issue-reports", roles: ["evac_admin", "evac_personnel"] },
         { icon: User, label: "Users", path: "/user-management", roles: ["evac_admin","super_admin"] },
     ];
 

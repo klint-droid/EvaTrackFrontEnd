@@ -94,7 +94,7 @@ export default function CenterModal({ isOpen, onClose, onSubmit, initialData }) 
     setPosition(pos); setLat(pos.lat); setLng(pos.lng);
     setLoadingAddr(true);
     try {
-      const addr = await reverseGeocode(pos.lat, pos.lng);
+      await reverseGeocode(pos.lat, pos.lng);
       setOsmAddress({ full_address: result.display_name });
     } catch (error) {
       console.error(error);

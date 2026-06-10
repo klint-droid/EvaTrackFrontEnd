@@ -25,6 +25,7 @@ import { deleteCenterIssueReport } from '../api/centerIssueReports/deleteCenterI
 
 import { getUser } from '../api/auth/getUser';
 import { getCenters } from '../api/evacuation/getCenters';
+import { getEvents } from '../api/events/getEvents';
 import { isAdmin, isSuperAdmin, isPersonnel } from '../utils/roles';
 
 const EMPTY_FORM = {
@@ -111,6 +112,8 @@ export default function CenterIssueReports() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [severityFilter, setSeverityFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [activeEvents, setActiveEvents] = useState([]);
+  const [selectedEventId, setSelectedEventId] = useState("all");
 
   const [message, setMessage] = useState(null);
 
@@ -150,6 +153,16 @@ export default function CenterIssueReports() {
     }
   };
 
+  const fetchActiveEvents = async () => {
+    try {
+      const res = await getEvents();
+      const list = res.data || res || [];
+      setActiveEvents(list);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const fetchReports = async () => {
     try {
       setLoading(true);
@@ -174,11 +187,50 @@ export default function CenterIssueReports() {
   useEffect(() => {
     fetchUser();
     fetchCenters();
+    fetchActiveEvents();
   }, []);
 
   useEffect(() => {
     fetchReports();
   }, [categoryFilter, severityFilter, statusFilter]);
+
+  const activeEventsList = activeEvents.filter(e => !e.ended_at);
+
+  const displayedReports = selectedEventId === "all_history"
+    ? reports
+    : selectedEventId === "all"
+      ? reports.filter(report => {
+          const reportTime = new Date(report.created_at).getTime();
+          return activeEventsList.some(evt => {
+            const startTime = new Date(evt.started_at).getTime();
+            const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+            return reportTime >= startTime && reportTime <= endTime;
+          });
+        })
+      : reports.filter(report => {
+          const evt = activeEvents.find(e => e.event_id === selectedEventId);
+          if (!evt) return false;
+          const reportTime = new Date(report.created_at).getTime();
+          const startTime = new Date(evt.started_at).getTime();
+          const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+          return reportTime >= startTime && reportTime <= endTime;
+        });
+
+  const openCount = selectedEventId === "all_history"
+    ? summary.open || 0
+    : displayedReports.filter(r => r.status === 'open').length;
+
+  const inProgressCount = selectedEventId === "all_history"
+    ? summary.in_progress || 0
+    : displayedReports.filter(r => r.status === 'in_progress').length;
+
+  const resolvedCount = selectedEventId === "all_history"
+    ? summary.resolved || 0
+    : displayedReports.filter(r => r.status === 'resolved').length;
+
+  const criticalCount = selectedEventId === "all_history"
+    ? summary.critical || 0
+    : displayedReports.filter(r => r.severity === 'critical').length;
 
   const openCreateModal = () => {
     setEditingReport(null);
@@ -332,7 +384,7 @@ export default function CenterIssueReports() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 text-left">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -350,7 +402,7 @@ export default function CenterIssueReports() {
             className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-2xl text-sm font-black hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-600/20"
           >
             <Plus size={18} />
-            New Issue Report
+            Report Issue
           </button>
         )}
       </div>
@@ -379,7 +431,7 @@ export default function CenterIssueReports() {
           </div>
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Open</p>
-            <p className="text-2xl font-black text-slate-900">{summary.open || 0}</p>
+            <p className="text-2xl font-black text-slate-900">{openCount}</p>
           </div>
         </div>
 
@@ -389,7 +441,7 @@ export default function CenterIssueReports() {
           </div>
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">In Progress</p>
-            <p className="text-2xl font-black text-slate-900">{summary.in_progress || 0}</p>
+            <p className="text-2xl font-black text-slate-900">{inProgressCount}</p>
           </div>
         </div>
 
@@ -399,7 +451,7 @@ export default function CenterIssueReports() {
           </div>
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Resolved</p>
-            <p className="text-2xl font-black text-slate-900">{summary.resolved || 0}</p>
+            <p className="text-2xl font-black text-slate-900">{resolvedCount}</p>
           </div>
         </div>
 
@@ -409,7 +461,7 @@ export default function CenterIssueReports() {
           </div>
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Critical</p>
-            <p className="text-2xl font-black text-slate-900">{summary.critical || 0}</p>
+            <p className="text-2xl font-black text-slate-900">{criticalCount}</p>
           </div>
         </div>
       </div>
@@ -420,7 +472,7 @@ export default function CenterIssueReports() {
           <div>
             <h2 className="text-sm font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
               <AlertTriangle size={17} className="text-blue-500" />
-              Issue Report Log
+              Evacuation Center Issue Reports
             </h2>
             <p className="text-xs text-slate-400 mt-1">
               Submitted reports are tracked by center and severity.
@@ -483,6 +535,20 @@ export default function CenterIssueReports() {
               ))}
             </select>
 
+            <select
+              value={selectedEventId}
+              onChange={(e) => setSelectedEventId(e.target.value)}
+              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none max-w-[200px] truncate"
+            >
+              <option value="all">All Active Events</option>
+              <option value="all_history">All Events (Including Ended)</option>
+              {activeEvents.map(event => (
+                <option key={event.event_id} value={event.event_id}>
+                  {event.name} {event.ended_at ? '(Ended)' : '(Active)'}
+                </option>
+              ))}
+            </select>
+
             <button
               onClick={fetchReports}
               className="px-3 py-2 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-slate-800"
@@ -519,14 +585,14 @@ export default function CenterIssueReports() {
             <tbody className="divide-y divide-slate-50">
               {loading ? (
                 [...Array(5)].map((_, i) => <RowSkeleton key={i} />)
-              ) : reports.length === 0 ? (
+              ) : displayedReports.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="px-6 py-14 text-center text-slate-400 font-bold">
                     No issue reports found.
                   </td>
                 </tr>
               ) : (
-                reports.map(report => {
+                displayedReports.map(report => {
                   const CategoryIcon = getCategoryIcon(report.category);
 
                   return (

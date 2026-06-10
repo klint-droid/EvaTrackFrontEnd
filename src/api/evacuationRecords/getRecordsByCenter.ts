@@ -7,11 +7,13 @@ export interface GetRecordsByCenterResponse {
 
 export const getRecordsByCenter = async (
   centerId: string, 
-  statusId: number | null = null
+  statusId: number | null = null,
+  eventId: string | null = null
 ): Promise<GetRecordsByCenterResponse> => {
   const query = new URLSearchParams({
     center_id: centerId,
-    ...(statusId ? { household_status_id: String(statusId) } : {})
+    ...(statusId ? { household_status_id: String(statusId) } : {}),
+    ...(eventId ? { event_id: eventId } : {})
   }).toString();
   
   const res = await API.get<GetRecordsByCenterResponse>(`/api/evacuations?${query}`);

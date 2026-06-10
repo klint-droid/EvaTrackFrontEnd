@@ -29,6 +29,27 @@ const renderInsideLabel = (props) => {
     );
 };
 
+// Custom tooltip to show raw values
+const CustomTooltip = ({ active, payload, label }) => {
+    if (!active || !payload || !payload.length) return null;
+    const entry = payload[0].payload;
+    return (
+        <div className="bg-white border border-slate-200 rounded-xl shadow-lg p-4 text-sm">
+            <p className="font-bold text-slate-800 mb-2">{label}</p>
+            <div className="flex items-center gap-2 mb-1">
+                <span className="w-3 h-3 rounded-sm bg-[#4472C4] inline-block" />
+                <span className="text-slate-600">Capacity:</span>
+                <span className="font-bold text-slate-800">{entry?.rawCapacity}</span>
+            </div>
+            <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-sm bg-[#ED7D31] inline-block" />
+                <span className="text-slate-600">Occupancy:</span>
+                <span className="font-bold text-slate-800">{entry?.rawCount}</span>
+            </div>
+        </div>
+    );
+};
+
 const CapacityChart = ({ data }) => {
     // Transform data: compute percentages for stacked view
     // Bottom segment = capacity, Top segment = current occupancy
@@ -44,27 +65,6 @@ const CapacityChart = ({ data }) => {
             rawCount: center.current,
         };
     });
-
-    // Custom tooltip to show raw values
-    const CustomTooltip = ({ active, payload, label }) => {
-        if (!active || !payload || !payload.length) return null;
-        const entry = chartData.find((d) => d.name === label);
-        return (
-            <div className="bg-white border border-slate-200 rounded-xl shadow-lg p-4 text-sm">
-                <p className="font-bold text-slate-800 mb-2">{label}</p>
-                <div className="flex items-center gap-2 mb-1">
-                    <span className="w-3 h-3 rounded-sm bg-[#4472C4] inline-block" />
-                    <span className="text-slate-600">Capacity:</span>
-                    <span className="font-bold text-slate-800">{entry?.rawCapacity}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-sm bg-[#ED7D31] inline-block" />
-                    <span className="text-slate-600">Occupancy:</span>
-                    <span className="font-bold text-slate-800">{entry?.rawCount}</span>
-                </div>
-            </div>
-        );
-    };
 
     return (
         <ResponsiveContainer width="100%" height="100%">

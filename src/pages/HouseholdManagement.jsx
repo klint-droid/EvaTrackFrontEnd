@@ -10,7 +10,7 @@ import {
     Users,
     X
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 
@@ -18,21 +18,25 @@ import { getCenters } from "../api/evacuation/getCenters";
 import { deleteHousehold } from "../api/households/deleteHousehold";
 import { getHouseholds } from "../api/households/getHouseholds";
 import { updateHousehold } from "../api/households/updateHousehold";
+import { getEvents } from "../api/events/getEvents";
 import { isAdmin, isSuperAdmin } from "../utils/roles";
 
 export default function HouseholdManagement() {
     const navigate = useNavigate();
+    const isMounted = useRef(false);
 
     const [households, setHouseholds] = useState([]);
     const [centers, setCenters] = useState([]);
+    const [events, setEvents] = useState([]);
     const [pagination, setPagination] = useState({});
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [editingHousehold, setEditingHousehold] = useState(null);
 
     const [filters, setFilters] = useState({
         q: '',
         status: '',
         center_id: '',
+        event_id: '',
     });
     const [searchInput, setSearchInput] = useState('');
 
@@ -62,6 +66,7 @@ export default function HouseholdManagement() {
             if (activeFilters.q) params.q = activeFilters.q;
             if (activeFilters.status) params.status = activeFilters.status;
             if (activeFilters.center_id) params.center_id = activeFilters.center_id;
+            if (activeFilters.event_id) params.event_id = activeFilters.event_id;
 
             const res = await getHouseholds(page, params);
             setHouseholds(res.data);
@@ -83,13 +88,28 @@ export default function HouseholdManagement() {
         }
     };
 
+    const fetchEvents = async () => {
+        try {
+            const res = await getEvents();
+            const list = res.data || [];
+            setEvents(list);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     useEffect(() => {
-        fetchHouseholds();
+        fetchHouseholds(1, filters);
+        fetchEvents();
         fetchCenters();
     }, []);
 
     // debounced search
     useEffect(() => {
+        if (!isMounted.current) {
+            isMounted.current = true;
+            return;
+        }
         const timeout = setTimeout(() => {
             const newFilters = { ...filters, q: searchInput };
             setFilters(newFilters);
@@ -139,18 +159,27 @@ export default function HouseholdManagement() {
         }
     }
     const getStatusBadge = (household) => {
-        const isEvacuated = !!household.current_evacuation;
-        return isEvacuated
-            ? 'bg-green-50 text-green-600 border-green-100'
-            : 'bg-slate-50 text-slate-500 border-slate-100';
+        const currentEvac = household.current_evacuation || household.currentEvacuation;
+        const isEvacuated = currentEvac && (currentEvac.household_status_id === 2 || currentEvac.household_status_id === "2");
+        const isReturned = currentEvac && (currentEvac.household_status_id === 6 || currentEvac.household_status_id === "6");
+
+        if (isEvacuated) return 'bg-green-50 text-green-600 border-green-100';
+        if (isReturned) return 'bg-blue-50 text-blue-600 border-blue-100';
+        return 'bg-slate-50 text-slate-500 border-slate-100';
     };
 
     const getStatusLabel = (household) => {
-        return household.current_evacuation ? 'Evacuated' : 'Not Evacuated';
+        const currentEvac = household.current_evacuation || household.currentEvacuation;
+        const isEvacuated = currentEvac && (currentEvac.household_status_id === 2 || currentEvac.household_status_id === "2");
+        const isReturned = currentEvac && (currentEvac.household_status_id === 6 || currentEvac.household_status_id === "6");
+
+        if (isEvacuated) return 'Evacuated';
+        if (isReturned) return 'Returned';
+        return 'Not Evacuated';
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="space-y-6 animate-in fade-in duration-500 text-left">
 
             {/* HEADER */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -179,6 +208,18 @@ export default function HouseholdManagement() {
                 </div>
                 <div className="flex gap-2">
                     <select
+                        value={filters.event_id}
+                        onChange={e => handleFilterChange('event_id', e.target.value)}
+                        className="w-44 px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:border-blue-300 transition-colors"
+                    >
+                        <option value="">All Events</option>
+                        {events.map(evt => (
+                            <option key={evt.event_id} value={evt.event_id}>
+                                {evt.name} {evt.ended_at ? "(Ended)" : "(Active)"}
+                            </option>
+                        ))}
+                    </select>
+                    <select
                         value={filters.status}
                         onChange={e => handleFilterChange('status', e.target.value)}
                         className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:border-blue-300 transition-colors"
@@ -190,7 +231,7 @@ export default function HouseholdManagement() {
                     <select
                         value={filters.center_id}
                         onChange={e => handleFilterChange('center_id', e.target.value)}
-                        className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:border-blue-300 transition-colors"
+                        className="w-48 px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:border-blue-300 transition-colors"
                     >
                         <option value="">All Centers</option>
                         {centers.map(c => (

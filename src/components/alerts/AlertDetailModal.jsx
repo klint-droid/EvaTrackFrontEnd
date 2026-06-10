@@ -38,15 +38,6 @@ export default function AlertDetailModal({ notifId, onClose }) {
         return map[key] || map.low;
     };
 
-    const urgencyBar = (key) => {
-        const map = {
-            critical: 'bg-red-500',
-            high:     'bg-orange-500',
-            medium:   'bg-yellow-400',
-            low:      'bg-green-500',
-        };
-        return map[key] || 'bg-slate-300';
-    };
 
     /* delivery log counts */
     const logStats = alert?.logs ? {
