@@ -141,7 +141,9 @@ export default function VerifyHousehold() {
             if (nested && typeof nested === "object" && nested.household_id) {
               parsed = nested;
             }
-          } catch (_) {}
+          } catch {
+            // Ignore parsing errors for nested JSON
+          }
         }
         
         if (parsed.household_id) {
@@ -149,7 +151,7 @@ export default function VerifyHousehold() {
           qrParsed = parsed; // retain full QR payload for fallback use
         }
       }
-    } catch (_) {
+    } catch {
       // Not JSON — treat as a plain household ID string
     }
 
