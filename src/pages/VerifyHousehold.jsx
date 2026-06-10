@@ -132,10 +132,22 @@ export default function VerifyHousehold() {
     let householdId = rawScan;
     let qrParsed = null;
     try {
-      const parsed = JSON.parse(rawScan);
-      if (parsed?.household_id) {
-        householdId = parsed.household_id;
-        qrParsed = parsed; // retain full QR payload for fallback use
+      let parsed = JSON.parse(rawScan);
+      if (parsed && typeof parsed === "object") {
+        // Handle double-encoded JSON where household_id is stringified JSON
+        if (parsed.household_id) {
+          try {
+            const nested = JSON.parse(parsed.household_id);
+            if (nested && typeof nested === "object" && nested.household_id) {
+              parsed = nested;
+            }
+          } catch (_) {}
+        }
+        
+        if (parsed.household_id) {
+          householdId = parsed.household_id;
+          qrParsed = parsed; // retain full QR payload for fallback use
+        }
       }
     } catch (_) {
       // Not JSON — treat as a plain household ID string

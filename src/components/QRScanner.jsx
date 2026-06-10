@@ -3,6 +3,8 @@ import { useEffect, useRef } from "react";
 
 function QRScanner({ onScan }) {
   const scannerRef = useRef(null);
+  const isScanningRef = useRef(false);
+  const isStoppingRef = useRef(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -35,17 +37,29 @@ function QRScanner({ onScan }) {
             fps: 10,
             qrbox: 250,
           },
-          (decodedText) => {
-            if (!isMounted) return;
+          async (decodedText) => {
+            if (!isMounted || isStoppingRef.current) return;
 
             console.log("Scanned:", decodedText);
+            isStoppingRef.current = true;
 
-            onScan(decodedText);
+            // Stop scanner first while DOM is still active
+            try {
+              if (isScanningRef.current) {
+                await scanner.stop();
+                isScanningRef.current = false;
+              }
+            } catch (stopErr) {
+              console.warn("Error stopping scanner on scan:", stopErr);
+            }
 
-            scanner.stop().catch(() => {});
+            if (isMounted) {
+              onScan(decodedText);
+            }
           },
           () => {}
         );
+        isScanningRef.current = true;
       } catch (err) {
         console.error("QR Scanner Error:", err);
       }
@@ -59,10 +73,24 @@ function QRScanner({ onScan }) {
       clearTimeout(timeout);
 
       if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {});
+        const scanner = scannerRef.current;
+        if (isScanningRef.current && !isStoppingRef.current) {
+          isStoppingRef.current = true;
+          try {
+            scanner.stop()
+              .then(() => {
+                isScanningRef.current = false;
+              })
+              .catch((err) => {
+                console.warn("Error stopping scanner on unmount promise:", err);
+              });
+          } catch (err) {
+            console.warn("Synchronous error stopping scanner on unmount:", err);
+          }
+        }
       }
     };
-  }, []);
+  }, [onScan]);
 
   return <div id="reader" style={{ width: "300px" }} />;
 }
