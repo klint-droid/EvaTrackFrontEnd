@@ -45,6 +45,7 @@ export default function VerifyHousehold() {
   const [scannedData, setScannedData] = useState(null);
   const [memberCount, setMemberCount] = useState("");
   const [selectedMembers, setSelectedMembers] = useState([]);
+  const [modalError, setModalError] = useState(null); // Error shown inside the admission modal
 
   const records = Array.isArray(results) ? results : (Array.isArray(results?.data) ? results.data : (results?.data?.data || []));
 
@@ -160,6 +161,7 @@ export default function VerifyHousehold() {
         setSelectedMembers(memberIds);
         // FIX #3: Show success notification before opening the modal
         showMessage("QR scanned successfully. Confirm admission below.");
+        setModalError(null);
         setAssignmentModal(true);
       } else {
         // FIX #2: Path B: household not returned by search — build minimal object from QR data
@@ -175,6 +177,7 @@ export default function VerifyHousehold() {
         setMemberCount(1);
         setSelectedMembers([]);
         showMessage("QR scanned. Confirm member count to proceed.");
+        setModalError(null);
         setAssignmentModal(true);
       }
     } catch (err) {
@@ -208,12 +211,12 @@ export default function VerifyHousehold() {
     setScannedData({
       household,
     });
-
     setMemberCount(household?.member_count || 1);
     const memberIds = Array.isArray(household?.members) 
       ? household.members.map(m => m.member_id) 
       : [];
     setSelectedMembers(memberIds);
+    setModalError(null);
     setAssignmentModal(true);
   };
 
@@ -251,6 +254,7 @@ export default function VerifyHousehold() {
         household,
       });
 
+      setModalError(null);
       setAssignmentModal(true);
       setHeadName("");
     } catch (err) {
@@ -265,25 +269,33 @@ export default function VerifyHousehold() {
 
     const hasMembers = scannedData?.household?.members?.length > 0;
 
+    // Pre-flight: QR path requires the household to have members registered in the system
+    if (scannedData?.isQR && !hasMembers) {
+      setModalError("This household has no registered members. Please add household members first before scanning in.");
+      return;
+    }
+
     if (hasMembers && selectedMembers.length === 0) {
-      showMessage("Please select at least one member to evacuate.", "error");
+      setModalError("Please select at least one member to evacuate.");
       return;
     }
 
     if (!hasMembers && (!memberCount || Number(memberCount) <= 0)) {
-      showMessage("Please enter number of members.", "error");
+      setModalError("Please enter the number of members.");
       return;
     }
 
     if (!user?.assigned_center_id) {
-      showMessage("You are not assigned to an evacuation center.", "error");
+      setModalError("You are not assigned to an evacuation center.");
       return;
     }
 
     if (!scannedData?.household?.household_id) {
-      showMessage("No household selected.", "error");
+      setModalError("No household selected.");
       return;
     }
+
+    setModalError(null);
 
     setLoading(true);
 
@@ -313,7 +325,9 @@ export default function VerifyHousehold() {
 
       navigateToHouseholdDetail(payload);
     } catch (err) {
-      showMessage(err.response?.data?.message || "Admission failed.", "error");
+      const errMsg = err.response?.data?.message || "Admission failed.";
+      // Show error inside the modal so it's visible, not hidden behind the overlay
+      setModalError(errMsg);
     } finally {
       setLoading(false);
     }
@@ -328,6 +342,7 @@ export default function VerifyHousehold() {
     setAssignmentModal(false);
     setScannedData(null);
     setSelectedMembers([]);
+    setModalError(null);
   };
 
   return (
@@ -640,6 +655,13 @@ export default function VerifyHousehold() {
               </div>
 
               <div className="p-6 space-y-5">
+                {/* Error feedback visible inside the modal */}
+                {modalError && (
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-red-50 border border-red-100 animate-in zoom-in-95 duration-200">
+                    <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs font-bold text-red-600 leading-snug">{modalError}</p>
+                  </div>
+                )}
                 <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
                   <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">
                     Household Identified
