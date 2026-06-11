@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../components/SideBar";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Bell, User, LogOut, Settings, Home, ChevronRight, Menu } from "lucide-react";
@@ -7,8 +7,16 @@ import { logout } from "../api/auth/logout";
 const DashboardLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("user") || "{}"));
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    useEffect(() => {
+        const handleStorageChange = () => {
+            setUser(JSON.parse(localStorage.getItem("user") || "{}"));
+        };
+        window.addEventListener("storage", handleStorageChange);
+        return () => window.removeEventListener("storage", handleStorageChange);
+    }, []);
 
     // Format the path for the breadcrumb (e.g., /resource-monitoring -> Resource Monitoring)
     const getPageTitle = (pathname) => {
@@ -77,26 +85,6 @@ const DashboardLayout = () => {
 
                     {/* RIGHT: Actions & Profile */}
                     <div className="flex items-center space-x-1 sm:space-x-2">
-                        
-                        {/* Status Indicator (Pulse effect for emergency systems) */}
-                        <div className="hidden lg:flex items-center px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100 mr-4">
-                            <span className="relative flex h-2 w-2 mr-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
-                            </span>
-                            <span className="text-[10px] font-bold uppercase tracking-wider">Live Monitoring</span>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-1">
-                            <button className="relative p-2 sm:p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">
-                                <Bell size={18} />
-                                <span className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                            </button>
-                            <button className="p-2 sm:p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors hidden sm:block">
-                                <Settings size={18} />
-                            </button>
-                        </div>
 
                         {/* Profile Dropdown Area */}
                         <div className="flex items-center pl-2 sm:pl-4 ml-1 sm:ml-2 border-l border-slate-200 gap-2 sm:gap-3">
@@ -115,14 +103,21 @@ const DashboardLayout = () => {
                                 </div>
                                 
                                 {/* Logout Dropdown */}
-                                <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 p-1 z-50">
-                                    <div className="px-4 py-2 border-b border-slate-50 md:hidden">
-                                        <p className="text-xs font-bold text-slate-800">{user?.name}</p>
-                                        <p className="text-[10px] text-slate-500 uppercase">{user?.role}</p>
+                                 <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 p-1 z-50">
+                                    <div className="px-4 py-2 border-b border-slate-50">
+                                        <p className="text-xs font-bold text-slate-800 truncate">{user?.name || "Command Center"}</p>
+                                        <p className="text-[10px] text-slate-500 uppercase truncate">{user?.role?.replace('_', ' ') || "Operator"}</p>
                                     </div>
                                     <button 
+                                        onClick={() => navigate("/profile")}
+                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors mt-1"
+                                    >
+                                        <User size={16} className="text-slate-400" />
+                                        <span className="font-semibold">My Profile</span>
+                                    </button>
+                                    <button 
                                         onClick={handleLogout}
-                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors border-t border-slate-50 mt-1"
                                     >
                                         <LogOut size={16} />
                                         <span className="font-semibold">Secure Logout</span>

@@ -222,8 +222,8 @@ export default function EvacuationList() {
                   <div className="flex justify-between items-start mb-4">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-300 ${
                       isAssigned
-                        ? "bg-blue-600 text-white"
-                        : "bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white"
+                        ? "bg-green-600 text-white"
+                        : "bg-blue-50 text-blue-600 group-hover:bg-green-600 group-hover:text-white"
                     }`}>
                       <Home size={20} />
                     </div>

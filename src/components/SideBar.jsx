@@ -47,6 +47,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         { icon: BarChart3, label: "Analytics", path: "/analytics", roles: ["evac_personnel", "evac_admin"] },
         { icon: AlertTriangle, label: "Center Issues", path: "/center-issue-reports", roles: ["evac_admin", "evac_personnel"] },
         { icon: User, label: "Users", path: "/user-management", roles: ["evac_admin","super_admin"] },
+        { icon: User, label: "My Profile", path: "/profile", roles: ["evac_personnel", "evac_admin", "super_admin"] },
     ];
 
     // On mobile, clicking a nav link should also close the drawer
@@ -112,7 +113,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                                     EVA<span className="text-blue-500">TRACK</span>
                                 </span>
                                 <span className="text-[10px] text-slate-500 font-medium tracking-[0.2em] -mt-1 uppercase">
-                                    Precision Safety
+                                    Streamline Evacuation Process
                                 </span>
                             </div>
                         )}

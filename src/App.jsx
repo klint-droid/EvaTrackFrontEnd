@@ -23,6 +23,7 @@ import HouseholdDetail from './pages/HouseholdDetail';
 import ResourceRequests from './pages/ResourceRequests';
 import CenterIssueReports from './pages/CenterIssueReports';
 import Analytics from "./pages/Analytics";
+import Profile from "./pages/Profile";
 
 const PublicLayout = () => {
   return (
@@ -69,6 +70,7 @@ function App() {
           <Route path="/center-issue-reports" element={<CenterIssueReports />} />
 
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<h1>404</h1>} />
         </Route>
 
