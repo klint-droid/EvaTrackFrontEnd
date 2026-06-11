@@ -292,6 +292,7 @@ const UserManagement = () => {
               <option value="">All Roles</option>
               <option value="evac_personnel">Personnel</option>
               <option value="evac_admin">Admin</option>
+              {isSuperAdminUser && <option value="super_admin">Super Admin</option>}
             </select>
           </div>
         </div>
