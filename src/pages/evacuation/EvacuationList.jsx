@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Home, MapPin, Users, Plus, Search,
-  ChevronRight, DoorOpen, AlertCircle, UserCheck
+  ChevronRight, DoorOpen, AlertCircle, UserCheck, ShieldAlert, Eye
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -65,6 +65,7 @@ export default function EvacuationList() {
   const [deleteOpen, setDeleteOpen]   = useState(false);
   const [selected, setSelected]       = useState(null);
   const [sortBy, setSortBy]           = useState("name");
+  const [activeTab, setActiveTab]     = useState("assigned");
 
   const canCreate = isAdmin() || isSuperAdmin();
   const canEdit   = isAdmin() || isSuperAdmin();
@@ -100,16 +101,25 @@ export default function EvacuationList() {
   };
 
   const assignedCenterId = getAssignedCenterId();
+  const personnelWithCenter = isPersonnel() && assignedCenterId;
 
   const processedCenters = centers
     .filter((c) => {
       const addrStr = (c.osm_address || "").toLowerCase();
       const matchesSearch = `${c.name} ${addrStr}`.toLowerCase().includes(search.toLowerCase());
+
+      // Tab-based filtering for personnel
+      if (personnelWithCenter) {
+        const isMine = String(c.evacuation_center_id) === String(assignedCenterId);
+        if (activeTab === "assigned") return matchesSearch && isMine;
+        if (activeTab === "others")   return matchesSearch && !isMine;
+      }
+
       return matchesSearch;
     })
     .sort((a, b) => {
-      // 1. Force the assigned center to the top
-      if (assignedCenterId) {
+      // 1. Force the assigned center to the top (for admin / all-centers tab)
+      if (assignedCenterId && !personnelWithCenter) {
         const aAssigned = String(a.evacuation_center_id) === String(assignedCenterId);
         const bAssigned = String(b.evacuation_center_id) === String(assignedCenterId);
         if (aAssigned && !bAssigned) return -1;
@@ -192,6 +202,29 @@ export default function EvacuationList() {
           >
             Launch Workstation <ChevronRight size={14} />
           </Link>
+        </div>
+      )}
+
+      {/* PERSONNEL TABS */}
+      {personnelWithCenter && (
+        <div className="flex bg-slate-100/80 p-1 rounded-2xl border border-slate-200/60 gap-1 w-full sm:w-auto sm:max-w-md">
+          {[
+            { key: "assigned", label: "My Assigned Center", icon: <UserCheck size={13} strokeWidth={2.5} /> },
+            { key: "others",   label: "Other Centers",      icon: <Eye size={13} strokeWidth={2.5} /> },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold rounded-xl transition-all duration-200 ${
+                activeTab === tab.key
+                  ? "bg-white text-slate-900 shadow-sm border border-slate-200/80 font-black"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
         </div>
       )}
 
@@ -308,12 +341,20 @@ export default function EvacuationList() {
                       </button>
                     )}
                   </div>
-                  <Link
-                    to={`/evacuation-centers/${c.evacuation_center_id}`}
-                    className="flex items-center gap-1 text-[11px] font-black text-slate-600 uppercase tracking-tighter hover:text-blue-600"
-                  >
-                    Manage <ChevronRight size={14} />
-                  </Link>
+                  {/* Personnel: show Manage only for assigned center, note for others */}
+                  {personnelWithCenter && !isAssigned ? (
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 italic">
+                      <ShieldAlert size={12} className="text-slate-400" />
+                      View only — not assigned
+                    </span>
+                  ) : (
+                    <Link
+                      to={`/evacuation-centers/${c.evacuation_center_id}`}
+                      className="flex items-center gap-1 text-[11px] font-black text-slate-600 uppercase tracking-tighter hover:text-blue-600"
+                    >
+                      Manage <ChevronRight size={14} />
+                    </Link>
+                  )}
                 </div>
               </div>
             );

@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import {
     Bell, Plus, Eye, Trash2, Clock, RefreshCw,
     Loader2, ChevronLeft, ChevronRight, MoreHorizontal,
-    Activity, CheckCircle, TrendingUp, Users, Search, Filter, Radio, MessageSquare, Smartphone
+    Activity, CheckCircle, TrendingUp, Users, Search, Filter, Radio, MessageSquare, Smartphone, CloudLightning
 } from 'lucide-react';
 
 import { getAlerts } from '../api/alerts/getAlerts';
 import { cancelAlert } from '../api/alerts/cancelAlert';
+import { getEvents } from '../api/events/getEvents';
 import { isAdmin, isPersonnel } from '../utils/roles';
 import CreateAlertModal from '../components/alerts/CreateAlertModal';
 import AlertDetailModal from '../components/alerts/AlertDetailModal';
@@ -18,6 +19,8 @@ export default function EvacuationAlerts() {
     const [createModal, setCreateModal] = useState(false);
     const [detailId, setDetailId] = useState(null);
     const [recentAlerts, setRecentAlerts] = useState([]);
+    const [events, setEvents] = useState([]);
+    const [selectedEvent, setSelectedEvent] = useState('');
     
     // Search & Filter state
     const [searchTerm, setSearchTerm] = useState('');
@@ -30,7 +33,7 @@ export default function EvacuationAlerts() {
     const fetchAlerts = async (page = 1) => {
         setLoading(true);
         try {
-            const res = await getAlerts(page);
+            const res = await getAlerts(page, selectedEvent || undefined);
             setAlerts(res.data || []);
             setPagination(res);
             if (page === 1) setRecentAlerts(res.data?.slice(0, 5) || []);
@@ -41,7 +44,11 @@ export default function EvacuationAlerts() {
         }
     };
 
-    useEffect(() => { fetchAlerts(); }, []);
+    useEffect(() => {
+        getEvents().then(res => setEvents(res.data || []));
+    }, []);
+
+    useEffect(() => { fetchAlerts(); }, [selectedEvent]);
 
     const handleCancel = async (id) => {
         if (!confirm('Cancel this scheduled alert?')) return;
@@ -233,16 +240,33 @@ export default function EvacuationAlerts() {
 
             {/* ── Command & Filter Control Toolbar ── */}
             <div className="bg-white border border-slate-100 p-4 rounded-3xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-                {/* Search */}
-                <div className="relative w-full sm:max-w-xs">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                    <input
-                        type="text"
-                        placeholder="Search broadcast logs..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 transition-all text-slate-700 placeholder-slate-400"
-                    />
+                {/* Search + Event Filter */}
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <div className="relative w-full sm:max-w-xs">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                        <input
+                            type="text"
+                            placeholder="Search broadcast logs..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 transition-all text-slate-700 placeholder-slate-400"
+                        />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <CloudLightning size={11} className="text-slate-400" />
+                        <select
+                            value={selectedEvent}
+                            onChange={e => setSelectedEvent(e.target.value)}
+                            className="px-3 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-bold outline-none focus:ring-2 focus:ring-blue-500/10 transition-all text-slate-600"
+                        >
+                            <option value="">All Events</option>
+                            {events.map(e => (
+                                <option key={e.event_id} value={e.event_id}>
+                                    {e.name}{e.ended_at ? ' (Ended)' : ''}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 {/* Dropdown Filters */}
@@ -290,13 +314,14 @@ export default function EvacuationAlerts() {
                     </select>
 
                     {/* Reset */}
-                    {(searchTerm || urgencyFilter || statusFilter || channelFilter) && (
+                    {(searchTerm || urgencyFilter || statusFilter || channelFilter || selectedEvent) && (
                         <button
                             onClick={() => {
                                 setSearchTerm('');
                                 setUrgencyFilter('');
                                 setStatusFilter('');
                                 setChannelFilter('');
+                                setSelectedEvent('');
                             }}
                             className="text-[10px] font-black uppercase text-blue-600 hover:text-blue-700 tracking-wider transition-all pl-2"
                         >
@@ -312,7 +337,7 @@ export default function EvacuationAlerts() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
-                                {['Broadcast Message', 'Urgency', 'Delivery Channel', 'Total Targets', 'Delivery Status', 'Logged At', 'Command'].map(h => (
+                                {['Broadcast Message', 'Event', 'Urgency', 'Delivery Channel', 'Total Targets', 'Delivery Status', 'Logged At', 'Command'].map(h => (
                                     <th key={h} className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">
                                         {h}
                                     </th>
@@ -322,7 +347,7 @@ export default function EvacuationAlerts() {
                         <tbody className="divide-y divide-slate-50">
                             {loading ? (
                                 <tr>
-                                    <td colSpan="7" className="py-24 text-center">
+                                    <td colSpan="8" className="py-24 text-center">
                                         <div className="flex flex-col items-center gap-2">
                                             <Loader2 className="animate-spin text-slate-300" size={32} />
                                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">querying system registry...</span>
@@ -331,7 +356,7 @@ export default function EvacuationAlerts() {
                                 </tr>
                             ) : filteredAlerts.length === 0 ? (
                                 <tr>
-                                    <td colSpan="7" className="py-24 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                    <td colSpan="8" className="py-24 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">
                                         No matching dispatches found.
                                     </td>
                                 </tr>
@@ -344,6 +369,15 @@ export default function EvacuationAlerts() {
                                         <p className="text-[9px] text-slate-400 font-mono mt-1 font-bold">
                                             UID: {alert.notif_id}
                                         </p>
+                                    </td>
+                                    <td className="px-6 py-4.5">
+                                        {alert.event ? (
+                                            <span className="px-2.5 py-1 text-[8px] font-black uppercase tracking-widest rounded-full border bg-sky-500/10 border-sky-500/25 text-sky-600">
+                                                {alert.event.name}
+                                            </span>
+                                        ) : (
+                                            <span className="text-[9px] text-slate-400 font-bold">—</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4.5">
                                         <span className={`px-2.5 py-1 text-[8px] font-black uppercase tracking-widest rounded-full border ${getUrgencyStyle(alert.urgency_level?.urgency_key)}`}>
