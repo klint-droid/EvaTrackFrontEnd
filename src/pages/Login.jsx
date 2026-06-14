@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { AlertCircle, ArrowLeft, Eye, EyeOff, ShieldCheck, Lock, Mail, Globe, Award, Radio } from "lucide-react";
+import { AlertCircle, ArrowLeft, Eye, EyeOff, ShieldCheck, Lock, Mail, Globe, Award } from "lucide-react";
 import API from "../api";
 import placeImage from "../assets/place.png";
+import evaTrackLogo from "../assets/evatrack_logo_stacked.svg";
 
 function Login() {
   const [userId, setUserId] = useState("");
@@ -55,24 +56,13 @@ function Login() {
       <section className="w-full md:w-[45%] lg:w-[40%] xl:w-[35%] flex flex-col justify-between bg-white px-6 sm:px-10 py-10 shadow-2xl z-10 relative">
         
         {/* Top Header Row */}
-        <div className="flex items-center justify-between">
-          {/* Logo Brand */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#0B1530] rounded-xl flex items-center justify-center shadow-md">
-              <ShieldCheck className="w-6 h-6 text-amber-400" />
-            </div>
-            <div className="text-left">
-              <div className="text-[17px] font-black text-slate-800 leading-none tracking-tight">EvaTrack</div>
-              <div className="text-[8.5px] font-bold uppercase tracking-widest text-slate-400 mt-1">Crisis Management</div>
-            </div>
-          </div>
-
+        <div className="flex items-center justify-start">
           {/* Portal Link */}
           <Link
             to="/"
-            className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 hover:text-slate-800 transition-colors uppercase tracking-wider"
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors uppercase tracking-wider group"
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
+            <ArrowLeft className="h-4 w-4 text-slate-400 group-hover:text-slate-700" />
             Portal
           </Link>
         </div>
@@ -206,7 +196,7 @@ function Login() {
         {/* Bottom Secured Footer */}
         <div className="text-center pt-8 border-t border-slate-100">
           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3">
-            Secured by National Disaster Management Authority
+            Secured by Barangay Disaster Management Authority
           </p>
           <div className="flex items-center justify-center gap-4 text-slate-400">
             <ShieldCheck size={16} />
@@ -218,69 +208,50 @@ function Login() {
       </section>
 
       {/* ── RIGHT COLUMN: BACKDROP IMAGE AND METRICS OVERLAY ── */}
-      <section className="hidden md:flex md:w-[55%] lg:w-[60%] xl:w-[65%] bg-slate-950 relative overflow-hidden items-center justify-center p-12 lg:p-20 select-none">
+      <section className="hidden md:flex md:w-[55%] lg:w-[60%] xl:w-[65%] bg-[#081424] relative overflow-hidden items-center justify-center p-12 lg:p-20 select-none">
         
         {/* Background Image of coastal area */}
         <img
           src={placeImage}
           alt="Backdrop image showing crisis planning location"
-          className="absolute inset-0 w-full h-full object-cover opacity-55 pointer-events-none mix-blend-luminosity z-0"
+          className="absolute inset-0 w-full h-full object-cover opacity-50 pointer-events-none mix-blend-luminosity z-0"
         />
 
         {/* Smooth Dark Gradient Overlays for maximum text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/60 to-transparent pointer-events-none z-10" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/70 to-transparent pointer-events-none z-10" />
         <div className="absolute inset-0 bg-slate-950/20 pointer-events-none z-10" />
 
         {/* Content Container */}
-        <div className="relative max-w-[520px] w-full text-left flex flex-col items-start z-20">
+        <div className="relative max-w-[480px] w-full text-center flex flex-col items-center z-20">
           
-          {/* Glassmorphic Brand Metric Card */}
-          <div className="bg-slate-950/60 border border-white/[0.08] backdrop-blur-xl p-8 rounded-2xl shadow-2xl relative border-l-4 border-l-amber-500 w-full transform hover:scale-[1.01] transition-transform duration-500">
+          {/* Centered Logo Card */}
+          <div className="bg-slate-950/60 border border-white/[0.08] backdrop-blur-xl p-8 sm:p-10 rounded-[2.5rem] shadow-2xl flex flex-col items-center justify-center w-full transform hover:scale-[1.01] transition-transform duration-500">
             
-            <div className="flex items-center gap-3">
-              <Globe className="text-amber-400 w-6 h-6 animate-pulse" />
-              <h3 className="text-white font-extrabold text-[15px] sm:text-base tracking-wide uppercase">
-                National Disaster Coordination
-              </h3>
-            </div>
+            <img
+              src={evaTrackLogo}
+              alt="EvaTrack logo"
+              className="h-28 w-auto object-contain mb-1"
+            />
+            
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-4">
+              Barangay Evacuation System
+            </span>
+            
+            <div className="h-[1px] w-32 bg-gradient-to-r from-transparent via-slate-800 to-transparent mb-5" />
 
-            <p className="text-slate-300 text-[13px] leading-relaxed mt-4 font-semibold">
-              Ensuring real-time response and resource transparency across regional command centers.
+            <p className="text-slate-300 text-[13px] leading-relaxed font-semibold">
+              Ensuring real-time response and resource transparency across evacuation centers.
               EvaTrack centralizes multi-agency data to protect communities during critical environmental events.
             </p>
 
-            {/* Metrics */}
-            <div className="grid grid-cols-2 gap-4 mt-6 pt-5 border-t border-white/10">
-              <div>
-                <span className="text-[10px] font-bold text-amber-500/80 uppercase tracking-widest block">
-                  Active Nodes
-                </span>
-                <span className="text-sm font-extrabold text-white mt-1 block">
-                  124 Centers
-                </span>
-              </div>
-              <div>
-                <span className="text-[10px] font-bold text-amber-500/80 uppercase tracking-widest block">
-                  Status
-                </span>
-                <span className="text-sm font-extrabold text-white mt-1 flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Operational
-                </span>
-              </div>
+            <div className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-wider text-sky-300 mt-6">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-sky-500" />
+              </span>
+              Barangay Level Disaster Coordination
             </div>
 
-          </div>
-
-        </div>
-
-        {/* Live Telemetry Badge (Bottom Right) */}
-        <div className="absolute bottom-6 right-6 z-20">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-950/60 border border-white/10 rounded-full backdrop-blur-md">
-            <Radio size={12} className="text-blue-400 animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-300">
-              Live Telemetry Active
-            </span>
           </div>
         </div>
 
