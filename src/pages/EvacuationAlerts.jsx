@@ -119,7 +119,7 @@ export default function EvacuationAlerts() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-slate-900 tracking-tight">Evacuation Alerts</h1>
-                    <p className="text-xs text-slate-500 font-bold tracking-wider uppercase mt-1">
+                    <p className="text-sm text-slate-500 font-medium">
                         Broadcast command, status monitor, and log dispatch control
                     </p>
                 </div>

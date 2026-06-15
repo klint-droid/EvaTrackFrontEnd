@@ -1,17 +1,20 @@
-const SEVERITY_COLORS = {
-    low:      'bg-green-100 text-green-700',
-    moderate: 'bg-yellow-100 text-yellow-700',
-    high:     'bg-orange-100 text-orange-700',
-    critical: 'bg-red-100 text-red-700',
+const SEVERITY_STYLES = {
+    low:      { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+    moderate: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
+    high:     { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
+    critical: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },
 };
 
-export default function SeverityBadge({ severity }) {
-    if (!severity) return <span className="text-gray-400 text-xs">—</span>;
+const DEFAULT_STYLE = { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200' };
 
-    const colorClass = SEVERITY_COLORS[severity.severity_key?.toLowerCase()] 
-        ?? 'bg-gray-100 text-gray-600';  
+export default function SeverityBadge({ severity }) {
+    if (!severity) return <span className="text-slate-300 text-xs">—</span>;
+
+    const key = severity.severity_key?.toLowerCase();
+    const style = SEVERITY_STYLES[key] || DEFAULT_STYLE;
+
     return (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${colorClass}`}>
+        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${style.bg} ${style.text} ${style.border}`}>
             {severity.severity_label}
         </span>
     );

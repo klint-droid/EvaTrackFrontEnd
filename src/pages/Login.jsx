@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { AlertCircle, ArrowLeft, Eye, EyeOff, ShieldCheck, Lock, Mail, Globe, Award } from "lucide-react";
+import { AlertCircle, ArrowLeft, Eye, EyeOff, ShieldCheck, Lock, Award, IdCard } from "lucide-react";
 import API from "../api";
 import placeImage from "../assets/place.png";
 import evaTrackLogo from "../assets/evatrack_logo_stacked.svg";
@@ -98,7 +98,7 @@ function Login() {
                 Official User ID
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 pointer-events-none" />
+                <IdCard className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 pointer-events-none" />
                 <input
                   id="userId"
                   type="text"
@@ -106,7 +106,7 @@ function Login() {
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
                   className="block h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-100 text-left"
-                  placeholder="j.delacruz@gov.ph"
+                  placeholder="EVA-BRGY-01"
                 />
               </div>
             </div>
@@ -148,7 +148,7 @@ function Login() {
                   className="w-4 h-4 rounded border-slate-300 text-[#0B1530] focus:ring-[#0B1530] transition cursor-pointer"
                 />
                 <span className="text-[11px] font-semibold text-slate-500 group-hover:text-slate-700 transition">
-                  Remember my terminal
+                  Remember me
                 </span>
               </label>
               <a 

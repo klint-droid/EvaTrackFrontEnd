@@ -385,7 +385,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-5 sm:space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-5 sm:space-y-8 animate-in fade-in duration-500 text-left">
       
       {/* 👋 WELCOME BANNER WITH COHESIVE COMPLEMENTARY DESIGN */}
       <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 rounded-2xl sm:rounded-[2rem] p-5 sm:p-8 text-white relative overflow-hidden shadow-sm">

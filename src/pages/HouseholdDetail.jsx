@@ -220,7 +220,7 @@ export default function HouseholdDetail() {
     // ─── Render ───────────────────────────────────────────────────────
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="space-y-6 animate-in fade-in duration-500 text-left">
 
             {/* HEADER */}
             <div className="flex items-center gap-4">

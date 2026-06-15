@@ -38,15 +38,15 @@ const Sidebar = ({ isOpen, onClose }) => {
 
     const menuItems = [
         { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", roles: ["evac_personnel", "evac_admin", "super_admin"] },
-        { icon: Home, label: "Household Status", path: "/households", roles: ["evac_admin", "evac_personnel"] },
+        { icon: Home, label: "Households", path: "/households", roles: ["evac_admin", "evac_personnel"] },
         { icon: Users, label: "Household Verification", path: "/household-verification", roles: ["evac_personnel", "evac_admin"] },
-        { icon: ShieldAlertIcon, label: "Events", path: "/events", roles: ["evac_admin"] },
-        { icon: Send, label: "Alerts", path: "/evacuation-alerts", roles: ["evac_personnel", "evac_admin"] },
-        { icon: Home, label: "Centers", path: "/evacuation-centers", roles: ["evac_personnel", "evac_admin"] },
-        { icon: Package, label: "Resources", path: "/resource-requests", roles: ["evac_personnel", "evac_admin"] },
-        { icon: BarChart3, label: "Analytics", path: "/analytics", roles: ["evac_personnel", "evac_admin"] },
+        { icon: ShieldAlertIcon, label: "Disaster Events", path: "/events", roles: ["evac_admin"] },
+        { icon: Send, label: "Disaster Alerts", path: "/evacuation-alerts", roles: ["evac_personnel", "evac_admin"] },
+        { icon: Home, label: "Evacuation Centers", path: "/evacuation-centers", roles: ["evac_personnel", "evac_admin"] },
+        { icon: Package, label: "Resource Requests", path: "/resource-requests", roles: ["evac_personnel", "evac_admin"] },
         { icon: AlertTriangle, label: "Center Issues", path: "/center-issue-reports", roles: ["evac_admin", "evac_personnel"] },
-        { icon: User, label: "Users", path: "/user-management", roles: ["evac_admin","super_admin"] },
+        { icon: BarChart3, label: "Reports & Analytics", path: "/analytics", roles: ["evac_personnel", "evac_admin"] },
+        { icon: User, label: "User Management", path: "/user-management", roles: ["evac_admin","super_admin"] },
         { icon: User, label: "My Profile", path: "/profile", roles: ["evac_personnel", "evac_admin", "super_admin"] },
     ];
 

@@ -237,7 +237,7 @@ export default function EvacuationDetail() {
     if (!center) return <div className="p-6 text-red-500">Center not found.</div>;
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 text-left">
 
             {/* Header */}
             <div className="flex flex-col gap-0.5 items-start">

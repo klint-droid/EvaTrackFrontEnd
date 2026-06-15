@@ -140,13 +140,13 @@ export default function EvacuationList() {
     });
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 text-left">
 
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Evacuation Centers</h1>
-          <p className="text-xs text-slate-500 font-medium tracking-wide uppercase">Real-time Shelter Monitoring</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Evacuation Centers</h1>
+          <p className="text-sm text-slate-500 font-medium">Real-time shelter monitoring</p>
         </div>
         {canCreate && (
           <button

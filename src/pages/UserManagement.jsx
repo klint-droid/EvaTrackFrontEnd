@@ -3,16 +3,18 @@ import { createPortal } from "react-dom";
 import { 
   User, 
   UserPlus, 
-  MapPin, 
   Edit3, 
   Trash2, 
   X,
   ChevronLeft,
   ChevronRight,
   MoreHorizontal,
-  Loader2,
   Search,
-  AlertCircle
+  AlertCircle,
+  Users,
+  ShieldCheck,
+  UserCheck,
+  Phone
 } from "lucide-react";
 
 import { getUsers } from "../api/users/getUsers";
@@ -26,33 +28,22 @@ import AlertConfirmModal from "../components/AlertConfirmModal";
 
 const UserRowSkeleton = () => (
   <tr className="animate-pulse">
-    {/* Name & ID */}
     <td className="px-6 py-4">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200" />
+        <div className="w-9 h-9 rounded-full bg-slate-100" />
         <div className="space-y-1.5 flex-1">
-          <div className="h-4 bg-slate-200 rounded w-28" />
-          <div className="h-2.5 bg-slate-100 rounded w-16" />
+          <div className="h-3.5 bg-slate-100 rounded w-28" />
+          <div className="h-2.5 bg-slate-50 rounded w-14" />
         </div>
       </div>
     </td>
-    {/* Contact */}
-    <td className="px-6 py-4">
-      <div className="h-4 bg-slate-100 rounded w-24" />
-    </td>
-    {/* System Role */}
-    <td className="px-6 py-4 text-center">
-      <div className="mx-auto h-6 bg-slate-100 rounded-full w-20" />
-    </td>
-    {/* Station Assignment */}
-    <td className="px-6 py-4">
-      <div className="h-8 bg-slate-100 rounded-lg w-36" />
-    </td>
-    {/* Actions */}
+    <td className="px-6 py-4"><div className="h-3.5 bg-slate-100 rounded w-24" /></td>
+    <td className="px-6 py-4 text-center"><div className="mx-auto h-5 bg-slate-100 rounded w-20" /></td>
+    <td className="px-6 py-4"><div className="h-8 bg-slate-100 rounded-lg w-36" /></td>
     <td className="px-6 py-4 text-right">
       <div className="flex justify-end gap-2">
-        <div className="w-8 h-8 bg-slate-100 rounded-lg animate-pulse" />
-        <div className="w-8 h-8 bg-slate-100 rounded-lg animate-pulse" />
+        <div className="w-8 h-8 bg-slate-50 rounded-lg" />
+        <div className="w-8 h-8 bg-slate-50 rounded-lg" />
       </div>
     </td>
   </tr>
@@ -67,7 +58,6 @@ const UserManagement = () => {
   const [assigningUserId, setAssigningUserId] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Custom alert confirm modal state
   const [deleteConfirmState, setDeleteConfirmState] = useState({ isOpen: false, userId: null, isLoading: false });
 
   const [search, setSearch] = useState("");
@@ -220,52 +210,116 @@ const UserManagement = () => {
 
   const getRoleBadge = (role) => {
     const styles = {
-      super_admin: "bg-purple-50 text-purple-600 border-purple-100",
-      evac_admin: "bg-blue-50 text-blue-600 border-blue-100",
-      evac_personnel: "bg-slate-50 text-slate-600 border-slate-100",
+      super_admin: "bg-violet-50 text-violet-600 border-violet-200",
+      evac_admin: "bg-blue-50 text-blue-600 border-blue-200",
+      evac_personnel: "bg-slate-50 text-slate-600 border-slate-200",
     };
     return styles[role] || styles.evac_personnel;
   };
 
+  const getRoleLabel = (role) => {
+    const labels = {
+      super_admin: "Super Admin",
+      evac_admin: "Admin",
+      evac_personnel: "Personnel",
+    };
+    return labels[role] || role.replace('_', ' ');
+  };
+
   const formatPhone = (num) => {
-  if (!num) return "—";
-  return num.replace(/^0/, "+63");
-};
+    if (!num) return "—";
+    return num.replace(/^0/, "+63");
+  };
+
+  // Compute stat card metrics
+  const totalUsers = pagination.total || users.length;
+  const personnelCount = users.filter(u => u.role === "evac_personnel").length;
+  const adminCount = users.filter(u => u.role === "evac_admin" || u.role === "super_admin").length;
+  const assignedCount = users.filter(u => u.role === "evac_personnel" && u.assigned_center_id).length;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 text-left">
+    <div className="min-h-screen font-sans text-left">
       
-      {/* ⚡️ HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* ─── Page Header ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 text-left">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Personnel Directory</h1>
-          <p className="text-xs text-slate-500 font-medium tracking-wide uppercase">Manage System Access and Station Assignments</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">User Management</h1>
+          <p className="text-sm text-slate-500 font-medium">Manage system access and station assignments</p>
         </div>
 
         {(isSuperAdminUser || isAdminUser) && (
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center space-x-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all active:scale-95"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-medium rounded-lg shadow-sm shadow-blue-600/20 hover:shadow-blue-600/30 transition-all duration-200"
           >
-            <UserPlus size={18} />
+            <UserPlus size={16} />
             <span>Add Personnel</span>
           </button>
         )}
       </div>
 
-      {/* ⚡️ TABLE CONTAINER */}
-      <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-[1.5rem] shadow-sm overflow-hidden">
-        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/20">
-          <div>
-            <h2 className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
-              <User size={18} className="text-blue-500" />
-              Personnel Directory Log
-            </h2>
-            <p className="text-xs text-slate-400 mt-1 hidden sm:block">Manage system logins, access control and shelter stations.</p>
+      {/* ─── Stats Cards ─── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        {/* Total Users */}
+        <div className="bg-white rounded-xl border border-slate-200/80 p-5 flex items-start justify-between hover:border-slate-300 transition-colors">
+          <div className="space-y-1">
+            <span className="text-sm text-slate-500 font-medium">Total Users</span>
+            <p className="text-3xl font-bold text-slate-900 tracking-tight">{totalUsers}</p>
+            <p className="text-xs text-slate-400 font-medium">Authorized accounts</p>
+          </div>
+          <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center text-slate-500 flex-shrink-0">
+            <Users className="w-5 h-5" />
+          </div>
+        </div>
+
+        {/* Admin Users */}
+        <div className="bg-white rounded-xl border border-slate-200/80 p-5 flex items-start justify-between hover:border-slate-300 transition-colors">
+          <div className="space-y-1">
+            <span className="text-sm text-slate-500 font-medium">Administrators</span>
+            <p className="text-3xl font-bold text-slate-900 tracking-tight">{adminCount}</p>
+            <p className="text-xs text-slate-400 font-medium">Admin & super admin</p>
+          </div>
+          <div className="w-10 h-10 rounded-lg bg-violet-50 flex items-center justify-center text-violet-500 flex-shrink-0">
+            <ShieldCheck className="w-5 h-5" />
+          </div>
+        </div>
+
+        {/* Personnel */}
+        <div className="bg-white rounded-xl border border-slate-200/80 p-5 flex items-start justify-between hover:border-slate-300 transition-colors">
+          <div className="space-y-1">
+            <span className="text-sm text-slate-500 font-medium">Personnel</span>
+            <p className="text-3xl font-bold text-slate-900 tracking-tight">{personnelCount}</p>
+            <p className="text-xs text-slate-400 font-medium">Field responders</p>
+          </div>
+          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 flex-shrink-0">
+            <User className="w-5 h-5" />
+          </div>
+        </div>
+
+        {/* Assigned Personnel */}
+        <div className="bg-white rounded-xl border border-slate-200/80 p-5 flex items-start justify-between hover:border-slate-300 transition-colors">
+          <div className="space-y-1">
+            <span className="text-sm text-slate-500 font-medium">Assigned</span>
+            <p className="text-3xl font-bold text-slate-900 tracking-tight">{assignedCount}</p>
+            <p className="text-xs text-slate-400 font-medium">Deployed to shelters</p>
+          </div>
+          <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500 flex-shrink-0">
+            <UserCheck className="w-5 h-5" />
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Table Container ─── */}
+      <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden">
+        {/* Table Header with Search & Filters */}
+        <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <User size={16} className="text-slate-400" />
+            <h2 className="text-sm font-semibold text-slate-800">Personnel Directory</h2>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2">
-            <div className="relative group">
+            <div className="relative">
               <input
                 type="text"
                 placeholder="Search name or phone..."
@@ -274,7 +328,7 @@ const UserManagement = () => {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") fetchUsers(1, search, roleFilter);
                 }}
-                className="pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all w-full sm:w-48"
+                className="pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 transition-all w-full sm:w-52"
               />
               <button 
                 onClick={() => fetchUsers(1, search, roleFilter)}
@@ -287,7 +341,7 @@ const UserManagement = () => {
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:border-slate-300 transition-colors"
+              className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 outline-none cursor-pointer hover:border-slate-300 transition-colors"
             >
               <option value="">All Roles</option>
               <option value="evac_personnel">Personnel</option>
@@ -297,16 +351,16 @@ const UserManagement = () => {
           </div>
         </div>
 
-        {/* ── DESKTOP TABLE VIEW (md and up) ── */}
+        {/* ── DESKTOP TABLE VIEW (md+) ── */}
         <div className="overflow-x-auto hidden md:block">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Name & Identifier</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact Number</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">System Role</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Station Assignment</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+              <tr className="border-b border-slate-100">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400">Contact</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400">Role</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400">Station Assignment</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-slate-400">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -314,42 +368,43 @@ const UserManagement = () => {
                 [...Array(5)].map((_, i) => <UserRowSkeleton key={i} />)
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-16 text-center text-slate-400 font-bold">
-                    <AlertCircle className="mx-auto text-slate-300 mb-2" size={32} />
-                    <p className="text-sm font-bold text-slate-700">No personnel found</p>
+                  <td colSpan="5" className="px-6 py-16 text-center">
+                    <AlertCircle className="mx-auto text-slate-300 mb-2" size={28} />
+                    <p className="text-sm font-medium text-slate-600">No personnel found</p>
                     <p className="text-xs text-slate-400 mt-1">Try adjusting your filters or search terms.</p>
                   </td>
                 </tr>
               ) : users.map((user) => (
-                <tr key={user.user_id} className="hover:bg-slate-50/30 transition-colors group">
-                  <td className="px-6 py-4">
+                <tr key={user.user_id} className="hover:bg-slate-50/60 transition-colors group">
+                  <td className="px-6 py-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200 group-hover:bg-white transition-colors">
+                      <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-sm font-semibold flex-shrink-0">
                         {(user.first_name || user.name || "?").charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-slate-800 leading-none mb-1">
+                        <p className="text-sm font-medium text-slate-800">
                           {user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : (user.name || "—")}
                         </p>
-                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">ID: {user.user_id}</p>
+                        <p className="text-xs text-slate-400 font-mono">ID-{user.user_id}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm font-medium text-slate-700">
+                  <td className="px-6 py-3.5">
+                    <div className="flex items-center gap-1.5 text-sm text-slate-600">
+                      <Phone size={12} className="text-slate-300" />
                       {formatPhone(user.contact_number)}
-                    </p>
+                    </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border ${getRoleBadge(user.role)}`}>
-                      {user.role.replace('_', ' ')}
+                  <td className="px-6 py-3.5">
+                    <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded border ${getRoleBadge(user.role)}`}>
+                      {getRoleLabel(user.role)}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-3.5">
                     {user.role === "evac_personnel" ? (
-                      <div className="flex flex-col gap-1.5 min-w-[180px]">
+                      <div className="flex flex-col gap-1 min-w-[180px]">
                         <select
-                          className="text-[11px] font-bold bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 transition-all cursor-pointer"
+                          className="text-sm bg-white border border-slate-200 rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 disabled:opacity-50 transition-all cursor-pointer"
                           value={user.assigned_center_id || ""}
                           disabled={assigningUserId === user.user_id || !canAssign(user)}
                           onChange={(e) => {
@@ -366,33 +421,33 @@ const UserManagement = () => {
                         </select>
 
                         {assigningUserId === user.user_id && (
-                          <span className="text-[9px] font-black text-blue-500 uppercase animate-pulse px-1">
+                          <span className="text-xs text-blue-500 font-medium animate-pulse px-1">
                             Updating...
                           </span>
                         )}
                       </div>
                     ) : (
-                      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
-                        ---
-                      </span>
+                      <span className="text-xs text-slate-300 font-medium">—</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <td className="px-6 py-3.5 text-right">
+                    <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       {canEdit(user) && (
                         <button 
                           onClick={() => setEditingUser(user)}
                           className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                          title="Edit user"
                         >
-                          <Edit3 size={16} />
+                          <Edit3 size={15} />
                         </button>
                       )}
                       {canDelete(user) && (
                         <button 
                           onClick={() => triggerDeleteUser(user.user_id)}
                           className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                          title="Delete user"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={15} />
                         </button>
                       )}
                     </div>
@@ -411,60 +466,61 @@ const UserManagement = () => {
           {loading ? (
             <div className="p-4 space-y-3">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 animate-pulse space-y-3">
+                <div key={i} className="p-4 bg-slate-50/50 rounded-xl border border-slate-100 animate-pulse space-y-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-200" />
+                    <div className="w-9 h-9 rounded-full bg-slate-100" />
                     <div className="flex-1 space-y-1.5">
-                      <div className="h-4 bg-slate-200 rounded w-32" />
-                      <div className="h-2.5 bg-slate-100 rounded w-16" />
+                      <div className="h-3.5 bg-slate-100 rounded w-32" />
+                      <div className="h-2.5 bg-slate-50 rounded w-16" />
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <div className="h-5 bg-slate-100 rounded-full w-20" />
+                    <div className="h-5 bg-slate-100 rounded w-20" />
                     <div className="h-5 bg-slate-100 rounded w-28" />
                   </div>
                 </div>
               ))}
             </div>
           ) : users.length === 0 ? (
-            <div className="p-8 text-center">
-              <AlertCircle className="mx-auto text-slate-300 mb-2" size={32} />
-              <p className="text-sm font-bold text-slate-700">No personnel found</p>
+            <div className="p-10 text-center">
+              <AlertCircle className="mx-auto text-slate-300 mb-2" size={28} />
+              <p className="text-sm font-medium text-slate-600">No personnel found</p>
               <p className="text-xs text-slate-400 mt-1">Try adjusting your filters or search terms.</p>
             </div>
           ) : (
             <div className="p-3 sm:p-4 space-y-3">
               {users.map((user) => (
-                <div key={user.user_id} className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-sm transition-all space-y-3">
+                <div key={user.user_id} className="p-4 bg-white rounded-xl border border-slate-100 hover:border-slate-200 transition-all space-y-3">
                   {/* Top row: Avatar + Name + Role Badge */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-slate-500 font-bold border border-slate-200 shadow-sm flex-shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-sm font-semibold flex-shrink-0">
                         {(user.first_name || user.name || "?").charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-slate-800 leading-tight truncate">
+                        <p className="text-sm font-medium text-slate-800 leading-tight truncate">
                           {user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : (user.name || "—")}
                         </p>
-                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">ID: {user.user_id}</p>
+                        <p className="text-xs text-slate-400 font-mono">ID-{user.user_id}</p>
                       </div>
                     </div>
-                    <span className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-widest rounded-full border flex-shrink-0 ${getRoleBadge(user.role)}`}>
-                      {user.role.replace('_', ' ')}
+                    <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded border flex-shrink-0 ${getRoleBadge(user.role)}`}>
+                      {getRoleLabel(user.role)}
                     </span>
                   </div>
 
-                  {/* Info row: Contact */}
-                  <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
-                    <span>📞 {formatPhone(user.contact_number)}</span>
+                  {/* Info row */}
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                    <Phone size={11} className="text-slate-300" />
+                    {formatPhone(user.contact_number)}
                   </div>
 
-                  {/* Station Assignment (only for personnel) */}
+                  {/* Station Assignment (personnel only) */}
                   {user.role === "evac_personnel" && (
                     <div className="space-y-1">
-                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Station</label>
+                      <label className="text-xs font-medium text-slate-400">Station</label>
                       <select
-                        className="w-full text-[11px] font-bold bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 transition-all cursor-pointer"
+                        className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 disabled:opacity-50 transition-all cursor-pointer"
                         value={user.assigned_center_id || ""}
                         disabled={assigningUserId === user.user_id || !canAssign(user)}
                         onChange={(e) => {
@@ -480,19 +536,19 @@ const UserManagement = () => {
                         ))}
                       </select>
                       {assigningUserId === user.user_id && (
-                        <span className="text-[9px] font-black text-blue-500 uppercase animate-pulse">Updating...</span>
+                        <span className="text-xs text-blue-500 font-medium animate-pulse">Updating...</span>
                       )}
                     </div>
                   )}
 
                   {/* Actions row */}
-                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+                  <div className="flex items-center justify-end gap-1 pt-2 border-t border-slate-100">
                     {canEdit(user) && (
                       <button 
                         onClick={() => setEditingUser(user)}
                         className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                       >
-                        <Edit3 size={16} />
+                        <Edit3 size={15} />
                       </button>
                     )}
                     {canDelete(user) && (
@@ -500,7 +556,7 @@ const UserManagement = () => {
                         onClick={() => triggerDeleteUser(user.user_id)}
                         className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={15} />
                       </button>
                     )}
                   </div>
@@ -510,81 +566,82 @@ const UserManagement = () => {
           )}
         </div>
         
-        {/* ⚡️ PAGINATION FOOTER */}
-        <div className="px-4 sm:px-6 py-3 sm:py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+        {/* ─── Pagination Footer ─── */}
+        <div className="px-6 py-3 border-t border-slate-100 flex items-center justify-between">
+          <p className="text-xs text-slate-400 font-medium">
             Page {pagination.current_page || 1} of {pagination.last_page || 1}
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <button 
               disabled={!pagination.prev_page_url}
               onClick={() => fetchUsers(pagination.current_page - 1)}
-              className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-slate-50 transition-all shadow-sm"
+              className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-slate-50 hover:border-slate-300 transition-all"
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={15} />
             </button>
             <button 
               disabled={!pagination.next_page_url}
               onClick={() => fetchUsers(pagination.current_page + 1)}
-              className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-slate-50 transition-all shadow-sm"
+              className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-slate-50 hover:border-slate-300 transition-all"
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={15} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* ⚡️ CREATE MODAL (React Portal) */}
+      {/* ─── CREATE MODAL ─── */}
       {showCreateModal && createPortal(
         <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9999] p-4">
-          <div className="absolute inset-0 bg-slate-900/60 animate-in fade-in duration-200" onClick={() => setShowCreateModal(false)} />
-          <div className="relative bg-white rounded-[1.5rem] shadow-2xl w-full max-w-[320px] overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <h2 className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-2">
-                <UserPlus size={16} className="text-blue-600" /> New User
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setShowCreateModal(false)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                <UserPlus size={16} className="text-blue-600" /> New Personnel
               </h2>
-              <button onClick={() => setShowCreateModal(false)} className="p-1.5 text-slate-400 hover:bg-slate-200 rounded-full transition-all"><X size={18}/></button>
+              <button onClick={() => setShowCreateModal(false)} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"><X size={16}/></button>
             </div>
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">First Name</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-500">First Name</label>
                   <input
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 outline-none transition-all"
                     value={newUser.first_name}
                     onChange={(e) => setNewUser({ ...newUser, first_name: e.target.value })}
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Last Name</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-500">Last Name</label>
                   <input
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 outline-none transition-all"
                     value={newUser.last_name}
                     onChange={(e) => setNewUser({ ...newUser, last_name: e.target.value })}
                   />
                 </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Password</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-500">Password</label>
                 <input
                   type="password"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 outline-none transition-all"
                   value={newUser.password}
                   onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
                 />
-              </div><div className="space-y-1">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Contact Number</label>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-500">Contact Number</label>
                 <input
                   type="number"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 outline-none transition-all"
                   value={newUser.contact_number}
                   onChange={(e) => setNewUser({ ...newUser, contact_number: e.target.value })}
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Authorization</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-500">Role</label>
                 <select
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none cursor-pointer"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none cursor-pointer focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 transition-all"
                   value={newUser.role}
                   onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
                 >
@@ -595,54 +652,56 @@ const UserManagement = () => {
               </div>
             </div>
             <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-end gap-3">
-              <button onClick={() => setShowCreateModal(false)} className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cancel</button>
-              <button onClick={handleCreateUser} className="px-5 py-2 bg-blue-600 text-white text-[10px] font-black rounded-lg shadow-lg uppercase tracking-wider hover:bg-blue-700 active:scale-95 transition-all">Register</button>
+              <button onClick={() => setShowCreateModal(false)} className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors">Cancel</button>
+              <button onClick={handleCreateUser} className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-all">Create</button>
             </div>
           </div>
         </div>,
         document.body
       )}
 
-      {/* ⚡️ EDIT MODAL (React Portal) */}
+      {/* ─── EDIT MODAL ─── */}
       {editingUser && createPortal(
         <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9999] p-4">
-          <div className="absolute inset-0 bg-slate-900/60 animate-in fade-in duration-200" onClick={() => setEditingUser(null)} />
-          <div className="relative bg-white rounded-[1.5rem] shadow-2xl w-full max-w-[320px] overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setEditingUser(null)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-sm font-black text-slate-800 tracking-tight">Modify Personnel</h2>
-              <button onClick={() => setEditingUser(null)} className="p-1.5 text-slate-400 hover:bg-slate-200 rounded-full"><X size={18}/></button>
+              <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                <Edit3 size={16} className="text-blue-600" /> Edit Personnel
+              </h2>
+              <button onClick={() => setEditingUser(null)} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"><X size={16}/></button>
             </div>
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">First Name</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-500">First Name</label>
                   <input
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 outline-none transition-all"
                     value={editingUser.first_name || ""}
                     onChange={(e) => setEditingUser({ ...editingUser, first_name: e.target.value })}
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Last Name</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-500">Last Name</label>
                   <input
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 outline-none transition-all"
                     value={editingUser.last_name || ""}
                     onChange={(e) => setEditingUser({ ...editingUser, last_name: e.target.value })}
                   />
                 </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Contact Number</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-500">Contact Number</label>
                 <input
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 outline-none transition-all"
                   value={editingUser.contact_number}
                   onChange={(e) => setEditingUser({ ...editingUser, contact_number: e.target.value })}
                 />
               </div> 
-              <div className="space-y-1">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Access Level</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-500">Role</label>
                 <select
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none cursor-pointer focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 transition-all"
                   value={editingUser.role}
                   onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
                 >
@@ -653,15 +712,15 @@ const UserManagement = () => {
               </div>
             </div>
             <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-end gap-3">
-              <button onClick={() => setEditingUser(null)} className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cancel</button>
-              <button onClick={handleUpdateUser} className="px-5 py-2 bg-blue-600 text-white text-[10px] font-black rounded-lg shadow-lg uppercase tracking-wider active:scale-95 transition-all">Save Changes</button>
+              <button onClick={() => setEditingUser(null)} className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors">Cancel</button>
+              <button onClick={handleUpdateUser} className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-all">Save Changes</button>
             </div>
           </div>
         </div>,
         document.body
       )}
 
-      {/* ⚡️ CUSTOM ALERT CONFIRMATION DIALOG (No default browser dialogs) */}
+      {/* ─── Delete Confirmation ─── */}
       <AlertConfirmModal
         isOpen={deleteConfirmState.isOpen}
         title="Delete Personnel Account"

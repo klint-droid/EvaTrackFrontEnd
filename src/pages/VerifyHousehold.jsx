@@ -360,16 +360,16 @@ export default function VerifyHousehold() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
 
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
             <Fingerprint className="text-indigo-600" size={28} />
             Household Verification
           </h1>
-          <p className="text-xs text-slate-500 font-medium uppercase tracking-wider text-[10px]">
+          <p className="text-sm text-slate-500 font-medium">
             Registry Admission & Verification Control
           </p>
         </div>

@@ -171,11 +171,11 @@ export default function Profile() {
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
             {/* Header */}
             <div>
-                <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
                     <Sparkles className="text-blue-600" size={24} />
                     My Account Profile
                 </h1>
-                <p className="text-xs text-slate-500 font-medium tracking-wide uppercase mt-1">
+                <p className="text-sm text-slate-500 font-medium mt-1">
                     Manage and secure your personal account details
                 </p>
             </div>

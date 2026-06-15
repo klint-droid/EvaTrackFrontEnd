@@ -184,8 +184,8 @@ export default function HouseholdManagement() {
             {/* HEADER */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">Household Status</h1>
-                    <p className="text-xs text-slate-500 font-medium tracking-wide uppercase">
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tight">Households</h1>
+                    <p className="text-sm text-slate-500 font-medium">
                         Manage and monitor household evacuation status in your assigned evacuation center
                     </p>
                 </div>
