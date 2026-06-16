@@ -11,6 +11,9 @@ import {
   SearchIcon,
   Navigation,
   User,
+  Users,
+  Keyboard,
+  UserCheck,
   Loader2,
   X,
   Sparkles,
@@ -26,6 +29,8 @@ import { createHousehold } from "../api/evacuationRecords/createHousehold";
 import { getUser } from "../api/auth/getUser";
 import { getCenter } from "../api/evacuation/getCenter";
 import { admitHousehold } from "../api/evacuationRecords/admitHousehold";
+import { getUnitsByCenter } from "../api/units/getUnitsByCenter";
+import { assignHousehold } from "../api/allocations/assignHousehold";
 
 export default function VerifyHousehold() {
   const navigate = useNavigate();
@@ -46,6 +51,8 @@ export default function VerifyHousehold() {
   const [memberCount, setMemberCount] = useState("");
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [modalError, setModalError] = useState(null); // Error shown inside the admission modal
+  const [units, setUnits] = useState([]);
+  const [selectedUnitId, setSelectedUnitId] = useState("");
 
   const records = Array.isArray(results) ? results : (Array.isArray(results?.data) ? results.data : (results?.data?.data || []));
 
@@ -125,6 +132,12 @@ export default function VerifyHousehold() {
       .catch(() => {
         setCenterName(user.assigned_center_id);
       });
+
+    getUnitsByCenter(user.assigned_center_id)
+      .then((res) => {
+        setUnits(res.data || []);
+      })
+      .catch(console.error);
   }, [user]);
 
   const handleScan = async (rawScan) => {
@@ -170,7 +183,7 @@ export default function VerifyHousehold() {
         });
         setMemberCount(household?.member_count || 1);
         const memberIds = Array.isArray(household?.members) 
-          ? household.members.map(m => m.member_id) 
+          ? household.members.filter(m => !getActiveEvacuation(m)).map(m => m.member_id) 
           : [];
         setSelectedMembers(memberIds);
         // FIX #3: Show success notification before opening the modal
@@ -227,7 +240,7 @@ export default function VerifyHousehold() {
     });
     setMemberCount(household?.member_count || 1);
     const memberIds = Array.isArray(household?.members) 
-      ? household.members.map(m => m.member_id) 
+      ? household.members.filter(m => !getActiveEvacuation(m)).map(m => m.member_id) 
       : [];
     setSelectedMembers(memberIds);
     setModalError(null);
@@ -329,6 +342,17 @@ export default function VerifyHousehold() {
       }
 
       const payload = getPayload(res);
+      const evacuation = payload?.evacuation || payload?.record || payload?.evacuation_record || payload;
+      const evacuationId = evacuation?.evacuation_id;
+
+      if (selectedUnitId && evacuationId) {
+        try {
+          await assignHousehold(selectedUnitId, evacuationId);
+        } catch (assignErr) {
+          const assignErrMsg = assignErr.response?.data?.message || "Unit assignment failed.";
+          throw new Error(`Admitted successfully, but allocation failed: ${assignErrMsg}`);
+        }
+      }
 
       showMessage(getMessage(res, "Admission complete."));
 
@@ -336,10 +360,11 @@ export default function VerifyHousehold() {
       setScannedData(null);
       setMemberCount("");
       setSelectedMembers([]);
+      setSelectedUnitId("");
 
       navigateToHouseholdDetail(payload);
     } catch (err) {
-      const errMsg = err.response?.data?.message || "Admission failed.";
+      const errMsg = err.message || err.response?.data?.message || "Admission failed.";
       // Show error inside the modal so it's visible, not hidden behind the overlay
       setModalError(errMsg);
     } finally {
@@ -357,59 +382,63 @@ export default function VerifyHousehold() {
     setScannedData(null);
     setSelectedMembers([]);
     setModalError(null);
+    setSelectedUnitId("");
+  };
+
+  const getHeadName = (h) => {
+    if (!h.members || h.members.length === 0) return 'Not Specified';
+    const head = h.members.find(m => 
+      m.relationship?.relationship_key === 'head' || 
+      m.relationship?.relationship_label === 'Head of Household' ||
+      m.relationship_id === 1
+    );
+    return head ? `${head.first_name} ${head.last_name}` : 'Not Specified';
+  };
+
+  const calculateAge = (birthDate) => {
+    if (!birthDate) return '—';
+    const birth = new Date(birthDate);
+    if (isNaN(birth.getTime())) return '—';
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+        age--;
+    }
+    return age;
+  };
+
+  const getActiveEvacuation = (member) => {
+    const records = member?.evacuated_members || member?.evacuatedMembers || [];
+    return records.find(em => {
+      const record = em.evacuation_record || em.evacuationRecord;
+      return record && 
+        (record.household_status_id === 2 || record.household_status_id === '2') && 
+        !record.event?.ended_at;
+    });
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
+    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
 
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <Fingerprint className="text-indigo-600" size={28} />
-            Household Verification
-          </h1>
-          <p className="text-sm text-slate-500 font-medium">
-            Registry Admission & Verification Control
-          </p>
-        </div>
-
-        {user && (
-          <div className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-2xl shadow-sm">
-            <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600">
-              <MapPin size={16} />
-            </div>
-            <div>
-              <p className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">
-                Station
-              </p>
-              <p className="text-xs font-bold text-slate-700">
-                {centerName ?? "---"}
-              </p>
-            </div>
+      {/* Header matching Disaster Events style */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-slate-950 text-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+            <QrCode className="w-6 h-6" />
           </div>
-        )}
-      </div>
-
-      {/* Simplified Tabs: Verify Registry & Manual Entry */}
-      <div className="flex p-1 bg-slate-200/50 rounded-2xl w-full sm:w-fit">
-        {[
-          { id: "admit", label: "Registry Admission", icon: Search },
-          { id: "manual", label: "On-Site Registration", icon: UserPlus },
-        ].map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-              tab === t.id
-                ? "bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200"
-                : "text-slate-500 hover:text-slate-700 hover:bg-white/40"
-            }`}
-          >
-            <t.icon size={14} strokeWidth={2.5} />
-            <span>{t.label}</span>
-          </button>
-        ))}
+          <div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+              Household Verification
+            </h1>
+            {user && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-800 font-semibold rounded-md text-xs border border-amber-100 mt-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                Station: {centerName ?? "---"}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Feedback Alert */}
@@ -432,16 +461,44 @@ export default function VerifyHousehold() {
         </div>
       )}
 
-      {/* Main Screen Wrapper */}
-      <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-[2rem] shadow-sm overflow-hidden min-h-[320px] sm:min-h-[380px] flex flex-col relative">
+      {/* Main Screen Wrapper: Card with tabs inside */}
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-h-[380px] flex flex-col relative">
+        
+        {/* Tabs Row matching mockup */}
+        <div className="border-b border-slate-200 px-6">
+          <nav className="flex space-x-8" aria-label="Tabs">
+            <button
+              onClick={() => setTab("admit")}
+              className={`py-4 px-1 border-b-2 font-bold text-sm transition-all cursor-pointer flex items-center gap-2 focus:outline-none ${
+                tab === "admit"
+                  ? 'border-slate-900 text-slate-900'
+                  : 'border-transparent text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              <Search size={16} />
+              Registry Admission
+            </button>
+            <button
+              onClick={() => setTab("manual")}
+              className={`py-4 px-1 border-b-2 font-bold text-sm transition-all cursor-pointer flex items-center gap-2 focus:outline-none ${
+                tab === "manual"
+                  ? 'border-slate-900 text-slate-900'
+                  : 'border-transparent text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              <UserPlus size={16} />
+              On-Site Registration
+            </button>
+          </nav>
+        </div>
 
         {tab === "admit" && (
-          <div className="p-5 sm:p-8 space-y-5 sm:space-y-6">
+          <div className="p-6 sm:p-8 space-y-6">
             
             {/* Title */}
             <div className="space-y-1">
               <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-1.5">
-                <Search size={16} className="text-indigo-600" />
+                <Search size={16} className="text-blue-600" />
                 Registry Manual Query
               </h3>
               <p className="text-xs text-slate-400 font-bold uppercase tracking-tight">
@@ -453,24 +510,23 @@ export default function VerifyHousehold() {
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1 group">
                 <SearchIcon
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors"
-                  size={16}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"
+                  size={18}
                 />
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
-                  placeholder="Enter family ID or Family Head name..."
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white outline-none transition-all"
+                  placeholder="Enter Household Name or Official ID..."
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 focus:bg-white outline-none transition-all"
                 />
               </div>
 
               <div className="flex gap-2">
-                {/* 📣 Interactive QR Scan Prompt Trigger */}
                 <button
                   type="button"
                   onClick={() => setQrModalOpen(true)}
-                  className="px-4 py-3 bg-indigo-50 text-indigo-600 border border-indigo-100 hover:bg-indigo-100 active:scale-95 transition-all rounded-xl flex items-center justify-center gap-2 shadow-sm font-black text-[10px] uppercase tracking-widest"
+                  className="px-5 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-sm shadow-blue-600/10"
                   title="Scan Digital QR Card"
                 >
                   <QrCode size={18} />
@@ -480,91 +536,125 @@ export default function VerifyHousehold() {
                 <button
                   onClick={handleSearch}
                   disabled={loading}
-                  className="px-6 py-3 bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-slate-800 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center"
+                  className="px-6 py-3 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-sm font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 flex items-center justify-center min-w-[90px]"
                 >
-                  {loading ? <Loader2 className="animate-spin" size={14} /> : "Search"}
+                  {loading ? <Loader2 className="animate-spin" size={16} /> : "Search"}
                 </button>
               </div>
             </div>
 
             {/* Search Registry Results Box */}
-            <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
+            <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
               {results === undefined ? (
-                <div className="py-12 text-center border border-dashed border-slate-100 rounded-2xl bg-slate-50/30 flex flex-col items-center justify-center space-y-2">
+                <div className="py-12 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/30 flex flex-col items-center justify-center space-y-2">
+                  <Search className="text-slate-300" size={24} />
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Awaiting query database sync...</p>
                   <p className="text-[10px] text-slate-400">Type family head credentials above or trigger live scan</p>
                 </div>
               ) : records.length === 0 ? (
-                <div className="py-12 text-center border border-dashed border-slate-100 rounded-2xl bg-rose-50/20">
+                <div className="py-12 text-center border border-dashed border-slate-200 rounded-2xl bg-rose-50/20">
+                  <AlertCircle className="text-rose-400 mx-auto mb-2" size={24} />
                   <p className="text-xs text-rose-500 font-bold uppercase tracking-wider">No matching families found in registry.</p>
                 </div>
               ) : (
-                records.map((h) => (
-                  <div
-                    key={h.household_id}
-                    className="p-4 border border-slate-100 rounded-2xl bg-slate-50/40 flex justify-between items-center group hover:bg-white hover:shadow-md transition-all duration-200"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center text-slate-400 shadow-sm border border-slate-100 group-hover:text-indigo-500 group-hover:border-indigo-100 transition-all">
-                        <User size={16} />
-                      </div>
-
-                      <div>
-                        <p className="text-xs font-black text-slate-800 leading-tight">
-                          {h.household_name}
-                        </p>
-                        <div className="flex items-center gap-3 mt-1">
-                          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
-                            ID: {h.household_id}
-                          </span>
-                          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
-                            Members: {h.member_count || 0}
+                records.map((h) => {
+                  const currentEvac = h.current_evacuation || h.currentEvacuation;
+                  const isEvacuated = currentEvac && !currentEvac.event?.ended_at && (currentEvac.household_status_id === 2 || currentEvac.household_status_id === "2");
+                  return (
+                    <div
+                      key={h.household_id}
+                      className="p-5 bg-white border border-slate-200 rounded-xl border-l-[5px] border-l-blue-600 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md hover:border-slate-300 transition-all duration-200 text-left"
+                    >
+                      <div className="flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-lg font-bold text-slate-900 leading-tight">
+                            {h.household_name}
+                          </h3>
+                          <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-500 border border-slate-200 rounded text-[11px] font-mono font-medium">
+                            {h.household_id}
                           </span>
                         </div>
-                      </div>
-                    </div>
+                        
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-xs text-slate-500 font-medium">
+                          <span className="flex items-center gap-1.5">
+                            <User size={14} className="text-slate-400" />
+                            <span>Head: {getHeadName(h)}</span>
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <Users size={14} className="text-slate-400" />
+                            <span>{h.member_count || h.members?.length || 0} Members</span>
+                          </span>
+                        </div>
 
-                    <button
-                      onClick={() => handleVerify(h)}
-                      className="flex items-center gap-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase tracking-wider shadow hover:bg-indigo-700 active:scale-95 transition-all"
-                    >
-                      <span>Admit</span>
-                      <Navigation size={10} fill="currentColor" />
-                    </button>
-                  </div>
-                ))
+                        {/* Evacuation Status Section */}
+                        <div className="mt-3.5 pt-2.5 border-t border-slate-100 flex flex-wrap items-center gap-2 text-xs">
+                          {isEvacuated ? (
+                            <>
+                              <span className="inline-flex items-center px-2 py-0.5 bg-rose-50 text-rose-600 font-semibold rounded text-[10px] border border-rose-100 uppercase tracking-wider">
+                                Evacuated
+                              </span>
+                              <span className="text-slate-500 flex items-center gap-1">
+                                <MapPin size={12} className="text-rose-500" />
+                                Evacuated to <strong className="text-slate-700 font-bold">{currentEvac.center?.name || currentEvac.center?.center_name || currentEvac.center_id || 'Unknown Center'}</strong>
+                                {currentEvac.event?.name && (
+                                  <span className="text-slate-400 font-normal ml-1">
+                                    (Event: {currentEvac.event.name})
+                                  </span>
+                                )}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="inline-flex items-center px-2 py-0.5 bg-slate-50 text-slate-500 font-semibold rounded text-[10px] border border-slate-200 uppercase tracking-wider">
+                                Not Evacuated
+                              </span>
+                              <span className="text-slate-400">Ready for check-in</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleVerify(h)}
+                        className="inline-flex items-center justify-center gap-1.5 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-semibold rounded-lg shadow-sm shadow-blue-600/10 transition-all duration-200 sm:self-center self-start"
+                      >
+                        <span>Admit</span>
+                      </button>
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>
         )}
 
         {tab === "manual" && (
-          <div className="p-5 sm:p-8 flex flex-col items-center justify-center flex-1 min-h-[320px] sm:min-h-[380px]">
-            <div className="max-w-md w-full p-6 bg-slate-50/40 border border-slate-100 rounded-3xl space-y-6">
+          <div className="p-6 sm:p-10 flex flex-col items-center justify-center min-h-[380px]">
+            <div className="max-w-md w-full p-8 bg-white border border-slate-200 rounded-3xl space-y-6 shadow-sm">
               <div className="text-center space-y-1 mb-2">
-                <h2 className="text-base font-black text-slate-800 tracking-tight flex items-center justify-center gap-2">
-                  <UserPlus size={18} className="text-indigo-600" />
+                <h2 className="text-lg font-black text-slate-900 tracking-tight flex items-center justify-center gap-2">
+                  <UserPlus size={20} className="text-blue-600" />
                   On-Site Emergency Entry
                 </h2>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
                   Create new listing for unregistered families
                 </p>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+              <div className="space-y-1.5 text-left">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
                   Full Name of Household Head
                 </label>
                 <input
                   value={headName}
                   onChange={(e) => setHeadName(e.target.value)}
                   placeholder="e.g. John Doe"
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 focus:bg-white outline-none transition-all"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+              <div className="space-y-1.5 text-left">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
                   Number of Members
                 </label>
                 <input
@@ -573,21 +663,21 @@ export default function VerifyHousehold() {
                   value={memberCount}
                   onChange={(e) => setMemberCount(e.target.value)}
                   placeholder="e.g. 4"
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 focus:bg-white outline-none transition-all"
                 />
               </div>
 
               <button
                 onClick={handleCreate}
                 disabled={!headName || !memberCount || loading}
-                className="w-full py-3.5 bg-indigo-600 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl shadow hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3.5 bg-blue-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-xl shadow-md shadow-blue-600/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? (
-                  <Loader2 className="animate-spin" size={14} />
+                  <Loader2 className="animate-spin" size={16} />
                 ) : (
                   <>
                     <span>Create & Admit Household</span>
-                    <Plus size={12} />
+                    <Plus size={14} />
                   </>
                 )}
               </button>
@@ -605,39 +695,77 @@ export default function VerifyHousehold() {
               onClick={() => setQrModalOpen(false)}
             />
 
-            <div className="relative bg-white rounded-2xl sm:rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 p-5 sm:p-6 flex flex-col items-center">
-              <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-5">
-                <h3 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-1.5">
-                  <QrCode size={15} className="text-indigo-600 animate-pulse" />
-                  Live QR Camera Scanner
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 flex flex-col">
+              
+              {/* Modal Header */}
+              <div className="w-full flex items-center justify-between bg-white px-5 py-4 border-b border-slate-150">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <QrCode size={18} className="text-slate-700" />
+                  Scan Household QR Code
                 </h3>
                 <button
                   onClick={() => setQrModalOpen(false)}
                   className="p-1 text-slate-400 hover:bg-slate-100 rounded-full transition-all"
                 >
-                  <X size={16} />
+                  <X size={18} />
                 </button>
               </div>
 
               {/* QR Scanner viewport box */}
-              <div className="w-full aspect-square bg-slate-50 rounded-[2rem] border border-slate-200 flex items-center justify-center overflow-hidden relative shadow-inner">
+              <div className="w-full aspect-square bg-slate-950 flex items-center justify-center overflow-hidden relative">
                 <QRScanner onScan={(id) => {
                   setQrModalOpen(false);
                   handleScan(id);
                 }} />
-                {/* Visual scan targets */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-44 h-44 border border-white/20 rounded-2xl flex items-center justify-center pointer-events-none">
-                  <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-indigo-500 rounded-tl-md" />
-                  <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-indigo-500 rounded-tr-md" />
-                  <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-indigo-500 rounded-bl-md" />
-                  <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-indigo-500 rounded-br-md" />
+                
+                {/* Visual scan targets - glowing corner brackets */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-56 h-56 relative">
+                    <div className="absolute top-0 left-0 w-8 h-8 border-t-[4px] border-l-[4px] border-blue-400 rounded-tl-xl" />
+                    <div className="absolute top-0 right-0 w-8 h-8 border-t-[4px] border-r-[4px] border-blue-400 rounded-tr-xl" />
+                    <div className="absolute bottom-0 left-0 w-8 h-8 border-b-[4px] border-l-[4px] border-blue-400 rounded-bl-xl" />
+                    <div className="absolute bottom-0 right-0 w-8 h-8 border-b-[4px] border-r-[4px] border-blue-400 rounded-br-xl" />
+                  </div>
                 </div>
               </div>
 
-              <div className="text-center mt-5 space-y-1">
-                <p className="text-xs font-bold text-slate-600">Align QR code inside the target frame</p>
-                <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Awaiting scan telemetry...</p>
+              {/* Viewport Status Row */}
+              <div className="w-full bg-slate-50 border-b border-slate-150 py-3.5 px-5 text-center flex flex-col items-center justify-center gap-2">
+                <p className="text-xs text-slate-500 font-medium leading-tight">
+                  Align the QR code within the frame to scan automatically.
+                </p>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 font-bold rounded-full text-[9px] uppercase tracking-wider">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                  Camera Active
+                </div>
               </div>
+
+              {/* Modal Footer Actions */}
+              <div className="w-full bg-white px-5 py-4 flex items-center justify-between gap-4">
+                <button
+                  onClick={() => setQrModalOpen(false)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-semibold transition-all"
+                >
+                  <X size={14} />
+                  Cancel
+                </button>
+
+                <button
+                  onClick={() => {
+                    setQrModalOpen(false);
+                    setTab("admit");
+                    setTimeout(() => {
+                      const inputEl = document.querySelector('input[placeholder="Enter Household Name or Official ID..."]');
+                      if (inputEl) inputEl.focus();
+                    }, 150);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-950 text-white hover:bg-slate-900 active:scale-95 rounded-lg text-xs font-semibold transition-all shadow-sm"
+                >
+                  <Keyboard size={14} />
+                  Enter ID Manually
+                </button>
+              </div>
+
             </div>
           </div>,
           document.body
@@ -653,102 +781,259 @@ export default function VerifyHousehold() {
               onClick={closeAdmissionModal}
             />
 
-            <div className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <h2 className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-2">
-                  <Sparkles size={16} className="text-indigo-600" />
-                  Finalize Admission
-                </h2>
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 flex flex-col text-left">
+              
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-slate-900 text-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <UserCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-slate-800 leading-tight">
+                      Finalize Admission
+                    </h2>
+                    <p className="text-xs text-slate-505">
+                      Review household details and assign accommodation.
+                    </p>
+                  </div>
+                </div>
 
                 <button
                   onClick={closeAdmissionModal}
-                  className="p-1.5 text-slate-400 hover:bg-slate-200 rounded-full transition-all"
+                  className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-full transition-all"
                 >
-                  <X size={16} />
+                  <X size={18} />
                 </button>
               </div>
 
-              <div className="p-6 space-y-5">
-                {/* Error feedback visible inside the modal */}
+              {/* Modal Body */}
+              <div className="p-6 space-y-5 max-h-[65vh] overflow-y-auto">
                 {modalError && (
                   <div className="flex items-start gap-3 p-3 rounded-xl bg-red-50 border border-red-100 animate-in zoom-in-95 duration-200">
                     <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
                     <p className="text-xs font-bold text-red-600 leading-snug">{modalError}</p>
                   </div>
                 )}
-                <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
-                  <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">
-                    Household Identified
-                  </p>
-                  <p className="text-sm font-bold text-indigo-900">
-                    {scannedData?.household?.household_name ||
-                      scannedData?.household?.head_name ||
-                      "Selected household"}
-                  </p>
-                  <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mt-1">
-                    {scannedData?.household?.household_id}
-                  </p>
-                </div>
 
-                {scannedData?.household?.members && scannedData.household.members.length > 0 ? (
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
-                      Select Members to Evacuate ({selectedMembers.length} selected)
-                    </label>
-                    <div className="max-h-[200px] overflow-y-auto border border-slate-100 rounded-xl p-3 bg-slate-50/50 space-y-2.5">
-                      {scannedData.household.members.map((member) => {
-                        const isChecked = selectedMembers.includes(member.member_id);
-                        return (
-                          <label key={member.member_id} className="flex items-start gap-3 cursor-pointer group p-1">
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => {
-                                if (isChecked) {
-                                  setSelectedMembers(selectedMembers.filter(id => id !== member.member_id));
-                                } else {
-                                  setSelectedMembers([...selectedMembers, member.member_id]);
-                                }
-                              }}
-                              className="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-bold text-slate-700 leading-tight group-hover:text-indigo-600 transition-colors">
-                                {member.first_name} {member.last_name}
-                              </p>
-                              <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
-                                {member.relationshipDetail?.relationship_name || member.relationship_id || "Family Member"}
-                              </p>
-                            </div>
-                          </label>
-                        );
-                      })}
+                {/* HOUSEHOLD SUMMARY */}
+                <div className="space-y-2">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                    Household Summary
+                  </h4>
+                  
+                  <div className="bg-slate-50/50 border border-slate-205 border-l-[4px] border-l-blue-600 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-0.5">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                        Household Head
+                      </p>
+                      <p className="text-sm font-bold text-slate-800">
+                        {scannedData?.household?.household_name ||
+                          scannedData?.household?.head_name ||
+                          "Selected household"}
+                      </p>
+                    </div>
+
+                    <div className="space-y-0.5 sm:text-right">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest sm:text-right">
+                        Household ID
+                      </p>
+                      <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-500 border border-slate-200 rounded text-[11px] font-mono font-medium">
+                        {scannedData?.household?.household_id}
+                      </span>
+                    </div>
+
+                    <div className="col-span-1 sm:col-span-2 space-y-1">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                        Current Address
+                      </p>
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+                        <MapPin size={14} className="text-slate-400" />
+                        <span>
+                          {scannedData?.household?.address?.full_address || "No address specified"}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                </div>
+
+                {/* ARRIVING MEMBERS */}
+                {scannedData?.household?.members && scannedData.household.members.length > 0 ? (
+                  (() => {
+                    const eligibleMembers = scannedData.household.members.filter(m => !getActiveEvacuation(m));
+                    const allEligibleSelected = eligibleMembers.length > 0 && selectedMembers.length === eligibleMembers.length;
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between px-1">
+                          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            Arriving Members
+                          </h4>
+                          <label className="flex items-center gap-1.5 text-xs text-slate-605 font-semibold cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={allEligibleSelected}
+                              disabled={eligibleMembers.length === 0}
+                              onChange={() => {
+                                if (allEligibleSelected) {
+                                  setSelectedMembers([]);
+                                } else {
+                                  setSelectedMembers(eligibleMembers.map(m => m.member_id));
+                                }
+                              }}
+                              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 disabled:opacity-50"
+                            />
+                            <span>Select All</span>
+                          </label>
+                        </div>
+
+                        {/* Members List Table */}
+                        <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                          <div className="bg-slate-900 px-4 py-2 flex items-center justify-between text-white text-[10px] font-black uppercase tracking-wider">
+                            <span className="w-1/2">Name</span>
+                            <span className="w-1/4 text-center">Age</span>
+                            <span className="w-1/4 text-right">Gender</span>
+                          </div>
+
+                          <div className="divide-y divide-slate-100 bg-white max-h-[180px] overflow-y-auto">
+                            {scannedData.household.members.map((member) => {
+                              const isChecked = selectedMembers.includes(member.member_id);
+                              const activeEvac = getActiveEvacuation(member);
+                              const isDisabled = !!activeEvac;
+
+                              return (
+                                <div 
+                                  key={member.member_id} 
+                                  className={`px-4 py-3 flex items-center justify-between transition-colors ${
+                                    isDisabled ? "bg-rose-50/30 opacity-75" : "hover:bg-slate-50/50"
+                                  }`}
+                                >
+                                  
+                                  {/* Left Checkbox & Name info */}
+                                  <div className="w-1/2 flex items-start gap-3">
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      disabled={isDisabled}
+                                      onChange={() => {
+                                        if (isChecked) {
+                                          setSelectedMembers(selectedMembers.filter(id => id !== member.member_id));
+                                        } else {
+                                          setSelectedMembers([...selectedMembers, member.member_id]);
+                                        }
+                                      }}
+                                      className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 disabled:opacity-50"
+                                    />
+                                    <div>
+                                      <p className="text-xs font-bold text-slate-700 leading-tight">
+                                        {member.first_name} {member.last_name}
+                                      </p>
+                                      <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
+                                        {member.relationshipDetail?.relationship_name || member.relationship?.relationship_label || member.relationship?.label || "Family Member"}
+                                      </p>
+                                      {activeEvac && (
+                                        <div className="text-[9px] text-rose-600 font-black uppercase mt-1 flex items-center gap-1">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                                          Evacuated to: {activeEvac.evacuation_record?.center?.name || activeEvac.evacuation_record?.center?.center_name || activeEvac.evacuationRecord?.center?.name || activeEvac.evacuationRecord?.center?.center_name || activeEvac.evacuation_record?.center_id || activeEvac.evacuationRecord?.center_id || 'Unknown Center'}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Age */}
+                                  <div className="w-1/4 text-center text-xs font-medium text-slate-605">
+                                    {calculateAge(member.birth_date)}
+                                  </div>
+
+                                  {/* GenderBadge */}
+                                  <div className="w-1/4 flex justify-end">
+                                    <span className="px-3 py-1 bg-slate-100 text-slate-600 font-bold rounded-full text-[10px]">
+                                      {member.gender?.gender_label || member.gender?.label || "—"}
+                                    </span>
+                                  </div>
+
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()
                 ) : (
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
                       Number of Members
                     </label>
                     <input
                       type="number"
                       min="1"
                       placeholder="e.g. 4"
-                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all"
+                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
                       value={memberCount}
                       onChange={(e) => setMemberCount(e.target.value)}
                     />
-                    <p className="text-[10px] text-slate-400 font-medium px-1">
-                      This will be used as the declared evacuee count. You can add individual member details after admission.
+                    <p className="text-[10px] text-slate-400 font-medium px-1 leading-snug">
+                      This household does not have members pre-registered. Specify the count to log details properly.
                     </p>
                   </div>
                 )}
+
+                {/* ACCOMMODATION ASSIGNMENT */}
+                <div className="space-y-2">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                    Accommodation Assignment
+                  </h4>
+
+                  <div className="relative border border-slate-202 rounded-xl px-3 py-2.5 bg-white focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/5 transition-all">
+                    <label className="absolute -top-2 left-3 bg-white px-1 text-[9px] font-black text-slate-450 uppercase tracking-widest">
+                      Select Unit
+                    </label>
+                    <select
+                      value={selectedUnitId}
+                      onChange={(e) => setSelectedUnitId(e.target.value)}
+                      className="w-full bg-white text-xs font-semibold text-slate-705 outline-none border-none py-1 cursor-pointer"
+                    >
+                      <option value="">Choose available unit...</option>
+                      {units.map((unit) => {
+                        const available = unit.max_capacity - (unit.current_occupancy || 0);
+                        const isFull = available <= 0;
+                        
+                        // Check if selected members size is larger than available capacity
+                        const selectedCount = scannedData?.household?.members?.length > 0 
+                          ? selectedMembers.length 
+                          : Number(memberCount) || 1;
+                        
+                        const notEnoughSpace = selectedCount > available;
+
+                        let statusLabel = `${available} slots left`;
+                        if (isFull) {
+                          statusLabel = "Full";
+                        } else if (notEnoughSpace) {
+                          statusLabel = `Not enough space - ${available} left`;
+                        }
+
+                        return (
+                          <option 
+                            key={unit.unit_id} 
+                            value={unit.unit_id} 
+                            disabled={isFull || notEnoughSpace}
+                            className="py-1"
+                          >
+                            {unit.name} ({statusLabel})
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                </div>
+
               </div>
 
+              {/* Footer Buttons */}
               <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-end gap-3">
                 <button
                   onClick={closeAdmissionModal}
-                  className="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+                  className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -756,20 +1041,26 @@ export default function VerifyHousehold() {
                 <button
                   disabled={loading || (scannedData?.household?.members?.length > 0 ? selectedMembers.length === 0 : !memberCount)}
                   onClick={handleConfirmAdmission}
-                  className={`px-5 py-2.5 text-white text-[10px] font-black rounded-lg shadow-lg uppercase tracking-wider flex items-center gap-2 transition-all ${
+                  className={`px-5 py-2.5 text-white text-xs font-bold rounded-lg shadow-lg flex items-center gap-1.5 transition-all cursor-pointer ${
                     loading || (scannedData?.household?.members?.length > 0 ? selectedMembers.length === 0 : !memberCount)
-                      ? "bg-indigo-300 cursor-not-allowed"
-                      : "bg-indigo-600 hover:bg-indigo-700 active:scale-95 shadow-indigo-600/20"
+                      ? "bg-emerald-300 cursor-not-allowed"
+                      : "bg-emerald-600 hover:bg-emerald-700 active:scale-95 shadow-emerald-600/10"
                   }`}
                 >
-                  {loading && <Loader2 size={12} className="animate-spin" />}
+                  {loading ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <CheckCircle2 size={14} />
+                  )}
                   Confirm Admission
                 </button>
               </div>
+
             </div>
           </div>,
           document.body
-        )}
+        )
+      }
     </div>
   );
 }
