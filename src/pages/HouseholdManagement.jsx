@@ -51,7 +51,7 @@ export default function HouseholdManagement() {
             const currentEvac = h.current_evacuation || h.currentEvacuation;
             const currentCenterId = currentEvac?.center_id || currentEvac?.center?.evacuation_center_id;
             const assignedCenterId = currentUser?.assigned_center?.id || currentUser?.assigned_center_id;
-            return !currentCenterId || currentCenterId === assignedCenterId;
+            return !currentCenterId || String(currentCenterId) === String(assignedCenterId);
         }
         return false;
     };
@@ -244,20 +244,19 @@ export default function HouseholdManagement() {
             </div>
 
             {/* TABLE */}
-            <div className="bg-white border border-slate-200 rounded-[1.5rem] shadow-sm overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-slate-50/50 border-b border-slate-100">
-                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Household</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Members</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Center / Unit</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                            <tr className="bg-slate-900">
+                                {['Household', 'Contact', 'Members', 'Status', 'Center / Unit', 'Command'].map((h, i) => (
+                                    <th key={h} className={`px-6 py-3.5 text-[10px] font-bold text-white uppercase tracking-wider ${i === 2 || i === 3 ? 'text-center' : ''} ${i === 5 ? 'text-right' : ''}`}>
+                                        {h}
+                                    </th>
+                                ))}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-50">
+                        <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 [1, 2, 3, 4, 5].map((i) => (
                                     <tr key={i} className="animate-pulse">
@@ -297,7 +296,7 @@ export default function HouseholdManagement() {
                                     </td>
                                 </tr>
                             ) : households.map(h => (
-                                <tr key={h.household_id} className="hover:bg-slate-50/30 transition-colors group">
+                                <tr key={h.household_id} className="hover:bg-slate-50/20 transition-colors group">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 border border-slate-200 group-hover:bg-white transition-colors">
@@ -356,9 +355,10 @@ export default function HouseholdManagement() {
                                             </button>
                                             {canEditHousehold(h) ? (
                                                 <button
+                                                    disabled={!h.household_id?.startsWith('NHH-')}
                                                     onClick={() => setEditingHousehold({ ...h })}
-                                                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                                                    title="Edit Household Info"
+                                                    className={`p-2 rounded-lg transition-all ${h.household_id?.startsWith('NHH-') ? 'text-slate-400 hover:text-blue-600 hover:bg-blue-50' : 'text-slate-300 cursor-not-allowed opacity-50'}`}
+                                                    title={h.household_id?.startsWith('NHH-') ? "Edit Household Info" : "Official record from barangay: Cannot edit"}
                                                 >
                                                     <Edit3 size={16} />
                                                 </button>
@@ -373,9 +373,10 @@ export default function HouseholdManagement() {
                                             )}
                                             {canDeleteHousehold && (
                                                 <button
+                                                    disabled={!h.household_id?.startsWith('NHH-')}
                                                     onClick={() => handleDelete(h.household_id)}
-                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                                    title="Delete"
+                                                    className={`p-2 rounded-lg transition-all ${h.household_id?.startsWith('NHH-') ? 'text-slate-400 hover:text-red-600 hover:bg-red-50' : 'text-slate-300 cursor-not-allowed opacity-50'}`}
+                                                    title={h.household_id?.startsWith('NHH-') ? "Delete" : "Official record from barangay: Cannot delete"}
                                                 >
                                                     <Trash2 size={16} />
                                                 </button>
@@ -391,12 +392,12 @@ export default function HouseholdManagement() {
                     </table>
                 </div>
 
-                {/* PAGINATION */}
-                <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                {/* Pagination */}
+                <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                    <p className="text-xs font-medium text-slate-500">
                         Page {pagination.current_page || 1} of {pagination.last_page || 1}
                         {' · '}
-                        {pagination.total || 0} total
+                        {pagination.total || 0} total records
                     </p>
                     <div className="flex gap-2">
                         <button

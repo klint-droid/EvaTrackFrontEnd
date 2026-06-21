@@ -1,74 +1,45 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
-    X, Send, Clock, RefreshCw,
-    MessageSquare, Smartphone, CheckCircle,
-    AlertTriangle, Sparkles, HelpCircle, Layers
+    X, Shield, MessageSquare, Smartphone, Laptop,
+    AlertTriangle, AlertCircle, Info, Activity
 } from 'lucide-react';
 import { sendAlert } from '../../api/alerts/sendAlert';
 import { getUrgencyLevels } from '../../api/alerts/getUrgencyLevels';
-import { previewRecipients } from '../../api/alerts/previewRecipients';
 import { getCenters } from '../../api/evacuation/getCenters';
 import { getEvents } from '../../api/events/getEvents';
 
-const EMPTY_FORM = {
-    message: '',
-    urgency_level_id: '',
-    channel: 'both',
-    target_filter: 'all',
-    evacuation_center_id: '',
-    evacuation_event_id: '',
-    scheduled_at: '',
-    is_recurring: false,
-    recurrence_type: 'daily',
-    recurrence_end_at: '',
-};
-
-const PRESETS = [
-    {
-        label: 'Typhoon Evacuation',
-        message: 'EMERGENCY: Heavy rainfall and severe winds are expected from the typhoon. A mandatory evacuation order is in effect. Please secure your home and move immediately to your designated evacuation center.',
-        urgency: 'critical',
-        channel: 'both'
-    },
-    {
-        label: 'Flood Advisory',
-        message: 'WARNING: Rapidly rising water levels detected. A flood advisory has been issued. Be prepared to evacuate. Move essential belongings and electronics to higher ground.',
-        urgency: 'high',
-        channel: 'both'
-    },
-    {
-        label: 'Fire Alert',
-        message: 'CRITICAL ALERT: An active fire has been reported near your area. Evacuate immediately if you are within the hazard zone. Follow emergency service directions.',
-        urgency: 'critical',
-        channel: 'both'
-    },
-    {
-        label: 'Safe to Return',
-        message: 'ALL CLEAR: The emergency threat has passed. Government and safety agencies have declared it safe to return to your household. Please travel with caution.',
-        urgency: 'low',
-        channel: 'both'
-    }
-];
-
-const URGENCY_STYLES = {
-    critical: 'bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20 active:bg-red-500/30',
-    high: 'bg-orange-500/10 border-orange-500/30 text-orange-500 hover:bg-orange-500/20 active:bg-orange-500/30',
-    medium: 'bg-yellow-500/10 border-yellow-500/30 text-yellow-600 hover:bg-yellow-500/20 active:bg-yellow-500/30',
-    low: 'bg-green-500/10 border-green-500/30 text-green-600 hover:bg-green-500/20 active:bg-green-500/30',
+const URGENCY_CONFIG = {
+    critical: { icon: AlertTriangle, text: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', activeBg: 'bg-red-50/50', activeBorder: 'border-red-400', leftBar: 'bg-red-500' },
+    high:     { icon: AlertCircle,   text: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200', activeBg: 'bg-orange-50/50', activeBorder: 'border-orange-400', leftBar: 'bg-orange-500' },
+    medium:   { icon: Activity,      text: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200', activeBg: 'bg-yellow-50/50', activeBorder: 'border-yellow-400', leftBar: 'bg-yellow-500' },
+    low:      { icon: Info,          text: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', activeBg: 'bg-green-50/50', activeBorder: 'border-green-400', leftBar: 'bg-green-500' },
 };
 
 export default function CreateAlertModal({ onClose, onSent }) {
-    const [form, setForm] = useState(EMPTY_FORM);
+    const [form, setForm] = useState({
+        message: '',
+        urgency_level_id: '',
+        scheduled_at: '',
+        is_recurring: false,
+        recurrence_type: 'daily',
+        recurrence_end_at: '',
+    });
+    
+    const [channels, setChannels] = useState({
+        sms: true,
+        push: true,
+        inApp: true
+    });
+    
+    const [selectedTargets, setSelectedTargets] = useState([{ type: 'all', id: 'all' }]);
+    const [isScheduled, setIsScheduled] = useState(false);
+    
     const [urgencyLevels, setUrgencyLevels] = useState([]);
     const [centers, setCenters] = useState([]);
     const [events, setEvents] = useState([]);
-    const [recipientCount, setRecipientCount] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [previewing, setPreviewing] = useState(false);
     const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
-    const [targetMode, setTargetMode] = useState('all');
 
     useEffect(() => {
         getUrgencyLevels().then(res => setUrgencyLevels(res.data || []));
@@ -76,450 +47,349 @@ export default function CreateAlertModal({ onClose, onSent }) {
         getEvents().then(res => setEvents((res.data || []).filter(e => !e.ended_at)));
     }, []);
 
-    useEffect(() => {
-        const timeout = setTimeout(async () => {
-            setPreviewing(true);
-            try {
-                const params = { target_filter: form.target_filter };
-                if (form.evacuation_center_id) params.evacuation_center_id = form.evacuation_center_id;
-                if (form.evacuation_event_id) params.evacuation_event_id = form.evacuation_event_id;
-                const res = await previewRecipients(params);
-                setRecipientCount(res.recipient_count);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setPreviewing(false);
-            }
-        }, 400);
-        return () => clearTimeout(timeout);
-    }, [form.target_filter, form.evacuation_center_id, form.evacuation_event_id]);
-
-    const handleTargetMode = (mode) => {
-        setTargetMode(mode);
-        setForm(prev => ({
-            ...prev,
-            target_filter: 'all',
-            evacuation_center_id: '',
-            evacuation_event_id: '',
-        }));
-    };
-
-    const applyPreset = (preset) => {
-        const match = urgencyLevels.find(u => u.urgency_key === preset.urgency);
-        setForm(prev => ({
-            ...prev,
-            message: preset.message,
-            urgency_level_id: match ? match.urgency_id : prev.urgency_level_id,
-            channel: preset.channel
-        }));
-        setError(null);
-    };
+    const targetOptions = [
+        { type: 'all', id: 'all', label: 'All Public' },
+        ...centers.map(c => ({ type: 'center', id: c.evacuation_center_id, label: c.name })),
+        ...events.map(e => ({ type: 'event', id: e.event_id, label: e.name }))
+    ];
 
     const handleSubmit = async () => {
         if (!form.message || !form.urgency_level_id) {
             setError('Message and urgency level are required.');
             return;
         }
-        if (recipientCount === 0) {
-            setError('No recipients match the selected filters.');
-            return;
-        }
+        
+        let channelVal = 'both';
+        if (channels.sms && !channels.push) channelVal = 'sms';
+        if (!channels.sms && channels.push) channelVal = 'push';
+
         setLoading(true);
         setError(null);
         try {
-            const payload = { ...form };
-            if (!payload.evacuation_center_id) delete payload.evacuation_center_id;
-            if (!payload.evacuation_event_id)  delete payload.evacuation_event_id;
-            if (!payload.scheduled_at)         delete payload.scheduled_at;
-            if (!payload.is_recurring) {
-                delete payload.recurrence_type;
-                delete payload.recurrence_end_at;
-            }
-            await sendAlert(payload);
-            const channelLabel = form.channel === 'both' ? 'Push & SMS'
-                : form.channel === 'sms' ? 'SMS' : 'Push';
-            setSuccess(`Alert successfully broadcasted via ${channelLabel}.`);
+            const promises = selectedTargets.map(target => {
+                const payload = { 
+                    message: form.message,
+                    urgency_level_id: form.urgency_level_id,
+                    channel: channelVal,
+                    target_filter: 'all', 
+                    evacuation_center_id: target.type === 'center' ? target.id : undefined,
+                    evacuation_event_id: target.type === 'event' ? target.id : undefined,
+                };
+                
+                if (isScheduled && form.scheduled_at) {
+                    payload.scheduled_at = form.scheduled_at;
+                }
+                
+                if (form.is_recurring) {
+                    payload.is_recurring = true;
+                    payload.recurrence_type = form.recurrence_type;
+                    payload.recurrence_end_at = form.recurrence_end_at;
+                }
+                
+                return sendAlert(payload);
+            });
+
+            await Promise.all(promises);
             onSent();
-            setTimeout(() => {
-                onClose();
-            }, 1000);
+            onClose();
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to send alert.');
-        } finally {
+            setError(err.response?.data?.message || 'Failed to send alert(s).');
             setLoading(false);
         }
     };
 
-    const broadcastLabel = form.is_recurring
-        ? 'Schedule Recurring Alert'
-        : form.scheduled_at
-            ? 'Schedule Broadcast'
-            : 'Broadcast Urgent Alert Now';
+    const handleTargetClick = (e, opt) => {
+        if (e.ctrlKey || e.metaKey) {
+            // Multi-select logic
+            if (opt.type === 'all') {
+                setSelectedTargets([{ type: 'all', id: 'all' }]);
+                return;
+            }
+            
+            const isAlreadySelected = selectedTargets.some(t => t.type === opt.type && t.id === opt.id);
+            let newTargets;
+            
+            if (isAlreadySelected) {
+                newTargets = selectedTargets.filter(t => !(t.type === opt.type && t.id === opt.id));
+                if (newTargets.length === 0) newTargets = [{ type: 'all', id: 'all' }];
+            } else {
+                newTargets = selectedTargets.filter(t => t.type !== 'all');
+                newTargets.push({ type: opt.type, id: opt.id });
+            }
+            setSelectedTargets(newTargets);
+        } else {
+            // Single select logic
+            setSelectedTargets([{ type: opt.type, id: opt.id }]);
+        }
+    };
 
-    const BroadcastIcon = form.is_recurring ? RefreshCw : form.scheduled_at ? Clock : Send;
+    const selectedUrgency = urgencyLevels.find(u => u.urgency_id === form.urgency_level_id);
+    const urgencyConf = selectedUrgency ? URGENCY_CONFIG[selectedUrgency.urgency_key] : URGENCY_CONFIG.low;
+    const UrgencyIcon = urgencyConf?.icon || Info;
 
     return createPortal(
-        <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9999] p-4">
-            <div
-                className="absolute inset-0 bg-slate-950/40 backdrop-blur-md animate-in fade-in duration-300"
-                onClick={onClose}
-            />
+        <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9999] p-4 sm:p-8">
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={onClose} />
 
-            <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-100 flex flex-col max-h-[90vh]">
-
-                {/* Header */}
-                <div className="px-6 py-5 flex items-center justify-between border-b border-slate-50 bg-slate-50/50">
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h2 className="text-xl font-black text-slate-900 tracking-tight">Create Emergency Broadcast</h2>
-                            <Sparkles size={16} className="text-amber-500 animate-pulse" />
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-full max-h-[85vh] flex flex-col md:flex-row overflow-hidden animate-in zoom-in-95 duration-300">
+                
+                {/* LEFT PANE - Form */}
+                <div className="flex-1 flex flex-col h-full bg-white relative z-10 border-r border-slate-200">
+                    {/* Header */}
+                    <div className="px-8 py-6 border-b border-slate-100 flex items-start justify-between bg-white shrink-0">
+                        <div>
+                            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Create Official Alert</h2>
+                            <p className="text-sm text-slate-500 font-medium mt-1">
+                                Broadcast an emergency notification to defined sectors.
+                            </p>
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5 font-medium">
-                            Dispatch immediate warning alerts across emergency channels
-                        </p>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all"
-                    >
-                        <X size={18} />
-                    </button>
-                </div>
-
-                {/* Form body */}
-                <div className="p-6 space-y-6 overflow-y-auto flex-1">
-
-                    {/* Feedback banners */}
-                    {error && (
-                        <div className="bg-red-50 border border-red-100 text-red-600 text-xs font-semibold rounded-2xl px-4 py-3 flex items-start gap-2.5 shadow-sm animate-in slide-in-from-top-2">
-                            <AlertTriangle size={15} className="flex-shrink-0 mt-0.5" />
-                            <span>{error}</span>
-                        </div>
-                    )}
-                    {success && (
-                        <div className="bg-green-50 border border-green-100 text-green-700 text-xs font-semibold rounded-2xl px-4 py-3 flex items-center gap-2.5 shadow-sm animate-in slide-in-from-top-2">
-                            <CheckCircle size={15} className="text-green-600" />
-                            <span>{success}</span>
-                        </div>
-                    )}
-
-                    {/* Operational Presets */}
-                    <div className="space-y-2.5">
-                        <Label>Operational Presets (Click to Auto-fill)</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                            {PRESETS.map((p, idx) => {
-                                const cls = URGENCY_STYLES[p.urgency] || 'border-slate-200 bg-slate-50 text-slate-700';
-                                return (
-                                    <button
-                                        key={idx}
-                                        type="button"
-                                        onClick={() => applyPreset(p)}
-                                        className={`flex flex-col justify-between p-3.5 rounded-2xl border text-left transition-all active:scale-[0.98] ${cls}`}
-                                    >
-                                        <span className="text-xs font-bold tracking-tight">{p.label}</span>
-                                        <span className="text-[9px] font-black uppercase tracking-wider opacity-75 mt-1.5">
-                                            {p.urgency} preset
-                                        </span>
-                                    </button>
-                                );
-                            })}
-                        </div>
+                        <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-all">
+                            <X size={20} />
+                        </button>
                     </div>
 
-                    {/* Live Target Estimator widget */}
-                    <div className="bg-slate-950 text-slate-100 rounded-3xl p-5 border border-slate-800 shadow-xl relative overflow-hidden">
-                        <div className="absolute right-0 top-0 w-28 h-28 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-                        
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                                <p className="text-[8px] font-black tracking-widest text-slate-500 uppercase">Target Estimator</p>
-                                <h4 className="text-xs font-bold text-slate-300">Live Broadcast Reach</h4>
+                    {/* Scrollable Form Body */}
+                    <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8 bg-white text-left">
+                        {error && (
+                            <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold border border-red-100">
+                                {error}
                             </div>
-                            <div className="flex items-center gap-1.5 bg-blue-500/15 text-blue-400 px-3 py-1 rounded-full text-[9px] font-black border border-blue-500/25">
-                                <span className={`w-1.5 h-1.5 rounded-full bg-blue-400 ${previewing ? 'animate-ping' : ''}`} />
-                                <span>LIVE COUNT</span>
-                            </div>
-                        </div>
-                        
-                        <div className="mt-4 flex items-baseline gap-2">
-                            <span className="text-4xl font-black tracking-tight text-white font-mono">
-                                {previewing ? '...' : recipientCount ?? 0}
-                            </span>
-                            <span className="text-xs text-slate-400 font-bold">households targeted</span>
-                        </div>
-                        
-                        <div className="mt-4 flex items-center justify-between text-[10px] text-slate-400 border-t border-slate-800/80 pt-3.5">
-                            <div>
-                                <span className="font-semibold text-slate-500 uppercase tracking-widest text-[8px] mr-1">Channels:</span> 
-                                <span className="text-slate-300 font-semibold">{form.channel === 'both' ? 'SMS + Push' : form.channel.toUpperCase()}</span>
-                            </div>
-                            <div>
-                                <span className="font-semibold text-slate-500 uppercase tracking-widest text-[8px] mr-1">Status:</span> 
-                                <span className="text-slate-300 font-semibold">{form.target_filter.replace('_', ' ')}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Targeting Mode */}
-                    <div className="space-y-3">
-                        <Label>Target Filters</Label>
-                        <div className="flex bg-slate-50 p-1 rounded-2xl border border-slate-100 gap-1">
-                            {[
-                                { value: 'all',    label: 'All Areas' },
-                                { value: 'center', label: 'By Evacuation Center' },
-                                { value: 'event',  label: 'By Active Event' },
-                            ].map(opt => (
-                                <button
-                                    key={opt.value}
-                                    type="button"
-                                    onClick={() => handleTargetMode(opt.value)}
-                                    className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
-                                        targetMode === opt.value
-                                            ? 'bg-white text-slate-900 shadow-sm border border-slate-100 font-black'
-                                            : 'text-slate-500 hover:text-slate-700'
-                                    }`}
-                                >
-                                    {opt.label}
-                                </button>
-                            ))}
-                        </div>
-
-                        {targetMode === 'center' && (
-                            <select
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 transition-all"
-                                value={form.evacuation_center_id}
-                                onChange={e => setForm({ ...form, evacuation_center_id: e.target.value, target_filter: 'all' })}
-                            >
-                                <option value="">Select Center Target…</option>
-                                {centers.map(c => (
-                                    <option key={c.evacuation_center_id} value={c.evacuation_center_id}>{c.name}</option>
-                                ))}
-                            </select>
                         )}
 
-                        {targetMode === 'event' && (
-                            <select
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 transition-all"
-                                value={form.evacuation_event_id}
-                                onChange={e => setForm({ ...form, evacuation_event_id: e.target.value, target_filter: 'all' })}
-                            >
-                                <option value="">Select Disaster Event Target…</option>
-                                {events.map(e => (
-                                    <option key={e.event_id} value={e.event_id}>{e.name}</option>
-                                ))}
-                            </select>
-                        )}
-
-                        {/* Evacuation status sub-filter */}
-                        <div className="flex gap-1.5">
-                            {[
-                                { value: 'all',           label: 'All Residents' },
-                                { value: 'evacuated',     label: 'Evacuated Only' },
-                                { value: 'not_evacuated', label: 'Not Evacuated' },
-                            ].map(opt => (
-                                <button
-                                    key={opt.value}
-                                    type="button"
-                                    onClick={() => setForm({ ...form, target_filter: opt.value })}
-                                    className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl border transition-all ${
-                                        form.target_filter === opt.value
-                                            ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/15'
-                                            : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
-                                    }`}
-                                >
-                                    {opt.label}
-                                </button>
-                            ))}
+                        {/* Urgency */}
+                        <div className="space-y-3">
+                            <label className="text-xs font-black text-slate-800 flex items-center gap-1">
+                                Urgency Level <span className="text-red-500">*</span>
+                            </label>
+                            <div className="grid grid-cols-4 gap-3">
+                                {urgencyLevels.map(u => {
+                                    const isSelected = form.urgency_level_id === u.urgency_id;
+                                    const conf = URGENCY_CONFIG[u.urgency_key] || URGENCY_CONFIG.low;
+                                    const IconObj = conf.icon;
+                                    return (
+                                        <button
+                                            key={u.urgency_id}
+                                            onClick={() => setForm({ ...form, urgency_level_id: u.urgency_id })}
+                                            className={`flex flex-col items-center justify-center py-4 rounded-xl border-2 transition-all active:scale-[0.98] ${
+                                                isSelected 
+                                                    ? `${conf.activeBorder} ${conf.activeBg}` 
+                                                    : 'border-slate-200 hover:border-slate-300 bg-white'
+                                            }`}
+                                        >
+                                            <IconObj size={24} className={isSelected ? conf.text : 'text-slate-400'} strokeWidth={2.5} />
+                                            <span className={`text-[12px] font-bold mt-2 ${isSelected ? conf.text : 'text-slate-600'}`}>
+                                                {u.urgency_label}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Urgency */}
-                    <div className="space-y-2.5">
-                        <Label>Urgency Level</Label>
-                        <div className="flex gap-1.5 flex-wrap">
-                            {urgencyLevels.map(u => {
-                                const isSelected = form.urgency_level_id === u.urgency_id;
-                                const baseStyle = URGENCY_STYLES[u.urgency_key] || 'border-slate-200 hover:border-slate-300 bg-slate-50';
-                                return (
-                                    <button
-                                        key={u.urgency_id}
-                                        type="button"
-                                        onClick={() => setForm({ ...form, urgency_level_id: u.urgency_id })}
-                                        className={`px-4 py-2 text-xs font-bold rounded-2xl border transition-all ${
-                                            isSelected
-                                                ? `${baseStyle.replace('bg-opacity-10', 'bg-opacity-100')} border-transparent font-black ring-2 ring-slate-900/10`
-                                                : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200 hover:bg-slate-50'
-                                        }`}
-                                    >
-                                        {u.urgency_label}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Notification channels */}
-                    <div className="space-y-2.5">
-                        <Label>Broadcast Channels</Label>
-                        <div className="grid grid-cols-2 gap-3.5">
-                            {[
-                                { value: 'push', label: 'Mobile Push Broadcast', description: 'Immediate App Alert', icon: <Smartphone size={16} /> },
-                                { value: 'sms',  label: 'Direct SMS Gateway', description: 'SMS Mobile Alert', icon: <MessageSquare size={16} /> },
-                            ].map(({ value, label, description, icon }) => {
-                                const isActive = form.channel === value || form.channel === 'both';
-                                return (
-                                    <button
-                                        key={value}
-                                        type="button"
-                                        onClick={() => {
-                                            if (form.channel === 'both') {
-                                                setForm({ ...form, channel: value === 'push' ? 'sms' : 'push' });
-                                            } else if (form.channel === value) {
-                                                setForm({ ...form, channel: 'both' });
-                                            } else {
-                                                setForm({ ...form, channel: 'both' });
-                                            }
-                                        }}
-                                        className={`flex items-start gap-3 p-4 rounded-2xl border-2 transition-all text-left relative overflow-hidden ${
-                                            isActive
-                                                ? 'border-blue-600 bg-blue-50/40 shadow-sm'
-                                                : 'border-slate-100 bg-white hover:border-slate-200'
-                                        }`}
-                                    >
-                                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                                            isActive ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-400'
-                                        }`}>
-                                            {icon}
-                                        </div>
-                                        <div className="space-y-0.5">
-                                            <p className={`text-xs font-bold leading-tight ${isActive ? 'text-slate-900' : 'text-slate-600'}`}>
-                                                {label}
-                                            </p>
-                                            <p className="text-[10px] text-slate-400 font-medium">{description}</p>
-                                        </div>
-                                        {isActive && (
-                                            <div className="absolute top-3 right-3 bg-blue-600 rounded-full w-4 h-4 flex items-center justify-center text-white">
-                                                <CheckCircle size={10} strokeWidth={3} />
-                                            </div>
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Message */}
-                    <div className="space-y-2.5">
-                        <Label>Alert Message Content</Label>
-                        <div className="relative">
+                        {/* Message */}
+                        <div className="space-y-3">
+                            <label className="text-xs font-black text-slate-800 flex items-center gap-1">
+                                Alert Message <span className="text-red-500">*</span>
+                            </label>
                             <textarea
-                                rows={4}
-                                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs leading-relaxed focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 outline-none transition-all resize-none font-medium placeholder-slate-400 text-slate-700"
-                                placeholder="Type custom emergency notification..."
+                                rows={5}
                                 value={form.message}
-                                onChange={e => setForm({ ...form, message: e.target.value })}
+                                onChange={e => setForm({ ...form, message: e.target.value.slice(0, 300) })}
+                                placeholder="Enter official directive or situational update..."
+                                className="w-full p-4 bg-white border-2 border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all resize-none text-slate-700 font-medium placeholder-slate-400"
                             />
+                            <div className="flex justify-between items-center text-xs text-slate-500 font-medium px-1">
+                                <span>Supports clear, concise formatting.</span>
+                                <span className="font-mono">{form.message.length} / 300</span>
+                            </div>
                         </div>
-                        <div className="flex justify-between text-[9px] font-black uppercase text-slate-400 tracking-wider px-0.5">
-                            <span>{form.message.length} Characters</span>
-                            <span className={recipientCount === 0 ? 'text-red-500 font-bold animate-pulse' : 'text-slate-400'}>
-                                {previewing ? 'Estimating Reach...' : `${recipientCount ?? 0} Recipient Households`}
-                            </span>
-                        </div>
-                    </div>
 
-                    {/* Schedule */}
-                    <div className="space-y-2.5">
-                        <div className="flex items-center gap-2">
-                            <Label>Schedule Delayed Broadcast (Optional)</Label>
-                            <Clock size={11} className="text-slate-400" />
-                        </div>
-                        <input
-                            type="datetime-local"
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 transition-all text-slate-700"
-                            value={form.scheduled_at}
-                            onChange={e => setForm({ ...form, scheduled_at: e.target.value })}
-                        />
-                    </div>
+                        {/* Split row: Target & Channels */}
+                        <div className="grid grid-cols-2 gap-6">
+                            {/* Target Audience */}
+                            <div className="space-y-3 flex flex-col">
+                                <label className="text-xs font-black text-slate-800">Target Audience</label>
+                                <div className="border-2 border-slate-200 rounded-xl overflow-hidden h-40 overflow-y-auto bg-white flex flex-col p-1.5">
+                                    {targetOptions.map((opt, i) => {
+                                        const isSelected = selectedTargets.some(t => t.type === opt.type && t.id === opt.id);
+                                        return (
+                                            <button
+                                                key={`${opt.type}-${opt.id}`}
+                                                onClick={(e) => handleTargetClick(e, opt)}
+                                                className={`text-left px-3 py-2 text-sm rounded-lg transition-all ${
+                                                    isSelected ? 'bg-slate-300/60 font-bold text-slate-800' : 'text-slate-600 hover:bg-slate-100'
+                                                }`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <p className="text-xs text-slate-500 font-medium mt-1 px-1">Hold Ctrl/Cmd to select multiple.</p>
+                            </div>
 
-                    {/* Recurring Options */}
-                    <div className="space-y-3 pt-2">
-                        <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                            <div className="relative flex items-center">
+                            {/* Delivery Channels */}
+                            <div className="space-y-3 flex flex-col">
+                                <label className="text-xs font-black text-slate-800">Delivery Channels</label>
+                                <div className="border-2 border-slate-200 rounded-xl p-5 flex-1 bg-white space-y-4">
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <input type="checkbox" checked={channels.sms} onChange={e => setChannels({...channels, sms: e.target.checked})} className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600 cursor-pointer" />
+                                        <MessageSquare size={16} className="text-slate-500" />
+                                        <span className="text-sm font-medium text-slate-700">SMS Broadcast</span>
+                                    </label>
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <input type="checkbox" checked={channels.push} onChange={e => setChannels({...channels, push: e.target.checked})} className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600 cursor-pointer" />
+                                        <Smartphone size={16} className="text-slate-500" />
+                                        <span className="text-sm font-medium text-slate-700">Push Notification</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Schedule Broadcast */}
+                        <div className="pt-6 border-t border-slate-100 flex items-center justify-between pb-6">
+                            <div>
+                                <h4 className="text-sm font-black text-slate-800">Schedule Broadcast</h4>
+                                <p className="text-xs text-slate-500 font-medium">Delay sending to a specific date/time.</p>
+                            </div>
+                            <button 
+                                onClick={() => setIsScheduled(!isScheduled)}
+                                className={`w-11 h-6 rounded-full transition-colors relative ${isScheduled ? 'bg-blue-600' : 'bg-slate-300'}`}
+                            >
+                                <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all shadow-sm ${isScheduled ? 'left-[22px]' : 'left-0.5'}`} />
+                            </button>
+                        </div>
+                        
+                        {isScheduled && (
+                            <div className="animate-in slide-in-from-top-2">
+                                <input
+                                    type="datetime-local"
+                                    value={form.scheduled_at}
+                                    onChange={e => setForm({...form, scheduled_at: e.target.value})}
+                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700"
+                                />
+                            </div>
+                        )}
+                        
+                        {/* Recurring Broadcast */}
+                        <div className="pt-2 border-t border-slate-100 pb-2">
+                            <label className="flex items-center gap-3 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     checked={form.is_recurring}
                                     onChange={e => setForm({ ...form, is_recurring: e.target.checked })}
-                                    className="accent-blue-600 w-4.5 h-4.5 rounded-lg border-slate-300 cursor-pointer"
+                                    className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
                                 />
-                            </div>
-                            <span className="text-xs font-bold text-slate-700">Repeat this broadcast alert periodically</span>
-                        </label>
+                                <span className="text-sm font-black text-slate-800">Set as Recurring Alert</span>
+                            </label>
 
-                        {form.is_recurring && (
-                            <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
-                                <div className="space-y-1.5">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Recurrence Interval</span>
-                                    <div className="flex gap-1.5">
-                                        {['hourly', 'daily', 'weekly'].map(opt => (
-                                            <button
-                                                key={opt}
-                                                type="button"
-                                                onClick={() => setForm({ ...form, recurrence_type: opt })}
-                                                className={`flex-1 py-2 text-xs font-bold rounded-xl border transition-all ${
-                                                    form.recurrence_type === opt
-                                                        ? 'bg-slate-900 border-slate-900 text-white font-black'
-                                                        : 'bg-white border-slate-100 text-slate-500 hover:border-slate-200'
-                                                }`}
-                                            >
-                                                {opt.charAt(0).toUpperCase() + opt.slice(1)}
-                                            </button>
-                                        ))}
+                            {form.is_recurring && (
+                                <div className="mt-4 bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4 animate-in slide-in-from-top-2">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Recurrence Interval</label>
+                                        <div className="flex gap-2">
+                                            {['hourly', 'daily', 'weekly'].map(opt => (
+                                                <button
+                                                    key={opt}
+                                                    type="button"
+                                                    onClick={() => setForm({ ...form, recurrence_type: opt })}
+                                                    className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-all ${
+                                                        form.recurrence_type === opt
+                                                            ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                                                            : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                                                    }`}
+                                                >
+                                                    {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">End Recurrence On</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={form.recurrence_end_at}
+                                            onChange={e => setForm({ ...form, recurrence_end_at: e.target.value })}
+                                            className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700"
+                                        />
                                     </div>
                                 </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
-                                        End Recurrence On
-                                    </label>
-                                    <input
-                                        type="datetime-local"
-                                        className="w-full px-4 py-2.5 bg-white border border-slate-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all text-slate-700"
-                                        value={form.recurrence_end_at}
-                                        onChange={e => setForm({ ...form, recurrence_end_at: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
+                        
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-8 py-5 border-t border-slate-100 bg-white shrink-0 flex items-center justify-end gap-4">
+                        <button 
+                            type="button" 
+                            onClick={onClose}
+                            className="px-6 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-all"
+                        >
+                            Save Draft
+                        </button>
+                        <button
+                            onClick={handleSubmit}
+                            disabled={loading || !form.message || !form.urgency_level_id}
+                            className="px-6 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl shadow-md shadow-blue-600/20 hover:bg-blue-700 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <Shield size={16} strokeWidth={2.5} />
+                            {loading ? 'Processing...' : 'Confirm & Broadcast'}
+                        </button>
                     </div>
                 </div>
 
-                {/* Footer */}
-                <div className="px-6 py-4.5 border-t border-slate-50 bg-slate-50/50">
-                    <button
-                        onClick={handleSubmit}
-                        disabled={loading || recipientCount === 0 || !form.message || !form.urgency_level_id}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-2xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20 uppercase tracking-widest"
-                    >
-                        {loading ? (
-                            <span className="animate-pulse text-xs">Transmitting Broadcast...</span>
-                        ) : (
-                            <>
-                                <BroadcastIcon size={14} strokeWidth={3} />
-                                <span>{broadcastLabel}</span>
-                            </>
-                        )}
-                    </button>
+                {/* RIGHT PANE - Mobile Preview */}
+                <div className="w-[360px] lg:w-[420px] shrink-0 bg-slate-50 flex flex-col relative hidden md:flex">
+                    <div className="pt-10 pb-4 text-center">
+                        <h3 className="text-xs font-black text-slate-600 capitalize tracking-wide">Mobile Preview</h3>
+                    </div>
+                    
+                    <div className="flex-1 flex items-center justify-center p-6 pb-12">
+                        {/* Phone Frame */}
+                        <div className="w-[280px] h-[560px] bg-white rounded-[2.5rem] shadow-2xl border-[12px] border-slate-900 overflow-hidden relative flex flex-col">
+                            {/* StatusBar */}
+                            <div className="bg-black text-white px-5 py-1.5 flex justify-between items-center text-[10px] font-medium absolute top-0 w-full z-20">
+                                <span>12:00</span>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-2.5 h-2.5 bg-white rounded-sm" />
+                                    <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                                </div>
+                            </div>
+                            
+                            {/* App Content */}
+                            <div className="flex-1 bg-slate-50 pt-10 p-4">
+                                
+                                {/* Notification Card */}
+                                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 relative overflow-hidden flex flex-col gap-2 mt-2">
+                                    {/* Left color bar */}
+                                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${urgencyConf.leftBar}`} />
+                                    
+                                    <div className={`flex items-center gap-1.5 ${urgencyConf.text}`}>
+                                        <UrgencyIcon size={14} strokeWidth={3} />
+                                        <span className="text-[10px] font-black uppercase tracking-wider">
+                                            {selectedUrgency?.urgency_label || 'Critical'} Alert
+                                        </span>
+                                    </div>
+                                    
+                                    <p className="text-xs text-slate-700 font-medium leading-relaxed break-words whitespace-pre-wrap">
+                                        {form.message || <span className="text-slate-400">Enter official directive or situational update...</span>}
+                                    </p>
+                                    
+                                    <p className="text-[9px] font-bold text-slate-400 text-right mt-3">Just now</p>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="absolute bottom-6 w-full text-center">
+                        <p className="text-xs text-slate-400 font-medium">Preview is approximate.</p>
+                    </div>
                 </div>
+
             </div>
         </div>,
         document.body
-    );
-}
-
-function Label({ children }) {
-    return (
-        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-            {children}
-        </p>
     );
 }

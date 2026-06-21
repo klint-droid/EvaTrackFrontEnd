@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     Bell, Plus, Eye, Trash2, Clock, RefreshCw,
     Loader2, ChevronLeft, ChevronRight, MoreHorizontal,
-    Activity, CheckCircle, TrendingUp, Users, Search, Filter, Radio, MessageSquare, Smartphone, CloudLightning
+    TrendingUp, Search, Filter, CheckCircle2, Play, XCircle
 } from 'lucide-react';
 
 import { getAlerts } from '../api/alerts/getAlerts';
@@ -18,7 +18,6 @@ export default function EvacuationAlerts() {
     const [loading, setLoading] = useState(true);
     const [createModal, setCreateModal] = useState(false);
     const [detailId, setDetailId] = useState(null);
-    const [recentAlerts, setRecentAlerts] = useState([]);
     const [events, setEvents] = useState([]);
     const [selectedEvent, setSelectedEvent] = useState('');
     
@@ -36,7 +35,6 @@ export default function EvacuationAlerts() {
             const res = await getAlerts(page, selectedEvent || undefined);
             setAlerts(res.data || []);
             setPagination(res);
-            if (page === 1) setRecentAlerts(res.data?.slice(0, 5) || []);
         } catch (err) {
             console.error(err);
         } finally {
@@ -60,16 +58,6 @@ export default function EvacuationAlerts() {
         }
     };
 
-    const getStatusStyle = (status) => {
-        const map = {
-            sent:      'bg-emerald-500/10 border-emerald-500/25 text-emerald-600',
-            failed:    'bg-rose-500/10 border-rose-500/25 text-rose-600',
-            scheduled: 'bg-indigo-500/10 border-indigo-500/25 text-indigo-600',
-            pending:   'bg-amber-500/10 border-amber-500/25 text-amber-700',
-            cancelled: 'bg-slate-500/10 border-slate-500/20 text-slate-500',
-        };
-        return map[status] || map.pending;
-    };
 
     const getUrgencyStyle = (key) => {
         const map = {
@@ -81,15 +69,6 @@ export default function EvacuationAlerts() {
         return map[key] || map.low;
     };
 
-    const getUrgencyDot = (key) => {
-        const map = {
-            critical: 'bg-red-500 shadow-lg shadow-red-500/40 animate-pulse',
-            high:     'bg-orange-500 shadow-md shadow-orange-500/30 animate-pulse',
-            medium:   'bg-yellow-400',
-            low:      'bg-green-500',
-        };
-        return map[key] || 'bg-slate-300';
-    };
 
     // Derived statistics
     const stats = (() => {
@@ -134,130 +113,82 @@ export default function EvacuationAlerts() {
                 )}
             </div>
 
-            {/* ── Operations Analytics dashboard ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                {/* Modern HSL glowing delivery card */}
-                <div className="bg-slate-950 rounded-3xl p-6 text-white space-y-4 border border-slate-900 shadow-xl relative overflow-hidden flex flex-col justify-between">
-                    <div className="absolute right-0 top-0 w-32 h-32 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
-                    
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
-                                <Activity size={14} className="text-blue-400" />
-                            </div>
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                Network Delivery Success
-                            </p>
-                        </div>
-                        <span className="text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md">
-                            active gateway
+            {/* ── Stats Cards Row ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                {/* Alerts Sent (24h) */}
+                <div className="bg-white border border-slate-200 rounded-2xl px-6 py-5 flex flex-col gap-1 shadow-sm">
+                    <p className="text-xs font-bold text-slate-500">Alerts Sent (24h)</p>
+                    <div className="flex items-baseline gap-3">
+                        <p className="text-4xl font-black text-slate-900 tracking-tight leading-none">{stats.total.toLocaleString()}</p>
+                        <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                            <TrendingUp size={12} />
+                            {stats.rate > 0 ? `${stats.rate}%` : '—'}
                         </span>
-                    </div>
-
-                    <div className="mt-2 flex items-baseline gap-3">
-                        <p className="text-5xl font-black leading-none font-mono tracking-tight">{stats.rate}%</p>
-                        <p className="text-xs text-slate-400 font-bold">
-                            {stats.sent} / {stats.total} total reached
-                        </p>
-                    </div>
-
-                    <div className="space-y-1.5 mt-2">
-                        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-1000 shadow-lg shadow-blue-500/30"
-                                style={{ width: `${stats.rate}%` }}
-                            />
-                        </div>
-                        <div className="flex justify-between text-[9px] font-black tracking-wider text-slate-500 uppercase">
-                            <span>0% reached</span>
-                            <span>100% target</span>
-                        </div>
                     </div>
                 </div>
 
-                {/* Dashboard Grid */}
-                <div className="grid grid-cols-2 gap-4">
-                    <StatCard
-                        icon={<CheckCircle size={15} className="text-emerald-500" />}
-                        iconBg="bg-emerald-500/10 border border-emerald-500/20"
-                        label="Active Broadcasts"
-                        value={alerts.filter(a => a.status === 'sent').length}
-                    />
-                    <StatCard
-                        icon={<Clock size={15} className="text-indigo-500" />}
-                        iconBg="bg-indigo-500/10 border border-indigo-500/20"
-                        label="Scheduled Alerts"
-                        value={alerts.filter(a => a.status === 'scheduled').length}
-                    />
-                    <StatCard
-                        icon={<TrendingUp size={15} className="text-amber-500" />}
-                        iconBg="bg-amber-500/10 border border-amber-500/20"
-                        label="Total Logs"
-                        value={pagination.total || 0}
-                    />
-                    <StatCard
-                        icon={<Users size={15} className="text-sky-500" />}
-                        iconBg="bg-sky-500/10 border border-sky-500/20"
-                        label="Recipients Reach"
-                        value={stats.total}
-                    />
+                {/* Delivery Rate */}
+                <div className="bg-white border border-slate-200 rounded-2xl px-6 py-5 flex flex-col gap-1 shadow-sm">
+                    <p className="text-xs font-bold text-slate-500">Delivery Rate</p>
+                    <div className="flex items-baseline gap-3">
+                        <p className="text-4xl font-black text-slate-900 tracking-tight leading-none">{stats.rate}%</p>
+                        <span className="text-xs font-medium text-slate-400">Network avg</span>
+                    </div>
                 </div>
 
-                {/* Pulsing Command Center Activity Feed */}
-                <div className="bg-white border border-slate-100 rounded-3xl p-6 space-y-4 shadow-sm flex flex-col justify-between">
-                    <div className="flex items-center justify-between">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                            Command Transmission Log
-                        </p>
-                        <span className="flex items-center gap-1 text-[9px] font-black uppercase text-blue-600">
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping" />
-                            live stream
-                        </span>
+                {/* Active Broadcasts */}
+                <div className="bg-white border border-slate-200 rounded-2xl px-6 py-5 flex flex-col gap-1 shadow-sm border-l-4 border-l-red-500">
+                    <p className="text-xs font-bold text-slate-500">Active Broadcasts</p>
+                    <div className="flex items-baseline gap-3">
+                        <p className="text-4xl font-black text-slate-900 tracking-tight leading-none">{alerts.filter(a => a.status === 'sent').length}</p>
+                        <span className="text-xs font-medium text-slate-400">Ongoing scenarios</span>
                     </div>
-                    {recentAlerts.length === 0 ? (
-                        <p className="text-xs text-slate-400 py-6 text-center">No transmissions logged.</p>
-                    ) : (
-                        <div className="space-y-3.5 mt-2 overflow-y-auto max-h-[140px] pr-1">
-                            {recentAlerts.map(alert => (
-                                <div key={alert.notif_id} className="flex items-start gap-3 border-b border-slate-50 pb-2 last:border-0 last:pb-0">
-                                    <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${getUrgencyDot(alert.urgency_level?.urgency_key)}`} />
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-slate-700 font-semibold truncate leading-snug">
-                                            {alert.message}
-                                        </p>
-                                        <span className="text-[8px] font-mono text-slate-400">ID: {alert.notif_id}</span>
-                                    </div>
-                                    <span className={`flex-shrink-0 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider rounded-full border ${getStatusStyle(alert.status)}`}>
-                                        {alert.status === 'cancelled' ? 'stopped' : alert.status}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
                 </div>
             </div>
 
-            {/* ── Command & Filter Control Toolbar ── */}
-            <div className="bg-white border border-slate-100 p-4 rounded-3xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-                {/* Search + Event Filter */}
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                    <div className="relative w-full sm:max-w-xs">
-                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+            {/* ── Filter Toolbar ── */}
+            <div className="bg-white border border-slate-200 px-5 py-3.5 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center gap-4">
+                {/* Left: Filters label + Search */}
+                <div className="flex items-center gap-4 w-full sm:w-auto">
+                    <div className="flex items-center gap-2 text-slate-700 flex-shrink-0">
+                        <Filter size={14} />
+                        <span className="text-sm font-bold">Filters</span>
+                    </div>
+                    <div className="relative flex-1 sm:max-w-[220px]">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
                         <input
                             type="text"
-                            placeholder="Search broadcast logs..."
+                            placeholder="Search alerts..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 transition-all text-slate-700 placeholder-slate-400"
+                            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-blue-400 transition-all text-slate-700 placeholder-slate-400"
                         />
                     </div>
+                </div>
+
+                {/* Right: Dropdowns */}
+                <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto sm:ml-auto">
                     <div className="flex items-center gap-1.5">
-                        <CloudLightning size={11} className="text-slate-400" />
+                        <span className="text-xs font-semibold text-slate-500">Urgency:</span>
+                        <select
+                            value={urgencyFilter}
+                            onChange={e => setUrgencyFilter(e.target.value)}
+                            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500/15 transition-all text-slate-700 cursor-pointer"
+                        >
+                            <option value="">All Levels</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-semibold text-slate-500">Event:</span>
                         <select
                             value={selectedEvent}
                             onChange={e => setSelectedEvent(e.target.value)}
-                            className="px-3 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-bold outline-none focus:ring-2 focus:ring-blue-500/10 transition-all text-slate-600"
+                            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500/15 transition-all text-slate-700 cursor-pointer"
                         >
                             <option value="">All Events</option>
                             {events.map(e => (
@@ -267,53 +198,37 @@ export default function EvacuationAlerts() {
                             ))}
                         </select>
                     </div>
-                </div>
 
-                {/* Dropdown Filters */}
-                <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
-                    {/* Urgency */}
                     <div className="flex items-center gap-1.5">
-                        <Filter size={11} className="text-slate-400" />
+                        <span className="text-xs font-semibold text-slate-500">Status:</span>
                         <select
-                            value={urgencyFilter}
-                            onChange={e => setUrgencyFilter(e.target.value)}
-                            className="px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-bold outline-none focus:ring-2 focus:ring-blue-500/10 transition-all text-slate-600"
+                            value={statusFilter}
+                            onChange={e => setStatusFilter(e.target.value)}
+                            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500/15 transition-all text-slate-700 cursor-pointer"
                         >
-                            <option value="">All Urgencies</option>
-                            <option value="critical">Critical Only</option>
-                            <option value="high">High Only</option>
-                            <option value="medium">Medium Only</option>
-                            <option value="low">Low Only</option>
+                            <option value="">All Statuses</option>
+                            <option value="sent">Sent</option>
+                            <option value="failed">Failed</option>
+                            <option value="scheduled">Scheduled</option>
+                            <option value="pending">Pending</option>
+                            <option value="cancelled">Stopped</option>
                         </select>
                     </div>
 
-                    {/* Status */}
-                    <select
-                        value={statusFilter}
-                        onChange={e => setStatusFilter(e.target.value)}
-                        className="px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-bold outline-none focus:ring-2 focus:ring-blue-500/10 transition-all text-slate-600"
-                    >
-                        <option value="">All Statuses</option>
-                        <option value="sent">Sent</option>
-                        <option value="failed">Failed</option>
-                        <option value="scheduled">Scheduled</option>
-                        <option value="pending">Pending</option>
-                        <option value="cancelled">Stopped</option>
-                    </select>
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-semibold text-slate-500">Channel:</span>
+                        <select
+                            value={channelFilter}
+                            onChange={e => setChannelFilter(e.target.value)}
+                            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500/15 transition-all text-slate-700 cursor-pointer"
+                        >
+                            <option value="">All Channels</option>
+                            <option value="sms">SMS</option>
+                            <option value="push">Push</option>
+                            <option value="both">Both</option>
+                        </select>
+                    </div>
 
-                    {/* Channel */}
-                    <select
-                        value={channelFilter}
-                        onChange={e => setChannelFilter(e.target.value)}
-                        className="px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-bold outline-none focus:ring-2 focus:ring-blue-500/10 transition-all text-slate-600"
-                    >
-                        <option value="">All Channels</option>
-                        <option value="sms">SMS Text</option>
-                        <option value="push">Push Notification</option>
-                        <option value="both">Both (SMS + Push)</option>
-                    </select>
-
-                    {/* Reset */}
                     {(searchTerm || urgencyFilter || statusFilter || channelFilter || selectedEvent) && (
                         <button
                             onClick={() => {
@@ -323,28 +238,28 @@ export default function EvacuationAlerts() {
                                 setChannelFilter('');
                                 setSelectedEvent('');
                             }}
-                            className="text-[10px] font-black uppercase text-blue-600 hover:text-blue-700 tracking-wider transition-all pl-2"
+                            className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-all px-2 py-1 hover:bg-blue-50 rounded-lg"
                         >
-                            Reset Filter
+                            Reset
                         </button>
                     )}
                 </div>
             </div>
 
             {/* ── Transmission Data Table ── */}
-            <div className="bg-white border border-slate-100 rounded-[2rem] shadow-sm overflow-hidden border-b-2">
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-slate-50/50 border-b border-slate-100">
-                                {['Broadcast Message', 'Event', 'Urgency', 'Delivery Channel', 'Total Targets', 'Delivery Status', 'Logged At', 'Command'].map(h => (
-                                    <th key={h} className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                            <tr className="bg-slate-900">
+                                {['Broadcast Message', 'Event', 'Urgency', 'Target', 'Total Targets', 'Delivery Status', 'Timestamp', 'Command'].map(h => (
+                                    <th key={h} className="px-6 py-3.5 text-[10px] font-bold text-white uppercase tracking-wider">
                                         {h}
                                     </th>
                                 ))}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-50">
+                        <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
                                     <td colSpan="8" className="py-24 text-center">
@@ -385,26 +300,16 @@ export default function EvacuationAlerts() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4.5">
-                                        <div className="flex items-center gap-2">
-                                            {alert.channel === 'push' && (
-                                                <div className="flex items-center gap-1.5 text-slate-600 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200/50">
-                                                    <Smartphone size={11} className="text-blue-500" />
-                                                    <span className="text-[9px] font-bold uppercase">Push</span>
-                                                </div>
-                                            )}
-                                            {alert.channel === 'sms' && (
-                                                <div className="flex items-center gap-1.5 text-slate-600 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200/50">
-                                                    <MessageSquare size={11} className="text-indigo-500" />
-                                                    <span className="text-[9px] font-bold uppercase">SMS</span>
-                                                </div>
-                                            )}
-                                            {alert.channel === 'both' && (
-                                                <div className="flex items-center gap-1.5 text-slate-700 bg-blue-50/60 px-2 py-0.5 rounded-lg border border-blue-100">
-                                                    <Radio size={11} className="text-blue-600" />
-                                                    <span className="text-[9px] font-extrabold uppercase">Push+SMS</span>
-                                                </div>
-                                            )}
-                                        </div>
+                                        <span className="text-xs font-medium text-slate-700">
+                                            {alert.center?.name || alert.evacuation_center?.name
+                                                ? (alert.center?.name || alert.evacuation_center?.name)
+                                                : alert.target_filter === 'evacuated'
+                                                    ? 'Evacuated Households'
+                                                    : alert.target_filter === 'not_evacuated'
+                                                        ? 'Non-Evacuated'
+                                                        : 'Public Broadcast'
+                                            }
+                                        </span>
                                     </td>
                                     <td className="px-6 py-4.5">
                                         <div className="flex items-center gap-1.5">
@@ -418,9 +323,36 @@ export default function EvacuationAlerts() {
                                     </td>
                                     <td className="px-6 py-4.5">
                                         <div>
-                                            <span className={`px-2.5 py-1 text-[8px] font-black uppercase tracking-widest rounded-full border ${getStatusStyle(alert.status)}`}>
-                                                {alert.status === 'cancelled' ? 'stopped' : alert.status}
-                                            </span>
+                                            {alert.status === 'sent' && (
+                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                                                    <CheckCircle2 size={14} />
+                                                    Delivered
+                                                </span>
+                                            )}
+                                            {alert.status === 'scheduled' && (
+                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                                                    <Clock size={14} />
+                                                    Scheduled
+                                                </span>
+                                            )}
+                                            {alert.status === 'pending' && (
+                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-blue-600">
+                                                    <Play size={14} className="fill-blue-600" />
+                                                    Sending...
+                                                </span>
+                                            )}
+                                            {alert.status === 'failed' && (
+                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-rose-600">
+                                                    <XCircle size={14} />
+                                                    Failed
+                                                </span>
+                                            )}
+                                            {alert.status === 'cancelled' && (
+                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+                                                    <XCircle size={14} />
+                                                    Stopped
+                                                </span>
+                                            )}
                                             {alert.is_recurring && (
                                                 <p className={`text-[8px] font-extrabold mt-1.5 flex items-center gap-1 ${
                                                     alert.status === 'cancelled' || alert.status === 'failed'
@@ -436,8 +368,7 @@ export default function EvacuationAlerts() {
                                                 </p>
                                             )}
                                             {alert.status === 'scheduled' && alert.scheduled_at && (
-                                                <p className="text-[9px] font-medium text-slate-400 mt-1.5 flex items-center gap-1">
-                                                    <Clock size={8} />
+                                                <p className="text-[9px] font-medium text-slate-400 mt-1 flex items-center gap-1">
                                                     {new Date(alert.scheduled_at).toLocaleString()}
                                                 </p>
                                             )}
@@ -478,8 +409,8 @@ export default function EvacuationAlerts() {
                 </div>
 
                 {/* Pagination */}
-                <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                    <p className="text-xs font-medium text-slate-500">
                         Page {pagination.current_page || 1} of {pagination.last_page || 1}
                         {' · '}
                         {pagination.total || 0} total records
@@ -516,23 +447,6 @@ export default function EvacuationAlerts() {
                     onClose={() => setDetailId(null)}
                 />
             )}
-        </div>
-    );
-}
-
-/* ── High-UX stat card ── */
-function StatCard({ icon, iconBg, label, value }) {
-    return (
-        <div className="bg-white border border-slate-100 rounded-3xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow hover:-translate-y-0.5 group">
-            <div className="flex items-center justify-between">
-                <div className={`w-8 h-8 ${iconBg} rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-105`}>
-                    {icon}
-                </div>
-            </div>
-            <div className="mt-3">
-                <p className="text-2xl font-black text-slate-800 leading-none font-mono tracking-tight">{value}</p>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1.5">{label}</p>
-            </div>
         </div>
     );
 }

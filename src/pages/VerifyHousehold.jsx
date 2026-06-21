@@ -39,6 +39,7 @@ export default function VerifyHousehold() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState(undefined); // undefined indicates search has not run yet
   const [headName, setHeadName] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -262,7 +263,10 @@ export default function VerifyHousehold() {
     setLoading(true);
 
     try {
-      const res = await createHousehold({ household_name: headName });
+      const res = await createHousehold({ 
+        household_name: headName,
+        contact_number: contactNumber || undefined,
+      });
       const payload = getPayload(res);
 
       const household =
@@ -655,6 +659,18 @@ export default function VerifyHousehold() {
 
               <div className="space-y-1.5 text-left">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                  Contact Number (Optional)
+                </label>
+                <input
+                  value={contactNumber}
+                  onChange={(e) => setContactNumber(e.target.value)}
+                  placeholder="e.g. 09123456789"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 focus:bg-white outline-none transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5 text-left">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
                   Number of Members
                 </label>
                 <input
@@ -902,9 +918,17 @@ export default function VerifyHousehold() {
 
                               return (
                                 <div 
-                                  key={member.member_id} 
+                                  key={member.member_id}
+                                  onClick={() => {
+                                    if (isDisabled) return;
+                                    if (isChecked) {
+                                      setSelectedMembers(selectedMembers.filter(id => id !== member.member_id));
+                                    } else {
+                                      setSelectedMembers([...selectedMembers, member.member_id]);
+                                    }
+                                  }}
                                   className={`px-4 py-3 flex items-center justify-between transition-colors ${
-                                    isDisabled ? "bg-rose-50/30 opacity-75" : "hover:bg-slate-50/50"
+                                    isDisabled ? "bg-rose-50/30 opacity-75 cursor-not-allowed" : "hover:bg-slate-50/50 cursor-pointer"
                                   }`}
                                 >
                                   
@@ -914,14 +938,8 @@ export default function VerifyHousehold() {
                                       type="checkbox"
                                       checked={isChecked}
                                       disabled={isDisabled}
-                                      onChange={() => {
-                                        if (isChecked) {
-                                          setSelectedMembers(selectedMembers.filter(id => id !== member.member_id));
-                                        } else {
-                                          setSelectedMembers([...selectedMembers, member.member_id]);
-                                        }
-                                      }}
-                                      className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 disabled:opacity-50"
+                                      readOnly
+                                      className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 disabled:opacity-50 pointer-events-none"
                                     />
                                     <div>
                                       <p className="text-xs font-bold text-slate-700 leading-tight">
