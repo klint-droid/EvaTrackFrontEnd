@@ -212,7 +212,7 @@ const UserManagement = () => {
     const styles = {
       super_admin: "bg-violet-50 text-violet-600 border-violet-200",
       evac_admin: "bg-blue-50 text-blue-600 border-blue-200",
-      evac_personnel: "bg-slate-50 text-slate-600 border-slate-200",
+      evac_personnel: "bg-red-100 text-red-600 border-red-200",
     };
     return styles[role] || styles.evac_personnel;
   };

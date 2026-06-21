@@ -517,7 +517,7 @@ export default function VerifyHousehold() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
-                  placeholder="Enter Household Name or Official ID..."
+                  placeholder="Enter Household Name, ID, or Member Name..."
                   className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 focus:bg-white outline-none transition-all"
                 />
               </div>

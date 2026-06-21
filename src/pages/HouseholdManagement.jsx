@@ -200,7 +200,7 @@ export default function HouseholdManagement() {
                     />
                     <input
                         type="text"
-                        placeholder="Search by name or ID..."
+                        placeholder="Search by household name, ID, or member..."
                         value={searchInput}
                         onChange={e => setSearchInput(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none"
