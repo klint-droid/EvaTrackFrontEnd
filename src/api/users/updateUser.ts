@@ -4,6 +4,7 @@ import type { User } from "../types";
 export interface UpdateUserPayload {
     first_name?: string;
     last_name?: string;
+    email?: string;
     role?: 'evac_personnel' | 'evac_admin' | 'super_admin';
     contact_number?: string;
 }
