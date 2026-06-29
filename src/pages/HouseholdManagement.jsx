@@ -8,7 +8,8 @@ import {
     Search,
     Trash2,
     Users,
-    X
+    X,
+    Filter
 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
@@ -31,6 +32,7 @@ export default function HouseholdManagement() {
     const [pagination, setPagination] = useState({});
     const [loading, setLoading] = useState(true);
     const [editingHousehold, setEditingHousehold] = useState(null);
+    const [showFilters, setShowFilters] = useState(false);
 
     const [filters, setFilters] = useState({
         q: '',
@@ -191,60 +193,110 @@ export default function HouseholdManagement() {
                 </div>
             </div>
 
-            {/* FILTERS */}
-            <div className="flex flex-col md:flex-row gap-3">
-                <div className="relative flex-1 group">
-                    <Search
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"
-                        size={16}
-                    />
-                    <input
-                        type="text"
-                        placeholder="Search by household name, ID, or member..."
-                        value={searchInput}
-                        onChange={e => setSearchInput(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none"
-                    />
-                </div>
-                <div className="flex gap-2">
-                    <select
-                        value={filters.event_id}
-                        onChange={e => handleFilterChange('event_id', e.target.value)}
-                        className="w-44 px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:border-blue-300 transition-colors"
-                    >
-                        <option value="">All Events</option>
-                        {events.map(evt => (
-                            <option key={evt.event_id} value={evt.event_id}>
-                                {evt.name} {evt.ended_at ? "(Ended)" : "(Active)"}
-                            </option>
-                        ))}
-                    </select>
-                    <select
-                        value={filters.status}
-                        onChange={e => handleFilterChange('status', e.target.value)}
-                        className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:border-blue-300 transition-colors"
-                    >
-                        <option value="">All Status</option>
-                        <option value="evacuated">Evacuated</option>
-                        <option value="not_evacuated">Not Evacuated</option>
-                    </select>
-                    <select
-                        value={filters.center_id}
-                        onChange={e => handleFilterChange('center_id', e.target.value)}
-                        className="w-48 px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:border-blue-300 transition-colors"
-                    >
-                        <option value="">All Centers</option>
-                        {centers.map(c => (
-                            <option key={c.evacuation_center_id} value={c.evacuation_center_id}>
-                                {c.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            </div>
-
-            {/* TABLE */}
+            {/* TABLE & FILTERS CONTAINER */}
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                
+                {/* FILTERS HEADER */}
+                <div className="px-6 py-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 w-full lg:w-auto">
+                        <div className="relative flex-1 sm:max-w-[280px]">
+                            <Search
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"
+                                size={16}
+                            />
+                            <input
+                                type="text"
+                                placeholder="Search households..."
+                                value={searchInput}
+                                onChange={e => setSearchInput(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="flex gap-2 relative w-full lg:w-auto justify-end">
+                        <select
+                            value={filters.status}
+                            onChange={e => handleFilterChange('status', e.target.value)}
+                            className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none cursor-pointer focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
+                        >
+                            <option value="">All Status</option>
+                            <option value="evacuated">Evacuated</option>
+                            <option value="not_evacuated">Not Evacuated</option>
+                        </select>
+
+                        <button
+                            onClick={() => setShowFilters(!showFilters)}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all ${
+                                (filters.event_id || filters.center_id) || showFilters
+                                    ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                            }`}
+                        >
+                            <Filter size={16} />
+                            <span className="hidden sm:inline">More Filters</span>
+                            {(filters.event_id || filters.center_id) && (
+                                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-[10px]">
+                                    {(filters.event_id ? 1 : 0) + (filters.center_id ? 1 : 0)}
+                                </span>
+                            )}
+                        </button>
+
+                        {/* Filters Popover */}
+                        {showFilters && (
+                            <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-200 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-sm font-bold text-slate-800">Advanced Filters</h3>
+                                    {(filters.event_id || filters.center_id) && (
+                                        <button 
+                                            onClick={() => {
+                                                const newFilters = { ...filters, event_id: '', center_id: '' };
+                                                setFilters(newFilters);
+                                                fetchHouseholds(1, newFilters);
+                                            }}
+                                            className="text-xs font-bold text-blue-600 hover:text-blue-700"
+                                        >
+                                            Clear
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Event</label>
+                                        <select
+                                            value={filters.event_id}
+                                            onChange={e => handleFilterChange('event_id', e.target.value)}
+                                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                        >
+                                            <option value="">All Events</option>
+                                            {events.map(evt => (
+                                                <option key={evt.event_id} value={evt.event_id}>
+                                                    {evt.name} {evt.ended_at ? "(Ended)" : "(Active)"}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Evacuation Center</label>
+                                        <select
+                                            value={filters.center_id}
+                                            onChange={e => handleFilterChange('center_id', e.target.value)}
+                                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                        >
+                                            <option value="">All Centers</option>
+                                            {centers.map(c => (
+                                                <option key={c.evacuation_center_id} value={c.evacuation_center_id}>
+                                                    {c.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>

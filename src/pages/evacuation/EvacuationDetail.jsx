@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Fragment } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
     Users,
@@ -7,6 +7,9 @@ import {
     Home,
     ChevronDown,
     ChevronUp,
+    ChevronLeft,
+    ChevronRight,
+    Edit2,
     Eye,
     RefreshCw,
     UserCheck,
@@ -30,6 +33,7 @@ import { getEvents } from '../../api/events/getEvents';
 
 import UnitModal from '../../components/units/UnitModal';
 import AssignHouseholdModal from '../../components/units/AssignHouseholdModal';
+import AlertConfirmModal from '../../components/AlertConfirmModal';
 import { isAdmin, isSuperAdmin, isPersonnel } from '../../utils/roles';
 
 export default function EvacuationDetail() {
@@ -58,6 +62,16 @@ export default function EvacuationDetail() {
     const [unitModal, setUnitModal] = useState(false);
     const [editingUnit, setEditingUnit] = useState(null);
     const [assignModal, setAssignModal] = useState(null);
+    const [deleteUnitModal, setDeleteUnitModal] = useState(null);
+    const [isDeletingUnit, setIsDeletingUnit] = useState(false);
+    const [unassignModal, setUnassignModal] = useState(null);
+    const [isUnassigning, setIsUnassigning] = useState(false);
+    const [deleteRecordModal, setDeleteRecordModal] = useState(null);
+    const [isDeletingRecord, setIsDeletingRecord] = useState(false);
+
+    // Units Pagination
+    const [unitsPage, setUnitsPage] = useState(1);
+    const [unitsMeta, setUnitsMeta] = useState(null);
 
     // export
     const [exportDropdown, setExportDropdown] = useState(false);
@@ -100,10 +114,18 @@ export default function EvacuationDetail() {
         }
     };
 
-    const fetchUnits = async () => {
+    const fetchUnits = async (page = unitsPage) => {
         try {
-            const res = await getUnitsByCenter(id);
+            const res = await getUnitsByCenter(id, page, 15);
             setUnits(res.data || []);
+            setUnitsMeta({
+                current_page: res.current_page,
+                last_page: res.last_page,
+                total: res.total,
+                from: res.from,
+                to: res.to
+            });
+            setUnitsPage(page);
         } catch (err) {
             console.error(err);
         }
@@ -175,41 +197,42 @@ export default function EvacuationDetail() {
         }
     };
 
-    const handleDeleteUnit = async (unitId) => {
-        if (!confirm('Delete this unit?')) return;
-
+    const confirmDeleteUnit = async () => {
+        if (!deleteUnitModal) return;
+        setIsDeletingUnit(true);
         try {
-            await deleteUnit(id, unitId);
+            await deleteUnit(id, deleteUnitModal.unit_id);
+            setDeleteUnitModal(null);
             fetchUnits();
         } catch (err) {
             alert(err.response?.data?.message || 'Failed to delete unit.');
+        } finally {
+            setIsDeletingUnit(false);
         }
     };
 
-    const handleUnassign = async (unitId, allocationId) => {
-        if (!confirm('Unassign this household?')) return;
-
+    const confirmUnassign = async () => {
+        if (!unassignModal) return;
+        setIsUnassigning(true);
         try {
-            await unassignHousehold(unitId, allocationId);
-            fetchAllocations(unitId);
+            await unassignHousehold(unassignModal.unitId, unassignModal.allocationId);
+            fetchAllocations(unassignModal.unitId);
             fetchUnits();
             fetchEvacuatedHouseholds();
+            setUnassignModal(null);
         } catch (err) {
             alert(err.response?.data?.message || 'Failed to unassign.');
+        } finally {
+            setIsUnassigning(false);
         }
     };
 
-    const handleDeleteEvacuationRecord = async (evacuationId) => {
-        if (
-            !confirm(
-                'Delete this evacuation record? Use this only if the wrong household was admitted.'
-            )
-        ) {
-            return;
-        }
+    const confirmDeleteEvacuationRecord = async () => {
+        if (!deleteRecordModal) return;
+        setIsDeletingRecord(true);
 
         try {
-            await deleteRecord(evacuationId);
+            await deleteRecord(deleteRecordModal);
 
             await Promise.all([
                 fetchCenter(),
@@ -221,9 +244,11 @@ export default function EvacuationDetail() {
                 await fetchAllocations(expandedUnit);
             }
 
-            alert('Evacuation record deleted successfully.');
+            setDeleteRecordModal(null);
         } catch (err) {
             alert(err.response?.data?.message || 'Failed to delete evacuation record.');
+        } finally {
+            setIsDeletingRecord(false);
         }
     };
 
@@ -356,151 +381,222 @@ export default function EvacuationDetail() {
                             No units yet. Add one to get started.
                         </div>
                     ) : (
-                        <div className="space-y-3">
-                            {units.map(unit => {
-                                const occupancy = Number(unit.current_occupancy ?? 0);
-                                const capacity = Number(unit.max_capacity ?? 0);
+                        <div className="bg-white rounded-xl border overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead className="bg-slate-50 border-b">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs w-[250px]">Unit</th>
+                                            <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">Type</th>
+                                            <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">Capacity</th>
+                                            <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">Occupancy Status</th>
+                                            <th className="px-4 py-3 text-right font-bold text-slate-500 uppercase text-xs w-[200px]">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-200">
+                                        {units.map(unit => {
+                                            const occupancy = Number(unit.current_occupancy ?? 0);
+                                            const capacity = Number(unit.max_capacity ?? 0);
+                                            const percent = capacity > 0 ? Math.round((occupancy / capacity) * 100) : 0;
+                                            const isExpanded = expandedUnit === unit.unit_id;
 
-                                const percent = capacity > 0
-                                    ? Math.round((occupancy / capacity) * 100)
-                                    : 0;
-
-                                const isExpanded = expandedUnit === unit.unit_id;
-
-                                return (
-                                    <div key={unit.unit_id} className="bg-white rounded-xl border overflow-hidden">
-
-                                        {/* Unit Row */}
-                                        <div className="p-4 flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                                                <Home size={18} />
-                                            </div>
-
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <p className="font-semibold text-slate-800">{unit.name}</p>
-
-                                                    <span className="text-xs text-slate-500 font-medium">
-                                                        {Number(unit.current_occupancy)} / {Number(unit.max_capacity)}
-                                                    </span>
-                                                </div>
-
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs text-slate-400">
-                                                        {unit.type?.type_label}
-                                                    </span>
-
-                                                    <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                        <div
-                                                            className={`h-full rounded-full transition-all ${
-                                                                percent >= 90
-                                                                    ? 'bg-red-500'
-                                                                    : percent >= 70
-                                                                        ? 'bg-amber-500'
-                                                                        : 'bg-emerald-500'
-                                                            }`}
-                                                            style={{ width: `${percent}%` }}
-                                                        />
-                                                    </div>
-
-                                                    <span className="text-xs font-bold text-slate-600">{percent}%</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center gap-2 flex-shrink-0">
-                                                {canManage && (
-                                                    <button
-                                                        onClick={() => setAssignModal(unit)}
-                                                        className="px-3 py-1.5 text-xs rounded-lg bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
-                                                    >
-                                                        Assign
-                                                    </button>
-                                                )}
-
-                                                {canEditUnits && (
-                                                    <>
-                                                        <button
-                                                            onClick={() => {
-                                                                setEditingUnit(unit);
-                                                                setUnitModal(true);
-                                                            }}
-                                                            className="px-3 py-1.5 text-xs rounded-lg border hover:bg-slate-50 cursor-pointer"
-                                                        >
-                                                            Edit
-                                                        </button>
-
-                                                        <button
-                                                            onClick={() => handleDeleteUnit(unit.unit_id)}
-                                                            className="p-1.5 text-slate-400 hover:text-red-500 cursor-pointer"
-                                                        >
-                                                            <Trash2 size={14} />
-                                                        </button>
-                                                    </>
-                                                )}
-
-                                                <button
-                                                    onClick={() => toggleUnit(unit.unit_id)}
-                                                    className="p-1.5 text-slate-400 hover:text-slate-600 cursor-pointer"
-                                                >
-                                                    {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        {/* Expanded Allocations */}
-                                        {isExpanded && (
-                                            <div className="border-t bg-slate-50 p-4">
-                                                <p className="text-xs font-bold text-slate-500 uppercase mb-3">
-                                                    Assigned Households
-                                                </p>
-
-                                                {!allocations[unit.unit_id] ? (
-                                                    <p className="text-sm text-slate-400">Loading...</p>
-                                                ) : allocations[unit.unit_id].length === 0 ? (
-                                                    <p className="text-sm text-slate-400">No households assigned yet.</p>
-                                                ) : (
-                                                    <div className="space-y-2">
-                                                        {allocations[unit.unit_id].map(alloc => (
-                                                            <div
-                                                                key={alloc.allocation_id}
-                                                                className="flex items-center justify-between bg-white p-3 rounded-lg border"
-                                                            >
-                                                                <div className="flex items-center gap-3">
-                                                                    <Users size={14} className="text-blue-500" />
-
-                                                                    <div>
-                                                                        <p className="text-sm font-medium text-slate-700">
-                                                                            {alloc.evacuation_record?.household?.household_name}
-                                                                        </p>
-
-                                                                        <p className="text-xs text-slate-400">
-                                                                            {alloc.evacuation_record?.evacuated_count} people
-                                                                        </p>
-                                                                    </div>
+                                            return (
+                                                <Fragment key={unit.unit_id}>
+                                                    <tr className="hover:bg-slate-50 transition-colors">
+                                                        <td className="px-4 py-3">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 border border-blue-100">
+                                                                    <Home size={14} />
                                                                 </div>
-
+                                                                <p className="font-bold text-slate-800">{unit.name}</p>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <span className="text-xs text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md font-semibold">
+                                                                {unit.type?.type_label || 'Unknown'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="flex items-center gap-1.5 text-sm">
+                                                                <Users size={14} className="text-slate-400" />
+                                                                <span className="font-bold text-slate-700">{occupancy}</span>
+                                                                <span className="text-slate-400">/ {capacity}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="flex items-center gap-2 max-w-[150px]">
+                                                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                                    <div
+                                                                        className={`h-full rounded-full transition-all ${
+                                                                            percent >= 90 ? 'bg-red-500' : percent >= 70 ? 'bg-amber-500' : 'bg-emerald-500'
+                                                                        }`}
+                                                                        style={{ width: `${percent}%` }}
+                                                                    />
+                                                                </div>
+                                                                <span className="text-[11px] font-black text-slate-600 w-8">{percent}%</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right">
+                                                            <div className="flex items-center justify-end gap-1.5">
                                                                 {canManage && (
                                                                     <button
-                                                                        onClick={() =>
-                                                                            handleUnassign(
-                                                                                unit.unit_id,
-                                                                                alloc.allocation_id
-                                                                            )
-                                                                        }
-                                                                        className="text-xs text-red-500 hover:text-red-700 font-medium cursor-pointer"
+                                                                        onClick={() => setAssignModal(unit)}
+                                                                        className="px-2.5 py-1.5 text-xs font-bold rounded bg-blue-50 text-blue-600 hover:bg-blue-100 border border-transparent hover:border-blue-200 transition-all"
                                                                     >
-                                                                        Unassign
+                                                                        Assign
                                                                     </button>
                                                                 )}
+                                                                {canEditUnits && (
+                                                                    <>
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setEditingUnit(unit);
+                                                                                setUnitModal(true);
+                                                                            }}
+                                                                            className="p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 rounded transition-colors"
+                                                                            title="Edit Unit"
+                                                                        >
+                                                                            <Edit2 size={15} />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => setDeleteUnitModal(unit)}
+                                                                            disabled={occupancy > 0}
+                                                                            title={occupancy > 0 ? "Cannot delete unit with occupants" : "Delete unit"}
+                                                                            className={`p-1.5 rounded transition-colors ${
+                                                                                occupancy > 0 
+                                                                                    ? 'text-slate-200 cursor-not-allowed' 
+                                                                                    : 'text-slate-400 hover:text-red-600 hover:bg-red-50 cursor-pointer'
+                                                                            }`}
+                                                                        >
+                                                                            <Trash2 size={15} />
+                                                                        </button>
+                                                                    </>
+                                                                )}
+                                                                <button
+                                                                    onClick={() => toggleUnit(unit.unit_id)}
+                                                                    className={`p-1.5 rounded transition-colors ${isExpanded ? 'bg-slate-200 text-slate-700' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'}`}
+                                                                    title={isExpanded ? "Hide allocations" : "Show allocations"}
+                                                                >
+                                                                    {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                                                                </button>
                                                             </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
+                                                        </td>
+                                                    </tr>
+
+                                                    {isExpanded && (
+                                                        <tr>
+                                                            <td colSpan="5" className="p-0 border-b-0">
+                                                                <div className="bg-slate-50 border-t border-slate-100 p-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]">
+                                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">
+                                                                        Assigned Households
+                                                                    </p>
+
+                                                                    {!allocations[unit.unit_id] ? (
+                                                                        <p className="text-sm font-medium text-slate-400 px-1">Loading allocations...</p>
+                                                                    ) : allocations[unit.unit_id].length === 0 ? (
+                                                                        <p className="text-sm font-medium text-slate-400 px-1">No households assigned yet.</p>
+                                                                    ) : (
+                                                                        <div className="space-y-2 max-w-2xl">
+                                                                            {allocations[unit.unit_id].map(alloc => (
+                                                                                <div
+                                                                                    key={alloc.allocation_id}
+                                                                                    className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
+                                                                                >
+                                                                                    <div className="flex items-center gap-3">
+                                                                                        <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100">
+                                                                                            <Users size={14} className="text-indigo-500" />
+                                                                                        </div>
+
+                                                                                        <div>
+                                                                                            <p className="text-sm font-bold text-slate-800 leading-tight">
+                                                                                                {alloc.evacuation_record?.household?.household_name}
+                                                                                            </p>
+
+                                                                                            <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                                                                                                {alloc.evacuation_record?.evacuated_count} members
+                                                                                            </p>
+                                                                                        </div>
+                                                                                    </div>
+
+                                                                                    {canManage && (
+                                                                                        <button
+                                                                                            onClick={() =>
+                                                                                                setUnassignModal({
+                                                                                                    unitId: unit.unit_id,
+                                                                                                    allocationId: alloc.allocation_id
+                                                                                                })
+                                                                                            }
+                                                                                            className="px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded-md font-bold transition-colors border border-transparent hover:border-red-100"
+                                                                                        >
+                                                                                            Unassign
+                                                                                        </button>
+                                                                                    )}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </Fragment>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Pagination Controls */}
+                            {unitsMeta && unitsMeta.last_page > 1 && (
+                                <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-slate-200">
+                                    <div className="flex flex-1 justify-between sm:hidden">
+                                        <button 
+                                            onClick={() => fetchUnits(unitsPage - 1)} 
+                                            disabled={unitsPage === 1} 
+                                            className="relative inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                                        >
+                                            Previous
+                                        </button>
+                                        <button 
+                                            onClick={() => fetchUnits(unitsPage + 1)} 
+                                            disabled={unitsPage === unitsMeta.last_page} 
+                                            className="relative ml-3 inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                                        >
+                                            Next
+                                        </button>
                                     </div>
-                                );
-                            })}
+                                    <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                                        <div>
+                                            <p className="text-sm text-slate-700">
+                                                Showing <span className="font-bold">{unitsMeta.from || 0}</span> to <span className="font-bold">{unitsMeta.to || 0}</span> of <span className="font-bold">{unitsMeta.total || 0}</span> units
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                                <button
+                                                    onClick={() => fetchUnits(unitsPage - 1)}
+                                                    disabled={unitsPage === 1}
+                                                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 transition-colors"
+                                                >
+                                                    <span className="sr-only">Previous</span>
+                                                    <ChevronLeft size={16} aria-hidden="true" />
+                                                </button>
+                                                <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:outline-offset-0">
+                                                    Page {unitsPage} of {unitsMeta.last_page}
+                                                </span>
+                                                <button
+                                                    onClick={() => fetchUnits(unitsPage + 1)}
+                                                    disabled={unitsPage === unitsMeta.last_page}
+                                                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 transition-colors"
+                                                >
+                                                    <span className="sr-only">Next</span>
+                                                    <ChevronRight size={16} aria-hidden="true" />
+                                                </button>
+                                            </nav>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -695,7 +791,7 @@ export default function EvacuationDetail() {
                                                         {canManage && (
                                                             <button
                                                                 onClick={() =>
-                                                                    handleDeleteEvacuationRecord(record.evacuation_id)
+                                                                    setDeleteRecordModal(record.evacuation_id)
                                                                 }
                                                                 className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-red-200 text-red-600 hover:bg-red-50 cursor-pointer"
                                                             >
@@ -745,6 +841,46 @@ export default function EvacuationDetail() {
                     }}
                 />
             )}
+
+            <AlertConfirmModal
+                isOpen={!!deleteUnitModal}
+                onClose={() => setDeleteUnitModal(null)}
+                onConfirm={confirmDeleteUnit}
+                title="Delete Accommodation Unit"
+                message={
+                    deleteUnitModal 
+                        ? `Are you sure you want to delete the unit "${deleteUnitModal.name}"? This action cannot be undone.`
+                        : ''
+                }
+                confirmText="Delete Unit"
+                cancelText="Cancel"
+                type="danger"
+                isLoading={isDeletingUnit}
+            />
+
+            <AlertConfirmModal
+                isOpen={!!unassignModal}
+                onClose={() => setUnassignModal(null)}
+                onConfirm={confirmUnassign}
+                title="Unassign Household"
+                message="Are you sure you want to unassign this household from the unit? They will be moved to the unassigned list."
+                confirmText="Unassign"
+                cancelText="Cancel"
+                type="warning"
+                isLoading={isUnassigning}
+            />
+
+            <AlertConfirmModal
+                isOpen={!!deleteRecordModal}
+                onClose={() => setDeleteRecordModal(null)}
+                onConfirm={confirmDeleteEvacuationRecord}
+                title="Delete Evacuation Record"
+                message="Are you sure you want to delete this evacuation record? Use this only if the wrong household was admitted. This action cannot be undone."
+                confirmText="Delete Record"
+                cancelText="Cancel"
+                type="danger"
+                isLoading={isDeletingRecord}
+            />
         </div>
     );
 }

@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 import API from "../api";
 import {
   AlertTriangle,
@@ -52,32 +55,38 @@ const statusConfig = {
   },
 };
 
-/* ─── Animated Map Dot ─── */
-const MapDot = ({ color, style, label }) => (
-  <div className="absolute group" style={style}>
-    <div className="relative">
-      <span className={`block h-3 w-3 rounded-full ${statusConfig[color].dot} shadow-lg ${statusConfig[color].glow}`} />
-      <span className={`absolute inset-0 h-3 w-3 rounded-full ${statusConfig[color].dot} animate-ping opacity-40`} />
-    </div>
-    {label && (
-      <div className="absolute top-5 left-1/2 -translate-x-1/2 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        <span className="px-2 py-1 rounded bg-slate-900/90 text-[10px] font-semibold text-slate-300 backdrop-blur-sm">
-          {label}
-        </span>
+/* ─── Animated Map Dot (Leaflet) ─── */
+const createCustomIcon = (colorKey) => {
+  const config = statusConfig[colorKey] || statusConfig.open;
+  return L.divIcon({
+    className: 'bg-transparent border-none', // Override leaflet defaults
+    html: `
+      <div class="relative group" style="width: 12px; height: 12px;">
+        <span class="block h-3 w-3 rounded-full ${config.dot} shadow-lg ${config.glow}"></span>
+        <span class="absolute inset-0 h-3 w-3 rounded-full ${config.dot} animate-ping opacity-60"></span>
       </div>
-    )}
-  </div>
-);
+    `,
+    iconSize: [12, 12],
+    iconAnchor: [6, 6]
+  });
+};
 
-/* ─── Map Dot Positions ─── */
-const dotPositions = [
-  { left: "28%", top: "25%" },
-  { left: "55%", top: "18%" },
-  { right: "22%", top: "38%" },
-  { left: "35%", top: "55%" },
-  { right: "30%", top: "60%" },
-  { left: "20%", top: "42%" },
-];
+/* ─── Map Bounds Manager ─── */
+const MapBoundsManager = ({ centers }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!centers || centers.length === 0) return;
+
+    const validCenters = centers.filter(c => c.latitude && c.longitude);
+    if (validCenters.length === 0) return;
+
+    const bounds = L.latLngBounds(validCenters.map(c => [parseFloat(c.latitude), parseFloat(c.longitude)]));
+    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+  }, [centers, map]);
+
+  return null;
+};
 
 /* ─── Main Landing Component ─── */
 const Landing = () => {
@@ -230,34 +239,43 @@ const Landing = () => {
             {/* Right: Interactive Status Map Panel */}
             <div className="relative">
               <div className="relative rounded-2xl bg-[#0F1A2E] border border-white/[0.06] overflow-hidden shadow-2xl shadow-black/30">
-                {/* Grid background */}
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
-                
-                {/* Map area with dots */}
-                <div className="relative h-[340px] sm:h-[380px]">
-                  {centers.slice(0, 6).map((center, i) => {
-                    const pos = dotPositions[i % dotPositions.length];
-                    const { key } = getCenterStatus(center.current_occupancy, center.capacity);
-                    return (
-                      <MapDot
-                        key={center.evacuation_center_id}
-                        color={key}
-                        style={pos}
-                        label={center.name}
-                      />
-                    );
-                  })}
+                {/* Map area */}
+                <div className="relative h-[340px] sm:h-[380px] z-10 bg-[#0F1A2E]">
+                  <MapContainer
+                    center={[10.3157, 123.8854]}
+                    zoom={12}
+                    scrollWheelZoom={false}
+                    className="h-full w-full bg-[#0F1A2E]"
+                    zoomControl={false}
+                  >
+                    <TileLayer
+                      url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                      attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+                    />
+                    <MapBoundsManager centers={centers} />
+                    {centers.map((center) => {
+                      const lat = parseFloat(center.latitude);
+                      const lng = parseFloat(center.longitude);
+                      if (isNaN(lat) || isNaN(lng)) return null;
 
-                  {/* Decorative connection lines (SVG) */}
-                  <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.06]">
-                    <line x1="28%" y1="25%" x2="55%" y2="18%" stroke="white" strokeWidth="1" strokeDasharray="4 4" />
-                    <line x1="55%" y1="18%" x2="70%" y2="38%" stroke="white" strokeWidth="1" strokeDasharray="4 4" />
-                    <line x1="35%" y1="55%" x2="70%" y2="60%" stroke="white" strokeWidth="1" strokeDasharray="4 4" />
-                  </svg>
+                      const { key } = getCenterStatus(center.current_occupancy, center.capacity);
+                      return (
+                        <Marker 
+                          key={center.evacuation_center_id} 
+                          position={[lat, lng]} 
+                          icon={createCustomIcon(key)}
+                        >
+                          <Tooltip direction="top" offset={[0, -10]} opacity={1} className="custom-leaflet-tooltip border-0 !bg-slate-900/90 !text-slate-200 !px-3 !py-1.5 !rounded-lg !backdrop-blur-sm shadow-xl font-sans">
+                            <div className="font-bold text-xs">{center.name}</div>
+                          </Tooltip>
+                        </Marker>
+                      );
+                    })}
+                  </MapContainer>
 
                   {/* Live feed badge - bottom right */}
-                  <div className="absolute bottom-5 right-5">
-                    <div className="flex flex-col items-end gap-1.5 px-4 py-3 rounded-xl bg-slate-900/80 backdrop-blur-md border border-white/[0.06]">
+                  <div className="absolute bottom-5 right-5 z-[500] pointer-events-none">
+                    <div className="flex flex-col items-end gap-1.5 px-4 py-3 rounded-xl bg-slate-900/80 backdrop-blur-md border border-white/[0.06] shadow-xl">
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] font-semibold text-slate-400 tracking-wider uppercase">Live Feed</span>
                         <span className="text-[11px] font-mono font-bold text-slate-300">{formattedTime}</span>
@@ -276,7 +294,7 @@ const Landing = () => {
                   </div>
 
                   {/* Map label */}
-                  <div className="absolute top-5 left-5 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/60 backdrop-blur-sm border border-white/[0.04]">
+                  <div className="absolute top-5 left-5 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/60 backdrop-blur-sm border border-white/[0.04] shadow-xl z-[500] pointer-events-none">
                     <Wifi size={12} className="text-blue-400" />
                     <span className="text-[10px] font-semibold text-slate-400 tracking-wider uppercase">
                       Operational Map

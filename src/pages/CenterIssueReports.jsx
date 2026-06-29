@@ -1,24 +1,5 @@
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import {
-  AlertTriangle,
-  Plus,
-  Search,
-  Filter,
-  Loader2,
-  X,
-  Edit3,
-  Trash2,
-  ShieldAlert,
-  CheckCircle2,
-  Clock,
-  Wrench,
-  HeartPulse,
-  Shield,
-  FileWarning,
-  UploadCloud,
-  Send
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Wrench, HeartPulse, Shield, FileWarning } from 'lucide-react';
 
 import { getCenterIssueReports } from '../api/centerIssueReports/getCenterIssueReports';
 import { createCenterIssueReport } from '../api/centerIssueReports/createCenterIssueReport';
@@ -30,6 +11,11 @@ import { getUser } from '../api/auth/getUser';
 import { getCenters } from '../api/evacuation/getCenters';
 import { getEvents } from '../api/events/getEvents';
 import { isAdmin, isSuperAdmin, isPersonnel } from '../utils/roles';
+
+import ReportsHeader from '../components/centerIssueReports/ReportsHeader';
+import ReportsSummaryCards from '../components/centerIssueReports/ReportsSummaryCards';
+import ReportsTable from '../components/centerIssueReports/ReportsTable';
+import ReportModal from '../components/centerIssueReports/ReportModal';
 
 const EMPTY_FORM = {
   evacuation_center_id: '',
@@ -46,51 +32,6 @@ const CATEGORY_OPTIONS = [
   { value: 'safety_issue', label: 'Safety Issue' },
   { value: 'other', label: 'Other' },
 ];
-
-const SEVERITY_OPTIONS = ['low', 'medium', 'high', 'critical'];
-const STATUS_OPTIONS = ['open', 'in_progress', 'resolved', 'closed'];
-
-const RowSkeleton = () => (
-  <tr className="animate-pulse">
-    {/* Issue info */}
-    <td className="px-6 py-4 space-y-2">
-      <div className="h-4 bg-slate-200 rounded w-2/3" />
-      <div className="h-3 bg-slate-100 rounded w-1/3" />
-      <div className="h-3 bg-slate-100 rounded w-5/6 mt-1" />
-    </td>
-    {/* Category */}
-    <td className="px-6 py-4">
-      <div className="h-6 bg-slate-100 rounded-lg w-20" />
-    </td>
-    {/* Severity */}
-    <td className="px-6 py-4">
-      <div className="h-6 bg-slate-100 rounded-lg w-16" />
-    </td>
-    {/* Status */}
-    <td className="px-6 py-4">
-      <div className="h-6 bg-slate-100 rounded-lg w-24" />
-    </td>
-    {/* Center */}
-    <td className="px-6 py-4">
-      <div className="h-4 bg-slate-100 rounded w-24" />
-    </td>
-    {/* Reported By */}
-    <td className="px-6 py-4">
-      <div className="h-4 bg-slate-100 rounded w-20" />
-    </td>
-    {/* Created */}
-    <td className="px-6 py-4">
-      <div className="h-4 bg-slate-100 rounded w-28" />
-    </td>
-    {/* Action */}
-    <td className="px-6 py-4">
-      <div className="flex justify-end gap-2">
-        <div className="w-8 h-8 bg-slate-100 rounded-lg" />
-        <div className="w-8 h-8 bg-slate-100 rounded-lg" />
-      </div>
-    </td>
-  </tr>
-);
 
 export default function CenterIssueReports() {
   const [user, setUser] = useState(null);
@@ -109,6 +50,7 @@ export default function CenterIssueReports() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingReport, setEditingReport] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
 
   const [search, setSearch] = useState('');
@@ -169,7 +111,6 @@ export default function CenterIssueReports() {
   const fetchReports = async () => {
     try {
       setLoading(true);
-
       const res = await getCenterIssueReports({
         q: search || undefined,
         category: categoryFilter || undefined,
@@ -278,7 +219,6 @@ export default function CenterIssueReports() {
 
     try {
       setSaving(true);
-
       const payload = {
         category: form.category,
         title: form.title,
@@ -321,7 +261,6 @@ export default function CenterIssueReports() {
 
   const handleDelete = async (reportId) => {
     if (!confirm('Delete this issue report?')) return;
-
     try {
       await deleteCenterIssueReport(reportId);
       showMessage('Issue report deleted successfully.');
@@ -333,11 +272,9 @@ export default function CenterIssueReports() {
 
   const canModifyReport = (report) => {
     if (isAdmin() || isSuperAdmin()) return true;
-
     if (isPersonnel()) {
       return report.status === 'open' && report.reported_by === user?.user_id;
     }
-
     return false;
   };
 
@@ -347,46 +284,31 @@ export default function CenterIssueReports() {
 
   const getCategoryIcon = (category) => {
     switch (category) {
-      case 'facility_issue':
-        return Wrench;
-      case 'health_issue':
-        return HeartPulse;
-      case 'safety_issue':
-        return Shield;
-      case 'incident':
-        return FileWarning;
-      default:
-        return AlertTriangle;
+      case 'facility_issue': return Wrench;
+      case 'health_issue': return HeartPulse;
+      case 'safety_issue': return Shield;
+      case 'incident': return FileWarning;
+      default: return AlertTriangle;
     }
   };
 
   const getSeverityClass = (severity) => {
     switch (severity) {
-      case 'critical':
-        return 'bg-red-50 text-red-700 border-red-100';
-      case 'high':
-        return 'bg-orange-50 text-orange-700 border-orange-100';
-      case 'medium':
-        return 'bg-amber-50 text-amber-700 border-amber-100';
-      case 'low':
-        return 'bg-slate-50 text-slate-600 border-slate-100';
-      default:
-        return 'bg-slate-50 text-slate-600 border-slate-100';
+      case 'critical': return 'bg-red-50 text-red-700 border-red-100';
+      case 'high': return 'bg-orange-50 text-orange-700 border-orange-100';
+      case 'medium': return 'bg-amber-50 text-amber-700 border-amber-100';
+      case 'low': return 'bg-slate-50 text-slate-600 border-slate-100';
+      default: return 'bg-slate-50 text-slate-600 border-slate-100';
     }
   };
 
   const getStatusClass = (status) => {
     switch (status) {
-      case 'open':
-        return 'bg-red-50 text-red-700 border-red-100';
-      case 'in_progress':
-        return 'bg-blue-50 text-blue-700 border-blue-100';
-      case 'resolved':
-        return 'bg-green-50 text-green-700 border-green-100';
-      case 'closed':
-        return 'bg-slate-50 text-slate-600 border-slate-100';
-      default:
-        return 'bg-slate-50 text-slate-600 border-slate-100';
+      case 'open': return 'bg-red-50 text-red-700 border-red-100';
+      case 'in_progress': return 'bg-blue-50 text-blue-700 border-blue-100';
+      case 'resolved': return 'bg-green-50 text-green-700 border-green-100';
+      case 'closed': return 'bg-slate-50 text-slate-600 border-slate-100';
+      default: return 'bg-slate-50 text-slate-600 border-slate-100';
     }
   };
 
@@ -397,29 +319,8 @@ export default function CenterIssueReports() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 text-left">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-            Evacuation Center Issues
-          </h1>
-          <p className="text-sm text-slate-500 font-medium">
-            Report and monitor incidents, facility problems, health issues, and safety concerns inside your assigned evacuation center.
-          </p>
-        </div>
+      <ReportsHeader canCreate={canCreate} openCreateModal={openCreateModal} />
 
-        {canCreate && (
-          <button
-            onClick={openCreateModal}
-            className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-2xl text-sm font-black hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-600/20"
-          >
-            <Plus size={18} />
-            Report Issue
-          </button>
-        )}
-      </div>
-
-      {/* Message */}
       {message && (
         <div
           className={`flex items-center gap-3 p-4 rounded-2xl border ${
@@ -435,439 +336,53 @@ export default function CenterIssueReports() {
         </div>
       )}
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 bg-red-50 text-red-600 rounded-xl flex items-center justify-center">
-            <AlertTriangle size={22} />
-          </div>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Open</p>
-            <p className="text-2xl font-black text-slate-900">{openCount}</p>
-          </div>
-        </div>
+      <ReportsSummaryCards
+        openCount={openCount}
+        inProgressCount={inProgressCount}
+        resolvedCount={resolvedCount}
+        criticalCount={criticalCount}
+      />
 
-        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
-            <Clock size={22} />
-          </div>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">In Progress</p>
-            <p className="text-2xl font-black text-slate-900">{inProgressCount}</p>
-          </div>
-        </div>
+      <ReportsTable
+        search={search}
+        setSearch={setSearch}
+        fetchReports={fetchReports}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        showFilters={showFilters}
+        setShowFilters={setShowFilters}
+        categoryFilter={categoryFilter}
+        setCategoryFilter={setCategoryFilter}
+        severityFilter={severityFilter}
+        setSeverityFilter={setSeverityFilter}
+        selectedEventId={selectedEventId}
+        setSelectedEventId={setSelectedEventId}
+        activeEvents={activeEvents}
+        loading={loading}
+        displayedReports={displayedReports}
+        getCategoryIcon={getCategoryIcon}
+        getCategoryLabel={getCategoryLabel}
+        getSeverityClass={getSeverityClass}
+        getStatusClass={getStatusClass}
+        canUpdateStatus={canUpdateStatus}
+        handleStatusChange={handleStatusChange}
+        formatDateTime={formatDateTime}
+        canModifyReport={canModifyReport}
+        openEditModal={openEditModal}
+        handleDelete={handleDelete}
+      />
 
-        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 bg-green-50 text-green-600 rounded-xl flex items-center justify-center">
-            <CheckCircle2 size={22} />
-          </div>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Resolved</p>
-            <p className="text-2xl font-black text-slate-900">{resolvedCount}</p>
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center">
-            <ShieldAlert size={22} />
-          </div>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Critical</p>
-            <p className="text-2xl font-black text-slate-900">{criticalCount}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-6 py-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-sm font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
-              <AlertTriangle size={17} className="text-blue-500" />
-              Evacuation Center Issue Reports
-            </h2>
-            <p className="text-xs text-slate-400 mt-1">
-              Submitted reports are tracked by center and severity.
-            </p>
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-2">
-            <div className="relative">
-              <Search
-                size={15}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') fetchReports();
-                }}
-                placeholder="Search issue..."
-                className="pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500"
-              />
-            </div>
-
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none"
-            >
-              <option value="">All Categories</option>
-              {CATEGORY_OPTIONS.map(item => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={severityFilter}
-              onChange={(e) => setSeverityFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none"
-            >
-              <option value="">All Severity</option>
-              {SEVERITY_OPTIONS.map(item => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none"
-            >
-              <option value="">All Status</option>
-              {STATUS_OPTIONS.map(item => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={selectedEventId}
-              onChange={(e) => setSelectedEventId(e.target.value)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none max-w-[200px] truncate"
-            >
-              <option value="all">All Active Events</option>
-              <option value="all_history">All Events (Including Ended)</option>
-              {activeEvents.map(event => (
-                <option key={event.event_id} value={event.event_id}>
-                  {event.name} {event.ended_at ? '(Ended)' : '(Active)'}
-                </option>
-              ))}
-            </select>
-
-            <button
-              onClick={fetchReports}
-              className="px-3 py-2 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-slate-800"
-            >
-              <Filter size={14} />
-            </button>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
-                {[
-                  'Issue',
-                  'Category',
-                  'Severity',
-                  'Status',
-                  'Center',
-                  'Reported By',
-                  'Created',
-                  'Action',
-                ].map(header => (
-                  <th
-                    key={header}
-                    className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400"
-                  >
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-slate-50">
-              {loading ? (
-                [...Array(5)].map((_, i) => <RowSkeleton key={i} />)
-              ) : displayedReports.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="px-6 py-14 text-center text-slate-400 font-bold">
-                    No issue reports found.
-                  </td>
-                </tr>
-              ) : (
-                displayedReports.map(report => {
-                  const CategoryIcon = getCategoryIcon(report.category);
-
-                  return (
-                    <tr key={report.report_id} className="hover:bg-slate-50/60">
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-black text-slate-800">
-                          {report.title}
-                        </p>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                          {report.report_id}
-                        </p>
-                        <p className="text-xs text-slate-400 mt-1 max-w-xs truncate">
-                          {report.description}
-                        </p>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-black rounded-lg border bg-blue-50 text-blue-700 border-blue-100 capitalize">
-                          <CategoryIcon size={12} />
-                          {getCategoryLabel(report.category)}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <span
-                          className={`px-2.5 py-1 text-[10px] font-black rounded-lg border uppercase ${getSeverityClass(report.severity)}`}
-                        >
-                          {report.severity}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        {canUpdateStatus ? (
-                          <select
-                            value={report.status}
-                            onChange={(e) => handleStatusChange(report.report_id, e.target.value)}
-                            className={`px-2.5 py-1 text-[10px] font-black rounded-lg border uppercase outline-none ${getStatusClass(report.status)}`}
-                          >
-                            {STATUS_OPTIONS.map(status => (
-                              <option key={status} value={status}>
-                                {status}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <span
-                            className={`px-2.5 py-1 text-[10px] font-black rounded-lg border uppercase ${getStatusClass(report.status)}`}
-                          >
-                            {report.status}
-                          </span>
-                        )}
-                      </td>
-
-                      <td className="px-6 py-4 text-xs font-bold text-slate-500">
-                        {report.center?.name || '—'}
-                      </td>
-
-                      <td className="px-6 py-4 text-xs font-bold text-slate-500">
-                        {report.reporter?.name || report.reported_by_user?.name || '—'}
-                      </td>
-
-                      <td className="px-6 py-4 text-xs text-slate-500">
-                        {formatDateTime(report.created_at)}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-end gap-2">
-                          {canModifyReport(report) && (
-                            <button
-                              onClick={() => openEditModal(report)}
-                              className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                              title="Edit"
-                            >
-                              <Edit3 size={15} />
-                            </button>
-                          )}
-
-                          {canModifyReport(report) && report.status === 'open' && (
-                            <button
-                              onClick={() => handleDelete(report.report_id)}
-                              className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                              title="Delete"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Modal */}
-      {modalOpen && createPortal(
-        <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9999] p-4 overflow-y-auto">
-          <div
-            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm fixed"
-            onClick={() => setModalOpen(false)}
-          />
-
-          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 my-auto">
-            <div className="px-6 py-4 border-b border-slate-200/60 flex items-start justify-between bg-white">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">
-                  {editingReport ? 'Update Center Issue' : 'Report Center Issue'}
-                </h2>
-                <p className="text-xs text-slate-500 mt-1">
-                  Identify facility, health, or safety concerns for immediate resolution.
-                </p>
-              </div>
-              <button
-                onClick={() => setModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto text-left">
-              
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700">
-                  Issue Category
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { value: 'facility_issue', label: 'Facility', icon: Wrench },
-                    { value: 'health_issue', label: 'Health', icon: HeartPulse },
-                    { value: 'safety_issue', label: 'Safety', icon: Shield },
-                    { value: 'incident', label: 'Incident', icon: FileWarning },
-                  ].map((cat) => {
-                    const Icon = cat.icon;
-                    const isSelected = form.category === cat.value;
-                    return (
-                      <div
-                        key={cat.value}
-                        onClick={() => setForm({ ...form, category: cat.value })}
-                        className={`flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer transition-all ${
-                          isSelected
-                            ? 'border-blue-500 bg-blue-50/30 shadow-[0_0_0_1px_rgba(59,130,246,1)] text-blue-700'
-                            : 'border-slate-200 bg-white hover:border-slate-300 text-slate-600'
-                        }`}
-                      >
-                        <Icon size={22} className={isSelected ? "text-blue-600" : "text-slate-400"} strokeWidth={isSelected ? 2.5 : 2} />
-                        <span className="mt-2 text-xs font-semibold">{cat.label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {canChooseCenter && (
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">
-                    Target Center
-                  </label>
-                  <select
-                    value={form.evacuation_center_id}
-                    onChange={(e) => setForm({ ...form, evacuation_center_id: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 transition-all cursor-pointer"
-                  >
-                    <option value="">Select an evacuation center...</option>
-                    {centers.map(center => (
-                      <option key={center.evacuation_center_id} value={center.evacuation_center_id}>
-                        {center.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">
-                  Severity Level
-                </label>
-                <div className="flex border border-slate-200 rounded-lg overflow-hidden">
-                  {SEVERITY_OPTIONS.map((sev) => {
-                    const isSelected = form.severity === sev;
-                    return (
-                      <div
-                        key={sev}
-                        onClick={() => setForm({ ...form, severity: sev })}
-                        className={`flex-1 text-center py-2.5 text-xs font-semibold cursor-pointer transition-colors capitalize ${
-                          isSelected
-                            ? 'bg-slate-200 text-slate-900 shadow-inner'
-                            : 'bg-white text-slate-500 hover:bg-slate-50'
-                        } ${sev !== SEVERITY_OPTIONS[0] ? 'border-l border-slate-200' : ''}`}
-                      >
-                        {sev}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">
-                  Issue Title
-                </label>
-                <input
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="Brief summary of the issue..."
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 transition-all"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">
-                  Detailed Description
-                </label>
-                <textarea
-                  rows="3"
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="Provide specific context, individuals involved, or immediate needs..."
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 resize-none transition-all"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">
-                  Attach Photo (Optional)
-                </label>
-                <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-colors">
-                  <UploadCloud size={28} className="text-slate-400 mb-3" />
-                  <p className="text-sm text-slate-600 font-medium">Click to upload or drag and drop</p>
-                  <p className="text-[10px] text-slate-400 mt-1 font-bold tracking-widest uppercase">PNG, JPG, or PDF up to 5MB</p>
-                </div>
-              </div>
-
-            </div>
-
-            <div className="px-6 py-4 bg-slate-50/80 border-t border-slate-200 flex justify-end gap-3">
-              <button
-                onClick={() => setModalOpen(false)}
-                className="px-5 py-2.5 text-sm font-bold text-slate-700 hover:text-slate-900 transition-colors bg-white border border-slate-200 rounded-lg shadow-sm"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleSubmit}
-                disabled={saving}
-                className="px-6 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-lg shadow-sm hover:bg-slate-800 transition-all disabled:opacity-50 flex items-center gap-2"
-              >
-                {saving ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Send size={16} />
-                )}
-                {editingReport ? 'Save Changes' : 'Submit Report'}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      <ReportModal
+        modalOpen={modalOpen}
+        setModalOpen={setModalOpen}
+        editingReport={editingReport}
+        form={form}
+        setForm={setForm}
+        canChooseCenter={canChooseCenter}
+        centers={centers}
+        handleSubmit={handleSubmit}
+        saving={saving}
+      />
     </div>
   );
 }

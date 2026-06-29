@@ -26,6 +26,7 @@ export default function EvacuationAlerts() {
     const [urgencyFilter, setUrgencyFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [channelFilter, setChannelFilter] = useState('');
+    const [showFilters, setShowFilters] = useState(false);
 
     const canCreate = isAdmin() || isPersonnel();
 
@@ -146,65 +147,27 @@ export default function EvacuationAlerts() {
                 </div>
             </div>
 
-            {/* ── Filter Toolbar ── */}
-            <div className="bg-white border border-slate-200 px-5 py-3.5 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center gap-4">
-                {/* Left: Filters label + Search */}
-                <div className="flex items-center gap-4 w-full sm:w-auto">
-                    <div className="flex items-center gap-2 text-slate-700 flex-shrink-0">
-                        <Filter size={14} />
-                        <span className="text-sm font-bold">Filters</span>
-                    </div>
-                    <div className="relative flex-1 sm:max-w-[220px]">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
-                        <input
-                            type="text"
-                            placeholder="Search alerts..."
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-blue-400 transition-all text-slate-700 placeholder-slate-400"
-                        />
-                    </div>
-                </div>
-
-                {/* Right: Dropdowns */}
-                <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto sm:ml-auto">
-                    <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-slate-500">Urgency:</span>
-                        <select
-                            value={urgencyFilter}
-                            onChange={e => setUrgencyFilter(e.target.value)}
-                            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500/15 transition-all text-slate-700 cursor-pointer"
-                        >
-                            <option value="">All Levels</option>
-                            <option value="critical">Critical</option>
-                            <option value="high">High</option>
-                            <option value="medium">Medium</option>
-                            <option value="low">Low</option>
-                        </select>
+            {/* ── Filter Toolbar & Table Container ── */}
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mb-4">
+                <div className="px-6 py-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 w-full lg:w-auto">
+                        <div className="relative flex-1 sm:max-w-[280px]">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                            <input
+                                type="text"
+                                placeholder="Search alerts..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
+                            />
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-slate-500">Event:</span>
-                        <select
-                            value={selectedEvent}
-                            onChange={e => setSelectedEvent(e.target.value)}
-                            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500/15 transition-all text-slate-700 cursor-pointer"
-                        >
-                            <option value="">All Events</option>
-                            {events.map(e => (
-                                <option key={e.event_id} value={e.event_id}>
-                                    {e.name}{e.ended_at ? ' (Ended)' : ''}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-slate-500">Status:</span>
+                    <div className="flex gap-2 relative w-full lg:w-auto justify-end">
                         <select
                             value={statusFilter}
                             onChange={e => setStatusFilter(e.target.value)}
-                            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500/15 transition-all text-slate-700 cursor-pointer"
+                            className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none cursor-pointer focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
                         >
                             <option value="">All Statuses</option>
                             <option value="sent">Sent</option>
@@ -213,41 +176,90 @@ export default function EvacuationAlerts() {
                             <option value="pending">Pending</option>
                             <option value="cancelled">Stopped</option>
                         </select>
-                    </div>
 
-                    <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-slate-500">Channel:</span>
-                        <select
-                            value={channelFilter}
-                            onChange={e => setChannelFilter(e.target.value)}
-                            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500/15 transition-all text-slate-700 cursor-pointer"
-                        >
-                            <option value="">All Channels</option>
-                            <option value="sms">SMS</option>
-                            <option value="push">Push</option>
-                            <option value="both">Both</option>
-                        </select>
-                    </div>
-
-                    {(searchTerm || urgencyFilter || statusFilter || channelFilter || selectedEvent) && (
                         <button
-                            onClick={() => {
-                                setSearchTerm('');
-                                setUrgencyFilter('');
-                                setStatusFilter('');
-                                setChannelFilter('');
-                                setSelectedEvent('');
-                            }}
-                            className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-all px-2 py-1 hover:bg-blue-50 rounded-lg"
+                            onClick={() => setShowFilters(!showFilters)}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all ${
+                                (urgencyFilter || selectedEvent || channelFilter) || showFilters
+                                    ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                            }`}
                         >
-                            Reset
+                            <Filter size={16} />
+                            <span className="hidden sm:inline">More Filters</span>
+                            {(urgencyFilter || selectedEvent || channelFilter) && (
+                                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-[10px]">
+                                    {(urgencyFilter ? 1 : 0) + (selectedEvent ? 1 : 0) + (channelFilter ? 1 : 0)}
+                                </span>
+                            )}
                         </button>
-                    )}
-                </div>
-            </div>
 
-            {/* ── Transmission Data Table ── */}
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                        {showFilters && (
+                            <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-200 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-sm font-bold text-slate-800">Advanced Filters</h3>
+                                    {(urgencyFilter || selectedEvent || channelFilter) && (
+                                        <button 
+                                            onClick={() => {
+                                                setUrgencyFilter('');
+                                                setSelectedEvent('');
+                                                setChannelFilter('');
+                                            }}
+                                            className="text-xs font-bold text-blue-600 hover:text-blue-700"
+                                        >
+                                            Clear
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Urgency</label>
+                                        <select
+                                            value={urgencyFilter}
+                                            onChange={e => setUrgencyFilter(e.target.value)}
+                                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                                        >
+                                            <option value="">All Levels</option>
+                                            <option value="critical">Critical</option>
+                                            <option value="high">High</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="low">Low</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Event</label>
+                                        <select
+                                            value={selectedEvent}
+                                            onChange={e => setSelectedEvent(e.target.value)}
+                                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                                        >
+                                            <option value="">All Events</option>
+                                            {events.map(e => (
+                                                <option key={e.event_id} value={e.event_id}>
+                                                    {e.name}{e.ended_at ? ' (Ended)' : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Channel</label>
+                                        <select
+                                            value={channelFilter}
+                                            onChange={e => setChannelFilter(e.target.value)}
+                                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                                        >
+                                            <option value="">All Channels</option>
+                                            <option value="sms">SMS</option>
+                                            <option value="push">Push</option>
+                                            <option value="both">Both</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>

@@ -9,7 +9,7 @@ const createStatusIcon = (colorHex) => {
     html: `
       <div style="display: flex; justify-content: center; align-items: center; width: 34px; height: 34px;">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${colorHex}" width="34px" height="34px" style="filter: drop-shadow(0px 3px 5px rgba(0, 0, 0, 0.4));">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-12-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
         </svg>
       </div>
     `,
@@ -188,6 +188,19 @@ const PublicPortal = () => {
       alert("Geolocation is not supported by your browser.");
       return;
     }
+
+    // Geolocation requires HTTPS on non-localhost origins in modern browsers
+    const isSecure = window.isSecureContext;
+    if (!isSecure) {
+      alert(
+        "Location access requires a secure connection (HTTPS).\n\n" +
+        "If you're on a local network, try accessing this page via:\n" +
+        "• http://localhost:5173\n" +
+        "• Or deploy with HTTPS enabled."
+      );
+      return;
+    }
+
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -197,12 +210,49 @@ const PublicPortal = () => {
         };
         setUserLocation(coords);
         setIsLocating(false);
+
+        // Auto-select the nearest available center for immediate routing
+        if (centers.length > 0) {
+          let nearestCenter = centers[0];
+          let minDist = Infinity;
+          centers.forEach((c) => {
+            const dist = getDistance(coords.lat, coords.lng, c.lat, c.lng);
+            if (dist < minDist) {
+              minDist = dist;
+              nearestCenter = c;
+            }
+          });
+          setSelectedCenter(nearestCenter);
+        }
       },
       (error) => {
         console.warn("Geolocation request denied/failed", error);
         setIsLocating(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            alert(
+              "Location permission was denied.\n\n" +
+              "Please allow location access in your browser settings and try again."
+            );
+            break;
+          case error.POSITION_UNAVAILABLE:
+            alert(
+              "Your location could not be determined.\n\n" +
+              "Make sure your device's location services (GPS) are enabled."
+            );
+            break;
+          case error.TIMEOUT:
+            alert(
+              "Location request timed out.\n\n" +
+              "Please check your internet connection and try again."
+            );
+            break;
+          default:
+            alert("An unknown error occurred while fetching your location.");
+            break;
+        }
       },
-      { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   };
 

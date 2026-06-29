@@ -12,7 +12,7 @@ import { updateCenter }  from "../../api/evacuation/updateCenter";
 import { isAdmin, isSuperAdmin, isPersonnel, getAssignedCenterId } from "../../utils/roles";
 
 import CenterModal  from "../../components/evacuation/CenterModal";
-import { DeleteModal } from "../../components/evacuation/DeleteModal";
+import AlertConfirmModal from "../../components/AlertConfirmModal";
 
 const CenterSkeleton = () => (
   <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-4 animate-pulse flex flex-col justify-between h-[308px]">
@@ -62,7 +62,8 @@ export default function EvacuationList() {
   const [loading, setLoading]         = useState(true);
   const [search, setSearch]           = useState("");
   const [modalOpen, setModalOpen]     = useState(false);
-  const [deleteOpen, setDeleteOpen]   = useState(false);
+  const [deleteConfirmState, setDeleteConfirmState] = useState({ isOpen: false, centerId: null, isLoading: false });
+  const [saveConfirmState, setSaveConfirmState] = useState({ isOpen: false, formData: null, isLoading: false });
   const [selected, setSelected]       = useState(null);
   const [sortBy, setSortBy]           = useState("name");
   const [activeTab, setActiveTab]     = useState("assigned");
@@ -84,20 +85,43 @@ export default function EvacuationList() {
     }
   };
 
-  const handleSubmit = async (form) => {
-    if (selected) {
-      await updateCenter(selected.evacuation_center_id, form);
-    } else {
-      await createCenter(form);
+  const triggerSubmit = (form) => {
+    setSaveConfirmState({ isOpen: true, formData: form, isLoading: false });
+  };
+
+  const handleConfirmSubmit = async () => {
+    const { formData } = saveConfirmState;
+    if (!formData) return;
+
+    setSaveConfirmState(prev => ({ ...prev, isLoading: true }));
+    try {
+      if (selected) {
+        await updateCenter(selected.evacuation_center_id, formData);
+      } else {
+        await createCenter(formData);
+      }
+      setModalOpen(false);
+      setSaveConfirmState({ isOpen: false, formData: null, isLoading: false });
+      fetchCenters();
+    } catch (err) {
+      alert(err.response?.data?.message || "Operation failed");
+      setSaveConfirmState(prev => ({ ...prev, isLoading: false }));
     }
-    setModalOpen(false);
-    fetchCenters();
   };
 
   const handleDelete = async () => {
-    await deleteCenter(selected.evacuation_center_id);
-    setDeleteOpen(false);
-    fetchCenters();
+    const { centerId } = deleteConfirmState;
+    if (!centerId) return;
+
+    setDeleteConfirmState(prev => ({ ...prev, isLoading: true }));
+    try {
+      await deleteCenter(centerId);
+      setDeleteConfirmState({ isOpen: false, centerId: null, isLoading: false });
+      fetchCenters();
+    } catch (err) {
+      alert(err.response?.data?.message || "Delete failed");
+      setDeleteConfirmState(prev => ({ ...prev, isLoading: false }));
+    }
   };
 
   const assignedCenterId = getAssignedCenterId();
@@ -334,7 +358,7 @@ export default function EvacuationList() {
                     )}
                     {canDelete && (
                       <button
-                        onClick={() => { setSelected(c); setDeleteOpen(true); }}
+                        onClick={() => { setSelected(c); setDeleteConfirmState({ isOpen: true, centerId: c.evacuation_center_id, isLoading: false }); }}
                         className="text-[11px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-tight"
                       >
                         Delete
@@ -371,13 +395,30 @@ export default function EvacuationList() {
       <CenterModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSubmit={handleSubmit}
+        onSubmit={triggerSubmit}
         initialData={selected}
       />
-      <DeleteModal
-        isOpen={deleteOpen}
-        onClose={() => setDeleteOpen(false)}
+      <AlertConfirmModal
+        isOpen={deleteConfirmState.isOpen}
+        title="Delete Evacuation Center"
+        message="Are you sure you want to delete this evacuation center? This action is permanent and will remove all associated records."
+        confirmText="Delete Center"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={deleteConfirmState.isLoading}
         onConfirm={handleDelete}
+        onClose={() => setDeleteConfirmState({ isOpen: false, centerId: null, isLoading: false })}
+      />
+      <AlertConfirmModal
+        isOpen={saveConfirmState.isOpen}
+        title={selected ? "Apply Changes" : "Register Station"}
+        message={selected ? `Are you sure you want to apply these changes to ${selected.name}?` : `Are you sure you want to register ${saveConfirmState.formData?.name}?`}
+        confirmText={selected ? "Apply Changes" : "Register"}
+        cancelText="Cancel"
+        type={selected ? "info" : "success"}
+        isLoading={saveConfirmState.isLoading}
+        onConfirm={handleConfirmSubmit}
+        onClose={() => setSaveConfirmState({ isOpen: false, formData: null, isLoading: false })}
       />
     </div>
   );

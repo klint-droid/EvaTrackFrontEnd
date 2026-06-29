@@ -1,19 +1,19 @@
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import {
-  Plus, Package, Truck, CheckCircle2, AlertCircle,
-  Search, Filter, X, Loader2, Trash2, ShieldAlert,
-  Users, Clock, AlertTriangle, Minus, ArrowDown, MapPin, ChevronDown, Send
-} from 'lucide-react';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 import { getResourceRequests } from '../api/resourceRequests/getResourceRequests';
 import { getUrgencyLevels } from '../api/resourceRequests/getUrgencyLevels';
 import { createResourceRequest } from '../api/resourceRequests/createResourceRequest';
 import { updateResourceRequestStatus } from '../api/resourceRequests/updateResourceRequestStatus';
 import { deleteResourceRequest } from '../api/resourceRequests/deleteResourceRequest';
-import { getCenters } from '../api/evacuation/getCenters'; // ✅ add this import
+import { getCenters } from '../api/evacuation/getCenters';
 import { getEvents } from '../api/events/getEvents';
 import { isAdmin, isSuperAdmin, isPersonnel } from '../utils/roles';
+
+import RequestsHeader from '../components/resourceRequests/RequestsHeader';
+import RequestsSummaryCards from '../components/resourceRequests/RequestsSummaryCards';
+import RequestsTable from '../components/resourceRequests/RequestsTable';
+import RequestModal from '../components/resourceRequests/RequestModal';
 
 const EMPTY_FORM = {
   request_type: 'resource',
@@ -22,12 +22,8 @@ const EMPTY_FORM = {
   urgency_id: '',
   description: '',
   target_agency: 'ResQperation',
-  evacuation_center_id: '', // ✅ added
+  evacuation_center_id: '',
 };
-
-const STATUS_OPTIONS = [
-  'pending', 'acknowledged', 'approved', 'rejected', 'delivered',
-];
 
 export default function ResourceRequests() {
   const [requests, setRequests] = useState([]);
@@ -36,12 +32,13 @@ export default function ResourceRequests() {
   });
 
   const [urgencyLevels, setUrgencyLevels] = useState([]);
-  const [centers, setCenters] = useState([]);           // ✅ added
+  const [centers, setCenters] = useState([]);
   const [activeEvents, setActiveEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState("all");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -69,7 +66,6 @@ export default function ResourceRequests() {
     }
   };
 
-  // ✅ fetch centers for admin/super admin only
   const fetchCenters = async () => {
     try {
       const res = await getCenters();
@@ -181,7 +177,6 @@ export default function ResourceRequests() {
 
     try {
       setSaving(true);
-
       await createResourceRequest({
         request_type:  form.request_type,
         resource_type: form.resource_type,
@@ -254,25 +249,8 @@ export default function ResourceRequests() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 text-left">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Resource Requests</h1>
-          <p className="text-sm text-slate-500 font-medium">
-            Request and monitor emergency supplies and personnel assistance.
-          </p>
-        </div>
-        {canCreate && (
-          <button
-            onClick={openModal}
-            className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-2xl text-sm font-black hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-600/20"
-          >
-            <Plus size={18} /> New Request
-          </button>
-        )}
-      </div>
+      <RequestsHeader canCreate={canCreate} openModal={openModal} />
 
-      {/* Message */}
       {message && (
         <div className={`flex items-center gap-3 p-4 rounded-2xl border ${
           message.type === 'error'
@@ -284,425 +262,48 @@ export default function ResourceRequests() {
         </div>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
-            <Clock size={22} />
-          </div>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pending Requests</p>
-            {loading && !requests.length ? (
-              <div className="h-8 bg-slate-200 animate-pulse rounded w-12 mt-1"></div>
-            ) : (
-              <p className="text-2xl font-black text-slate-900">{pendingCount}</p>
-            )}
-          </div>
-        </div>
+      <RequestsSummaryCards 
+        pendingCount={pendingCount} 
+        acknowledgedCount={acknowledgedCount} 
+        deliveredCount={deliveredCount} 
+        loading={loading} 
+        requests={requests} 
+      />
 
-        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
-            <Truck size={22} />
-          </div>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Acknowledged</p>
-            {loading && !requests.length ? (
-              <div className="h-8 bg-slate-200 animate-pulse rounded w-12 mt-1"></div>
-            ) : (
-              <p className="text-2xl font-black text-slate-900">{acknowledgedCount}</p>
-            )}
-          </div>
-        </div>
+      <RequestsTable 
+        search={search}
+        setSearch={setSearch}
+        fetchRequests={fetchRequests}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        showFilters={showFilters}
+        setShowFilters={setShowFilters}
+        typeFilter={typeFilter}
+        setTypeFilter={setTypeFilter}
+        selectedEventId={selectedEventId}
+        setSelectedEventId={setSelectedEventId}
+        activeEvents={activeEvents}
+        loading={loading}
+        displayedRequests={displayedRequests}
+        canUpdateStatus={canUpdateStatus}
+        handleStatusChange={handleStatusChange}
+        getStatusClass={getStatusClass}
+        getUrgencyClass={getUrgencyClass}
+        formatDateTime={formatDateTime}
+        handleDelete={handleDelete}
+      />
 
-        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 bg-green-50 text-green-600 rounded-xl flex items-center justify-center">
-            <CheckCircle2 size={22} />
-          </div>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Delivered 24h</p>
-            {loading && !requests.length ? (
-              <div className="h-8 bg-slate-200 animate-pulse rounded w-12 mt-1"></div>
-            ) : (
-              <p className="text-2xl font-black text-slate-900">{deliveredCount}</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-6 py-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-sm font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
-              <Package size={17} className="text-blue-500" /> Request History
-            </h2>
-            <p className="text-xs text-slate-400 mt-1">Submitted requests are routed to ResQperation.</p>
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-2">
-            <div className="relative">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') fetchRequests(); }}
-                placeholder="Search request..."
-                className="pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500"
-              />
-            </div>
-
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none"
-            >
-              <option value="">All Types</option>
-              <option value="resource">Resources</option>
-              <option value="personnel">Personnel</option>
-            </select>
-
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none"
-            >
-              <option value="">All Status</option>
-              {STATUS_OPTIONS.map(status => (
-                <option key={status} value={status}>{status}</option>
-              ))}
-            </select>
-
-            <select
-              value={selectedEventId}
-              onChange={(e) => setSelectedEventId(e.target.value)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none max-w-[200px] truncate"
-            >
-              <option value="all">All Active Events</option>
-              <option value="all_history">All Events (Including Ended)</option>
-              {activeEvents.map(event => (
-                <option key={event.event_id} value={event.event_id}>
-                  {event.name} {event.ended_at ? '(Ended)' : '(Active)'}
-                </option>
-              ))}
-            </select>
-
-            <button
-              onClick={fetchRequests}
-              className="px-3 py-2 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-slate-800"
-            >
-              <Filter size={14} />
-            </button>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
-                {['Resource Type', 'Type', 'Quantity', 'Urgency', 'Status', 'Center', 'Timestamp', 'Action'].map(header => (
-                  <th key={header} className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-slate-50">
-              {loading ? (
-                Array.from({ length: 5 }).map((_, index) => (
-                  <tr key={index} className="animate-pulse border-b border-slate-50">
-                    {/* 1. Resource Type */}
-                    <td className="px-6 py-4">
-                      <div className="h-4 bg-slate-200 rounded w-28 mb-2"></div>
-                      <div className="h-3 bg-slate-100 rounded w-16"></div>
-                    </td>
-                    {/* 2. Type */}
-                    <td className="px-6 py-4">
-                      <div className="h-5 bg-slate-200 rounded-lg w-20"></div>
-                    </td>
-                    {/* 3. Quantity */}
-                    <td className="px-6 py-4">
-                      <div className="h-4 bg-slate-200 rounded w-8"></div>
-                    </td>
-                    {/* 4. Urgency */}
-                    <td className="px-6 py-4">
-                      <div className="h-5 bg-slate-200 rounded-lg w-16"></div>
-                    </td>
-                    {/* 5. Status */}
-                    <td className="px-6 py-4">
-                      <div className="h-6 bg-slate-200 rounded-lg w-24"></div>
-                    </td>
-                    {/* 6. Center */}
-                    <td className="px-6 py-4">
-                      <div className="h-4 bg-slate-200 rounded w-24"></div>
-                    </td>
-                    {/* 7. Timestamp */}
-                    <td className="px-6 py-4">
-                      <div className="h-4 bg-slate-100 rounded w-32"></div>
-                    </td>
-                    {/* 8. Action */}
-                    <td className="px-6 py-4">
-                      <div className="h-5 bg-slate-200 rounded w-5 ml-auto"></div>
-                    </td>
-                  </tr>
-                ))
-              ) : displayedRequests.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="px-6 py-14 text-center text-slate-400 font-bold">
-                    No resource requests found.
-                  </td>
-                </tr>
-              ) : (
-                displayedRequests.map(req => (
-                  <tr key={req.request_id} className="hover:bg-slate-50/60">
-                    <td className="px-6 py-4">
-                      <p className="text-sm font-black text-slate-800">{req.resource_type}</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{req.request_id}</p>
-                      {req.description && (
-                        <p className="text-xs text-slate-400 mt-1 max-w-xs truncate">{req.description}</p>
-                      )}
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-black rounded-lg border bg-blue-50 text-blue-700 border-blue-100 capitalize">
-                        {req.request_type === 'personnel' ? <Users size={12} /> : <Package size={12} />}
-                        {req.request_type}
-                      </span>
-                    </td>
-
-                    <td className="px-6 py-4 text-sm font-bold text-slate-700">{req.quantity}</td>
-
-                    <td className="px-6 py-4">
-                      {/*was req.urgency — relation name is urgencyLevel */}
-                      <span className={`px-2.5 py-1 text-[10px] font-black rounded-lg border uppercase ${
-                        getUrgencyClass(req.urgency_level?.urgency_key)
-                      }`}>
-                        {req.urgency_level?.urgency_label || '—'}
-                      </span>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      {canUpdateStatus ? (
-                        <select
-                          // ✅ was req.status (object) — use req.status?.status_key
-                          value={req.status?.status_key || ''}
-                          onChange={(e) => handleStatusChange(req.request_id, e.target.value)}
-                          className={`px-2.5 py-1 text-[10px] font-black rounded-lg border uppercase outline-none ${
-                            getStatusClass(req.status?.status_key)
-                          }`}
-                        >
-                          {STATUS_OPTIONS.map(status => (
-                            <option key={status} value={status}>{status}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <span className={`px-2.5 py-1 text-[10px] font-black rounded-lg border uppercase ${
-                          getStatusClass(req.status?.status_key)
-                        }`}>
-                          {/* ✅ was req.status — use status_label for display */}
-                          {req.status?.status_label || '—'}
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="px-6 py-4 text-xs font-bold text-slate-500">
-                      {req.center?.name || '—'}
-                    </td>
-
-                    <td className="px-6 py-4 text-xs text-slate-500">
-                      {formatDateTime(req.created_at)}
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        {/* ✅ was req.status === 'pending' — now compare status_key */}
-                        {req.status?.status_key === 'pending' && (
-                          <button
-                            onClick={() => handleDelete(req.request_id)}
-                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                            title="Delete"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Modal */}
-      {modalOpen && createPortal(
-        <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9999] p-4 overflow-y-auto">
-          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm fixed" onClick={() => setModalOpen(false)} />
-
-          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 my-auto">
-            <div className="px-6 py-4 border-b border-slate-200/60 flex items-start justify-between bg-white">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">New Resource Request</h2>
-                <p className="text-xs text-slate-500 mt-1">Submit official requisition for emergency dispatch.</p>
-              </div>
-              <button onClick={() => setModalOpen(false)} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto text-left">
-              
-              {/* Request Type */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700">Request Type</label>
-                <div className="flex border border-slate-200 rounded-lg overflow-hidden bg-slate-50/50 p-1 gap-1">
-                  <button
-                    onClick={() => setForm({ ...form, request_type: 'resource' })}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-md transition-all ${
-                      form.request_type === 'resource'
-                        ? 'bg-white text-blue-600 shadow-sm border border-slate-200/60'
-                        : 'text-slate-500 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Package size={16} /> Supplies
-                  </button>
-                  <button
-                    onClick={() => setForm({ ...form, request_type: 'personnel' })}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-md transition-all ${
-                      form.request_type === 'personnel'
-                        ? 'bg-white text-blue-600 shadow-sm border border-slate-200/60'
-                        : 'text-slate-500 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Users size={16} /> Personnel
-                  </button>
-                </div>
-              </div>
-
-              {/* Category & Quantity */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">Resource Category</label>
-                  <input
-                    value={form.resource_type}
-                    onChange={(e) => setForm({ ...form, resource_type: e.target.value })}
-                    placeholder={form.request_type === 'resource' ? 'e.g. Food Packs' : 'e.g. Medical Team'}
-                    className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 transition-all"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">Quantity / Units</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={form.quantity}
-                    onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-                    placeholder="e.g. 500"
-                    className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Urgency */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700">Urgency Level</label>
-                <div className="grid grid-cols-4 gap-3">
-                  {urgencyLevels.map(level => {
-                    const isSelected = form.urgency_id === level.urgency_id;
-                    const key = level.urgency_key || level.urgency_label.toLowerCase();
-                    let styling = '';
-                    let Icon = AlertCircle;
-                    
-                    if (key === 'critical') {
-                      Icon = AlertTriangle;
-                      styling = isSelected ? 'border-red-500 bg-white text-red-600 shadow-sm shadow-red-500/20' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50';
-                    } else if (key === 'high') {
-                      Icon = AlertCircle;
-                      styling = isSelected ? 'border-amber-400 bg-amber-400 text-amber-900 shadow-sm shadow-amber-400/30' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50';
-                    } else if (key === 'medium') {
-                      Icon = Minus;
-                      styling = isSelected ? 'border-slate-300 bg-white text-slate-900 shadow-sm' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50';
-                    } else if (key === 'low') {
-                      Icon = ArrowDown;
-                      styling = isSelected ? 'border-slate-300 bg-white text-slate-900 shadow-sm' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50';
-                    }
-
-                    return (
-                      <div
-                        key={level.urgency_id}
-                        onClick={() => setForm({ ...form, urgency_id: level.urgency_id })}
-                        className={`flex flex-col items-center justify-center py-3 border rounded-lg cursor-pointer transition-all ${styling}`}
-                      >
-                        <Icon size={18} className="mb-1.5" strokeWidth={isSelected ? 2.5 : 2} />
-                        <span className="text-[11px] font-bold tracking-wide capitalize">{level.urgency_label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Delivery Destination (Conditional) */}
-              {canUpdateStatus && (
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">Delivery Destination</label>
-                  <div className="relative">
-                    <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <select
-                      value={form.evacuation_center_id}
-                      onChange={(e) => setForm({ ...form, evacuation_center_id: e.target.value })}
-                      className="w-full pl-9 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 transition-all cursor-pointer appearance-none"
-                    >
-                      <option value="">Select Active Evacuation Center</option>
-                      {centers.map(center => (
-                        <option key={center.evacuation_center_id} value={center.evacuation_center_id}>
-                          {center.name}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                      <ChevronDown size={16} />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Description */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Description / Additional Notes</label>
-                <textarea
-                  rows="3"
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="Provide specific details regarding the request..."
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 resize-none transition-all"
-                />
-              </div>
-
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-4 bg-slate-50/80 border-t border-slate-200 flex justify-end gap-3">
-              <button onClick={() => setModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-slate-700 hover:text-slate-900 transition-colors bg-white border border-slate-200 rounded-lg shadow-sm">
-                Cancel
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={saving}
-                className="px-6 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-lg shadow-sm hover:bg-slate-800 transition-all disabled:opacity-50 flex items-center gap-2"
-              >
-                {saving ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Send size={16} />
-                )}
-                Submit Official Request
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      <RequestModal 
+        modalOpen={modalOpen}
+        setModalOpen={setModalOpen}
+        form={form}
+        setForm={setForm}
+        urgencyLevels={urgencyLevels}
+        canUpdateStatus={canUpdateStatus}
+        centers={centers}
+        handleSubmit={handleSubmit}
+        saving={saving}
+      />
     </div>
   );
 }

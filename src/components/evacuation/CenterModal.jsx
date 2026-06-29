@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
   X, MapPin, Building2, Users, Save,
-  Navigation, Loader2, Search
+  Navigation, Loader2, Search, Check
 } from "lucide-react";
 import LocationPicker from "../Location/LocationPicker";
 import { reverseGeocode } from "../../utils/reverseGeocode";
@@ -123,87 +123,105 @@ export default function CenterModal({ isOpen, onClose, onSubmit, initialData }) 
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 flex items-center justify-center z-[9999] p-4">
-      <div className="absolute inset-0 bg-slate-900/60" onClick={onClose} />
-
-      <div className="relative bg-white rounded-[2rem] w-full max-w-6xl h-[88vh] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-
-        {/* HEADER */}
-        <div className="flex justify-between items-center px-8 py-5 border-b border-slate-100 bg-white z-10">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-xl"><Building2 size={20} /></div>
-            <div>
-              <h2 className="font-black text-slate-800 tracking-tight">
-                {isEdit ? "Modify Station" : "Register New Station"}
-              </h2>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none mt-1">
-                Pin on map or search an address
-              </p>
-            </div>
-          </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all">
-            <X size={20} strokeWidth={2.5} />
+    <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9990] p-4 overflow-y-auto">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm fixed transition-opacity duration-300 animate-in fade-in" onClick={onClose} />
+      
+      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-6xl overflow-hidden border border-slate-100 my-auto transform scale-100 transition-all duration-300 animate-in zoom-in-95 flex flex-col max-h-[90vh] h-[800px]">
+        
+        {/* Header - Matches UserManagement */}
+        <div className="px-8 py-6 border-b border-slate-200/60 shrink-0">
+          <h2 className="text-xl font-bold text-slate-900">
+            {isEdit ? "Update Evacuation Center" : "Register New Center"}
+          </h2>
+          <p className="text-sm text-slate-500 mt-1">
+            Specify the facility details and pinpoint its exact location on the map.
+          </p>
+          <button onClick={onClose} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all">
+            <X size={20}/>
           </button>
         </div>
 
-        {/* BODY */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 overflow-hidden">
+        {/* Body - Two Column Layout */}
+        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+          
+          {/* Left Column: MAP */}
+          <div className="w-full lg:w-7/12 h-[350px] lg:h-full bg-slate-100 relative">
+            <LocationPicker position={position} onSelect={handleSelectLocation} />
+            
+            {/* Overlay instruction */}
+            {!osmAddress && !loadingAddr && (
+               <div className="absolute top-4 left-4 right-4 p-4 bg-white/90 backdrop-blur-sm border border-slate-200/60 shadow-lg rounded-2xl flex items-center gap-3 z-[1000] animate-in fade-in slide-in-from-top-4">
+                 <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
+                   <MapPin size={20} />
+                 </div>
+                 <div>
+                   <p className="text-sm font-bold text-slate-800">Pin the location</p>
+                   <p className="text-xs font-medium text-slate-500">Click anywhere on the map to set the exact coordinates for the center.</p>
+                 </div>
+               </div>
+            )}
+          </div>
 
-          {/* LEFT */}
-          <div className="lg:col-span-4 flex flex-col overflow-y-auto bg-white border-r border-slate-100">
-            <div className="p-6 space-y-5">
-
-              {/* Station name */}
+          {/* Right Column: INPUTS */}
+          <div className="w-full lg:w-5/12 p-8 overflow-y-auto flex flex-col space-y-8 bg-white border-l border-slate-100">
+            
+            {/* Facility Details */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2">Facility Details</h3>
+              
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Station Name</label>
+                <label className="text-xs font-semibold text-slate-600">Center Name</label>
                 <div className="relative group">
-                  <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={16} />
+                  <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
                   <input
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
+                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
                     placeholder="e.g. City Central High"
                   />
                 </div>
               </div>
 
-              {/* Capacity */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Maximum Capacity</label>
+                <label className="text-xs font-semibold text-slate-600">Maximum Capacity</label>
                 <div className="relative group">
-                  <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={16} />
+                  <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
                   <input
                     type="number"
                     value={form.capacity}
                     onChange={(e) => setForm({ ...form, capacity: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
-                    placeholder="0"
+                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
+                    placeholder="e.g. 500"
                   />
                 </div>
               </div>
+            </div>
 
-              {/* Address search */}
+            {/* Location Details */}
+            <div className="space-y-4 flex-1">
+              <h3 className="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2">Location Setup</h3>
+              
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Search Address</label>
+                <label className="text-xs font-semibold text-slate-600">Search Address</label>
                 <div className="relative">
-                  <Search className="absolute left-3.5 top-3.5 text-slate-300" size={15} />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                   <input
                     value={searchQuery}
                     onChange={handleSearchInput}
-                    className="w-full pl-10 pr-8 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
-                    placeholder="Type address or landmark…"
+                    className="w-full pl-11 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
+                    placeholder="Type an address or landmark..."
                   />
                   {searchLoading && (
-                    <Loader2 size={14} className="absolute right-3.5 top-3.5 text-blue-400 animate-spin" />
+                    <Loader2 size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-500 animate-spin" />
                   )}
 
                   {searchResults.length > 0 && (
-                    <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
+                    <div className="absolute z-50 top-full mt-2 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
                       {searchResults.map((r) => (
                         <button
                           key={r.place_id}
                           onClick={() => handleSelectResult(r)}
-                          className="w-full text-left px-4 py-3 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-700 border-b border-slate-50 last:border-0 transition-colors"
+                          className="w-full text-left px-5 py-3 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 border-b border-slate-50 last:border-0 transition-colors"
                         >
                           <span className="font-semibold block truncate">{r.display_name}</span>
                         </button>
@@ -211,67 +229,55 @@ export default function CenterModal({ isOpen, onClose, onSubmit, initialData }) 
                     </div>
                   )}
                 </div>
-                <p className="text-[10px] text-slate-400 px-1">Or pin directly on the map →</p>
+                <p className="text-xs text-slate-400 mt-1">Search or click anywhere on the map to pin.</p>
               </div>
 
-              {/* Address recap */}
+              {/* Address Recap Box */}
               {(osmAddress || loadingAddr) && (
-                <div className={`p-4 rounded-2xl border transition-all ${osmAddress ? "bg-blue-50 border-blue-100" : "bg-slate-50 border-slate-100"}`}>
+                <div className={`p-4 rounded-xl border transition-all ${osmAddress ? "bg-blue-50 border-blue-100" : "bg-slate-50 border-slate-100"}`}>
                   {loadingAddr ? (
-                    <div className="flex items-center gap-3 text-blue-600 font-bold text-xs">
-                      <Loader2 size={14} className="animate-spin" />
-                      <span>Fetching address…</span>
+                    <div className="flex items-center gap-3 text-blue-600 font-bold text-sm">
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Resolving address...</span>
                     </div>
                   ) : (
-                    <div className="space-y-2">
-                      <div className="flex items-start gap-2">
-                        <Navigation size={13} className="text-blue-600 shrink-0 mt-0.5" />
-                        <p className="text-xs font-semibold text-blue-900 leading-snug">{osmAddress.full_address}</p>
+                    <div className="flex flex-col gap-4 items-start justify-between">
+                      <div className="flex items-start gap-2 w-full">
+                        <Navigation size={16} className="text-blue-600 shrink-0 mt-0.5" />
+                        <p className="text-sm font-semibold text-blue-900 leading-snug">{osmAddress.full_address}</p>
                       </div>
-                      <div className="flex gap-4 pt-2 border-t border-blue-100">
+                      <div className="flex gap-4 shrink-0 border-t border-blue-200/50 pt-3 w-full">
                         <div>
-                          <p className="text-[8px] font-black text-blue-400 uppercase">Latitude</p>
-                          <p className="text-xs font-mono font-bold text-blue-700">{lat?.toFixed(6)}</p>
+                          <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Latitude</p>
+                          <p className="text-xs font-mono font-bold text-blue-800">{lat?.toFixed(6)}</p>
                         </div>
                         <div>
-                          <p className="text-[8px] font-black text-blue-400 uppercase">Longitude</p>
-                          <p className="text-xs font-mono font-bold text-blue-700">{lng?.toFixed(6)}</p>
+                          <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Longitude</p>
+                          <p className="text-xs font-mono font-bold text-blue-800">{lng?.toFixed(6)}</p>
                         </div>
                       </div>
                     </div>
                   )}
                 </div>
               )}
-
-              {/* Empty state */}
-              {!osmAddress && !loadingAddr && (
-                <div className="flex flex-col items-center py-8 text-slate-300 space-y-2">
-                  <MapPin size={28} className="opacity-40" />
-                  <p className="text-[10px] font-bold uppercase tracking-tighter text-center text-slate-400">
-                    Search above or pin the map
-                  </p>
-                </div>
-              )}
             </div>
-          </div>
-
-          {/* RIGHT: MAP */}
-          <div className="lg:col-span-8 h-full bg-slate-100">
-            <LocationPicker position={position} onSelect={handleSelectLocation} />
           </div>
         </div>
 
-        {/* FOOTER */}
-        <div className="flex justify-end gap-4 px-8 py-5 border-t border-slate-100 bg-slate-50/50">
-          <button onClick={onClose} className="text-[11px] font-black text-slate-400 hover:text-slate-600 uppercase tracking-widest px-4 py-2 transition-colors">
+        {/* Footer - Matches UserManagement */}
+        <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 rounded-b-3xl shrink-0">
+          <button 
+            onClick={onClose} 
+            className="px-6 py-3 text-sm font-bold text-slate-600 hover:text-slate-900 bg-slate-200 hover:bg-slate-300 rounded-xl transition-all active:scale-95"
+          >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={!isFormValid}
-            className="flex items-center gap-2 bg-blue-600 text-white px-8 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:bg-blue-700 active:scale-95 disabled:bg-slate-200 disabled:shadow-none disabled:text-slate-400 transition-all"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-sm font-bold rounded-xl shadow-md shadow-blue-500/20 transition-all disabled:bg-slate-300 disabled:shadow-none disabled:active:scale-100 px-6 py-3"
           >
-            <Save size={16} strokeWidth={3} />
+            {isEdit ? <Check size={16} /> : <Save size={16} />}
             {isEdit ? "Save Changes" : "Register Station"}
           </button>
         </div>
