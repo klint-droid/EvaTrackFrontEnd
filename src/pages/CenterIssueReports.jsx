@@ -3,6 +3,7 @@ import ReportsHeader from '../components/centerIssueReports/ReportsHeader';
 import ReportsSummaryCards from '../components/centerIssueReports/ReportsSummaryCards';
 import ReportsTable from '../components/centerIssueReports/ReportsTable';
 import ReportModal from '../components/centerIssueReports/ReportModal';
+import ViewDetailsModal from '../components/centerIssueReports/ViewDetailsModal';
 import { useCenterIssueReports } from '../hooks/useCenterIssueReports';
 
 const CATEGORY_OPTIONS = [
@@ -33,7 +34,8 @@ export default function CenterIssueReports() {
     displayedReports,
     openCount, inProgressCount, resolvedCount, criticalCount,
     fetchReports, openCreateModal, openEditModal, handleSubmit,
-    handleStatusChange, handleDelete, canModifyReport
+    handleStatusChange, handleDelete, canModifyReport,
+    viewingReport, setViewingReport
   } = useCenterIssueReports();
 
   const getCategoryLabel = (value) => {
@@ -128,6 +130,7 @@ export default function CenterIssueReports() {
         canModifyReport={canModifyReport}
         openEditModal={openEditModal}
         handleDelete={handleDelete}
+        setViewingReport={setViewingReport}
       />
 
       <ReportModal
@@ -140,6 +143,15 @@ export default function CenterIssueReports() {
         centers={centers}
         handleSubmit={handleSubmit}
         saving={saving}
+      />
+
+      <ViewDetailsModal
+        report={viewingReport}
+        onClose={() => setViewingReport(null)}
+        getCategoryIcon={getCategoryIcon}
+        getCategoryLabel={getCategoryLabel}
+        getSeverityClass={getSeverityClass}
+        getStatusClass={getStatusClass}
       />
     </div>
   );

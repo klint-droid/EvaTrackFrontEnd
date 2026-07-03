@@ -12,6 +12,7 @@ import DemographicPanel from "../components/analytics/DemographicPanel";
 import CenterPerformance from "../components/analytics/CenterPerformance";
 import ResourceRequestsAnalytics from "../components/analytics/ResourceRequestsAnalytics";
 import CenterIssuesAnalytics from "../components/analytics/CenterIssuesAnalytics";
+import { useAlert } from "../context/AlertContext";
 
 export default function Analytics() {
     // Derive role context from localStorage for UI branching
@@ -25,6 +26,7 @@ export default function Analytics() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
+    const { showAlert } = useAlert();
 
     // Dynamic Filter State
     const initialCenterId = isPersonnel 
@@ -63,7 +65,7 @@ export default function Analytics() {
             });
         } catch (err) {
             console.error("Export failed:", err);
-            alert("Export failed: " + (err.response?.data?.message || err.message || "Unknown error"));
+            showAlert("Export failed: " + (err.response?.data?.message || err.message || "Unknown error"), "Export Error", "danger");
         } finally {
             setExporting(false);
         }

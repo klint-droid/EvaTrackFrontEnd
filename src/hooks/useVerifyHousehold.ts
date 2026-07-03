@@ -5,36 +5,42 @@ import { searchHousehold } from "../api/evacuationRecords/searchHousehold";
 import { createHousehold } from "../api/evacuationRecords/createHousehold";
 import { getUser } from "../api/auth/getUser";
 import { getCenter } from "../api/evacuation/getCenter";
+import { getCenters } from "../api/evacuation/getCenters";
+import { isAdmin, isSuperAdmin } from "../utils/roles";
 import { admitHousehold } from "../api/evacuationRecords/admitHousehold";
 import { getUnitsByCenter } from "../api/units/getUnitsByCenter";
 import { assignHousehold } from "../api/allocations/assignHousehold";
+import { useAlert } from "../context/AlertContext";
 
 export const useVerifyHousehold = () => {
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState("admit");
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState(undefined);
-  const [headName, setHeadName] = useState("");
-  const [contactNumber, setContactNumber] = useState("");
-  const [message, setMessage] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [tab, setTab] = useState<string>("admit");
+  const [query, setQuery] = useState<string>("");
+  const [results, setResults] = useState<any>(undefined);
+  const [headName, setHeadName] = useState<string>("");
+  const [contactNumber, setContactNumber] = useState<string>("");
+  const [message, setMessage] = useState<{ text: string; type: string } | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const [user, setUser] = useState(null);
-  const [centerName, setCenterName] = useState(null);
+  const [user, setUser] = useState<any>(null);
+  const [centerName, setCenterName] = useState<string | null>(null);
+  const [centers, setCenters] = useState<any[]>([]);
+  const [activeCenterId, setActiveCenterId] = useState<string | null>(null);
 
-  const [assignmentModal, setAssignmentModal] = useState(false);
-  const [qrModalOpen, setQrModalOpen] = useState(false);
-  const [scannedData, setScannedData] = useState(null);
-  const [memberCount, setMemberCount] = useState("");
-  const [selectedMembers, setSelectedMembers] = useState([]);
-  const [modalError, setModalError] = useState(null);
-  const [units, setUnits] = useState([]);
-  const [selectedUnitId, setSelectedUnitId] = useState("");
+  const [assignmentModal, setAssignmentModal] = useState<boolean>(false);
+  const [qrModalOpen, setQrModalOpen] = useState<boolean>(false);
+  const [scannedData, setScannedData] = useState<any>(null);
+  const [memberCount, setMemberCount] = useState<string | number>("");
+  const [selectedMembers, setSelectedMembers] = useState<any[]>([]);
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [units, setUnits] = useState<any[]>([]);
+  const [selectedUnitId, setSelectedUnitId] = useState<string>("");
+  const { showConfirm } = useAlert();
 
   const records = Array.isArray(results) ? results : (Array.isArray(results?.data) ? results.data : (results?.data?.data || []));
 
-  const showMessage = (msg, type = "success") => {
+  const showMessage = (msg: string, type: string = "success") => {
     setMessage({
       text: msg || (type === "error" ? "Something went wrong." : "Success."),
       type,
@@ -42,26 +48,26 @@ export const useVerifyHousehold = () => {
     setTimeout(() => setMessage(null), 3500);
   };
 
-  const getApiBody = (res) => {
+  const getApiBody = (res: any) => {
     if (res?.data?.message || res?.data?.data) {
       return res.data;
     }
     return res;
   };
 
-  const getPayload = (res) => {
+  const getPayload = (res: any) => {
     const body = getApiBody(res);
     return body?.data || body;
   };
 
-  const getMessage = (res, fallback = "Success.") => {
+  const getMessage = (res: any, fallback: string = "Success.") => {
     const body = getApiBody(res);
     return body?.message || fallback;
   };
 
-  const getActiveEvacuation = (member) => {
+  const getActiveEvacuation = (member: any) => {
     const r = member?.evacuated_members || member?.evacuatedMembers || [];
-    return r.find(em => {
+    return r.find((em: any) => {
       const record = em.evacuation_record || em.evacuationRecord;
       return record && 
         (record.household_status_id === 2 || record.household_status_id === '2') && 
@@ -69,7 +75,7 @@ export const useVerifyHousehold = () => {
     });
   };
 
-  const navigateToHouseholdDetail = (payload) => {
+  const navigateToHouseholdDetail = (payload: any) => {
     const evacuation =
       payload?.evacuation ||
       payload?.record ||
@@ -91,7 +97,7 @@ export const useVerifyHousehold = () => {
     }
 
     navigate(
-      `/households/${household.household_id}?evacuation_id=${evacuation.evacuation_id}&center_id=${evacuation.center_id || user?.assigned_center_id}`
+      `/households/${household.household_id}?evacuation_id=${evacuation.evacuation_id}&center_id=${evacuation.center_id || activeCenterId || user?.assigned_center_id}`
     );
   };
 
@@ -105,28 +111,49 @@ export const useVerifyHousehold = () => {
   }, []);
 
   useEffect(() => {
-    if (!user?.assigned_center_id) return;
+    if (!user) return;
+    const isUserAdmin = isAdmin() || isSuperAdmin();
 
-    getCenter(user.assigned_center_id)
+    if (isUserAdmin) {
+      getCenters()
+        .then((res: any) => {
+          const list = Array.isArray(res) ? res : (res?.data ?? []);
+          setCenters(list);
+          // Only set activeCenterId if the admin has a specifically assigned center, 
+          // otherwise leave it null so they are forced to choose in the Admission Modal.
+          if (user.assigned_center_id && !activeCenterId) {
+            setActiveCenterId(user.assigned_center_id);
+          }
+        })
+        .catch(console.error);
+    } else if (user.assigned_center_id && !activeCenterId) {
+      setActiveCenterId(user.assigned_center_id);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!activeCenterId) return;
+
+    getCenter(activeCenterId)
       .then((res) => {
         const body = getApiBody(res);
         const center = body?.data || body;
         setCenterName(
-          center?.name || center?.center_name || user.assigned_center_id
+          center?.name || center?.center_name || activeCenterId
         );
       })
       .catch(() => {
-        setCenterName(user.assigned_center_id);
+        setCenterName(activeCenterId);
       });
 
-    getUnitsByCenter(user.assigned_center_id, 1, 1000)
-      .then((res) => {
+    getUnitsByCenter(activeCenterId, 1, 1000)
+      .then((res: any) => {
         setUnits(res.data || []);
       })
       .catch(console.error);
-  }, [user]);
+  }, [activeCenterId]);
 
-  const handleScan = async (rawScan) => {
+  const handleScan = async (rawScan: string) => {
     let householdId = rawScan;
     let qrParsed = null;
     try {
@@ -155,9 +182,9 @@ export const useVerifyHousehold = () => {
     setLoading(true);
 
     try {
-      const res = await searchHousehold(householdId);
+      const res: any = await searchHousehold(householdId);
       const recordsList = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : (res?.data?.data || []));
-      const household = recordsList.find(h => h.household_id === householdId) || recordsList[0];
+      const household = recordsList.find((h: any) => h.household_id === householdId) || recordsList[0];
 
       if (household) {
         setScannedData({
@@ -166,7 +193,7 @@ export const useVerifyHousehold = () => {
         });
         setMemberCount(household?.member_count || 1);
         const memberIds = Array.isArray(household?.members) 
-          ? household.members.filter(m => !getActiveEvacuation(m)).map(m => m.member_id) 
+          ? household.members.filter((m: any) => !getActiveEvacuation(m)).map((m: any) => m.member_id) 
           : [];
         setSelectedMembers(memberIds);
         showMessage("QR scanned successfully. Confirm admission below.");
@@ -187,7 +214,7 @@ export const useVerifyHousehold = () => {
         setModalError(null);
         setAssignmentModal(true);
       }
-    } catch (err) {
+    } catch (err: any) {
       showMessage(err.response?.data?.message || "Scan failed. Please try again.", "error");
       setQrModalOpen(true);
     } finally {
@@ -204,25 +231,25 @@ export const useVerifyHousehold = () => {
     try {
       const data = await searchHousehold(query);
       setResults(data);
-    } catch (err) {
+    } catch (err: any) {
       showMessage(err.response?.data?.message || "Search failed.", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  const openAdmissionModal = (household) => {
+  const openAdmissionModal = (household: any) => {
     setScannedData({ household });
     setMemberCount(household?.member_count || 1);
     const memberIds = Array.isArray(household?.members) 
-      ? household.members.filter(m => !getActiveEvacuation(m)).map(m => m.member_id) 
+      ? household.members.filter((m: any) => !getActiveEvacuation(m)).map((m: any) => m.member_id) 
       : [];
     setSelectedMembers(memberIds);
     setModalError(null);
     setAssignmentModal(true);
   };
 
-  const handleVerify = (household) => {
+  const handleVerify = (household: any) => {
     openAdmissionModal(household);
   };
 
@@ -232,30 +259,18 @@ export const useVerifyHousehold = () => {
       showMessage("Please enter household name and number of members.", "error");
       return;
     }
-    setLoading(true);
-    try {
-      const res = await createHousehold({ 
-        household_name: headName,
-        contact_number: contactNumber || undefined,
-      });
-      const payload = getPayload(res);
-      const household = payload?.household || payload?.data || payload;
 
-      if (!household?.household_id) {
-        showMessage("Household admitted, but response is missing household ID.", "error");
-        return;
-      }
+    const tempHousehold = {
+      household_id: "TBD",
+      household_name: headName,
+      contact_number: contactNumber || undefined,
+      members: []
+    };
 
-      showMessage("Household admitted. Confirm final count.");
-      setScannedData({ household });
-      setModalError(null);
-      setAssignmentModal(true);
-      setHeadName("");
-    } catch (err) {
-      showMessage(err.response?.data?.message || "Failed to create household.", "error");
-    } finally {
-      setLoading(false);
-    }
+    showMessage("Please confirm admission details.");
+    setScannedData({ household: tempHousehold, isManualNew: true });
+    setModalError(null);
+    setAssignmentModal(true);
   };
 
   const handleConfirmAdmission = async () => {
@@ -275,8 +290,8 @@ export const useVerifyHousehold = () => {
       setModalError("Please enter the number of members.");
       return;
     }
-    if (!user?.assigned_center_id) {
-      setModalError("You are not assigned to an evacuation center.");
+    if (!activeCenterId) {
+      setModalError("You must select an active evacuation center.");
       return;
     }
     if (!scannedData?.household?.household_id) {
@@ -288,17 +303,35 @@ export const useVerifyHousehold = () => {
     setLoading(true);
 
     try {
+      let finalHouseholdId = scannedData?.household?.household_id;
+
+      if (scannedData?.isManualNew) {
+        const createRes = await createHousehold({
+          household_name: scannedData.household.household_name,
+          contact_number: scannedData.household.contact_number,
+        });
+        const payload = getPayload(createRes);
+        const createdHousehold = payload?.household || payload?.data || payload;
+        finalHouseholdId = createdHousehold?.household_id;
+
+        if (!finalHouseholdId) {
+            throw new Error("Failed to create household. No ID returned.");
+        }
+      }
+
       let res;
       if (scannedData?.isQR) {
         res = await scanQR({
-          household_id: scannedData.household.household_id,
+          household_id: finalHouseholdId,
           member_ids: hasMembers ? selectedMembers : undefined,
+          center_id: activeCenterId,
         });
       } else {
         res = await admitHousehold({
-          household_id: scannedData.household.household_id,
+          household_id: finalHouseholdId,
           member_ids: hasMembers ? selectedMembers : undefined,
           member_count: !hasMembers ? Number(memberCount) : undefined,
+          center_id: activeCenterId,
         });
       }
 
@@ -309,7 +342,7 @@ export const useVerifyHousehold = () => {
       if (selectedUnitId && evacuationId) {
         try {
           await assignHousehold(selectedUnitId, evacuationId);
-        } catch (assignErr) {
+        } catch (assignErr: any) {
           const assignErrMsg = assignErr.response?.data?.message || "Unit assignment failed.";
           throw new Error(`Admitted successfully, but allocation failed: ${assignErrMsg}`);
         }
@@ -321,8 +354,22 @@ export const useVerifyHousehold = () => {
       setMemberCount("");
       setSelectedMembers([]);
       setSelectedUnitId("");
-      navigateToHouseholdDetail(payload);
-    } catch (err) {
+
+      if (scannedData?.isManualNew) {
+        setHeadName("");
+        setContactNumber("");
+      }
+
+      const navPayload = {
+         ...payload,
+         household: {
+           ...payload?.household,
+           household_id: finalHouseholdId
+         }
+      };
+
+      navigateToHouseholdDetail(navPayload);
+    } catch (err: any) {
       const errMsg = err.response?.data?.message || err.message || "Admission failed.";
       setModalError(errMsg);
     } finally {
@@ -332,8 +379,20 @@ export const useVerifyHousehold = () => {
 
   const closeAdmissionModal = () => {
     if (scannedData?.household) {
-      const confirmClose = confirm("Household is not yet admitted. Close anyway?");
-      if (!confirmClose) return;
+      showConfirm(
+        "Household is not yet admitted. Close anyway?",
+        () => {
+          setAssignmentModal(false);
+          setScannedData(null);
+          setSelectedMembers([]);
+          setModalError(null);
+          setSelectedUnitId("");
+        },
+        "Close Anyway",
+        "warning",
+        "Close"
+      );
+      return;
     }
     setAssignmentModal(false);
     setScannedData(null);
@@ -342,9 +401,9 @@ export const useVerifyHousehold = () => {
     setSelectedUnitId("");
   };
 
-  const getHeadName = (h) => {
+  const getHeadName = (h: any) => {
     if (!h.members || h.members.length === 0) return 'Not Specified';
-    const head = h.members.find(m => 
+    const head = h.members.find((m: any) => 
       m.relationship?.relationship_key === 'head' || 
       m.relationship?.relationship_label === 'Head of Household' ||
       m.relationship_id === 1
@@ -352,7 +411,7 @@ export const useVerifyHousehold = () => {
     return head ? `${head.first_name} ${head.last_name}` : 'Not Specified';
   };
 
-  const calculateAge = (birthDate) => {
+  const calculateAge = (birthDate: string) => {
     if (!birthDate) return '—';
     const birth = new Date(birthDate);
     if (isNaN(birth.getTime())) return '—';
@@ -375,6 +434,7 @@ export const useVerifyHousehold = () => {
     loading, setLoading,
     user, setUser,
     centerName, setCenterName,
+    centers, activeCenterId, setActiveCenterId,
     assignmentModal, setAssignmentModal,
     qrModalOpen, setQrModalOpen,
     scannedData, setScannedData,

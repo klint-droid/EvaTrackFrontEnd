@@ -3,24 +3,30 @@ import { getEvents } from '../api/events/getEvents';
 import { getHistoryEvents } from '../api/events/getHistoryEvents';
 import { getDisasterTypes } from '../api/events/getDisasterTypes';
 
+interface Filters {
+  type_id: string;
+  start_date: string;
+  end_date: string;
+}
+
 export const useEventManagement = () => {
-  const [events, setEvents] = useState([]);
-  const [historicalEvents, setHistoricalEvents] = useState([]);
-  const [historyPagination, setHistoryPagination] = useState({});
-  const [historyLoading, setHistoryLoading] = useState(false);
+  const [events, setEvents] = useState<any[]>([]);
+  const [historicalEvents, setHistoricalEvents] = useState<any[]>([]);
+  const [historyPagination, setHistoryPagination] = useState<any>({});
+  const [historyLoading, setHistoryLoading] = useState<boolean>(false);
   
-  const [disasterTypes, setDisasterTypes] = useState([]);
-  const [filters, setFilters] = useState({
+  const [disasterTypes, setDisasterTypes] = useState<any[]>([]);
+  const [filters, setFilters] = useState<Filters>({
     type_id: '',
     start_date: '',
     end_date: ''
   });
 
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
-  const [assigningEvent, setAssigningEvent] = useState(null);
-  const [viewingEvent, setViewingEvent] = useState(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [assigningEvent, setAssigningEvent] = useState<any>(null);
+  const [viewingEvent, setViewingEvent] = useState<any>(null);
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -34,7 +40,7 @@ export const useEventManagement = () => {
     }
   };
 
-  const fetchHistory = async (page = 1) => {
+  const fetchHistory = async (page: number = 1) => {
     setHistoryLoading(true);
     try {
       const res = await getHistoryEvents(page, filters);
@@ -64,9 +70,9 @@ export const useEventManagement = () => {
     return acc + (curr.evacuation_centers?.length || 0);
   }, 0);
 
-  const uniqueRegions = new Set();
+  const uniqueRegions = new Set<string>();
   activeEvents.forEach(e => {
-    (e.evacuation_centers || []).forEach(c => {
+    (e.evacuation_centers || []).forEach((c: any) => {
       if (c.region) uniqueRegions.add(c.region);
     });
   });

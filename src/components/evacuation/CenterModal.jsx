@@ -6,12 +6,14 @@ import {
 } from "lucide-react";
 import LocationPicker from "../Location/LocationPicker";
 import { reverseGeocode } from "../../utils/reverseGeocode";
+import { useAlert } from "../../context/AlertContext";
 
 export default function CenterModal({ isOpen, onClose, onSubmit, initialData }) {
   const isEdit = Boolean(initialData);
 
   const [form, setForm]               = useState({ name: "", capacity: "" });
   const [position, setPosition]       = useState(null);
+  const { showAlert } = useAlert();
   const [lat, setLat]                 = useState(null);
   const [lng, setLng]                 = useState(null);
   const [osmAddress, setOsmAddress]   = useState(null);
@@ -106,7 +108,7 @@ export default function CenterModal({ isOpen, onClose, onSubmit, initialData }) 
   // ── submit ───────────────────────────────────────────────────────────────────
   const handleSubmit = () => {
     if (!lat || !lng || !osmAddress?.full_address) {
-      alert("Please pin or search a location first.");
+      showAlert("Please pin or search a location first.", "Validation Error", "warning");
       return;
     }
     onSubmit({

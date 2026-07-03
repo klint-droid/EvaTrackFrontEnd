@@ -1,6 +1,7 @@
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import { useState, useEffect } from "react";
 import { Search, Map as MapIcon, Loader2 } from "lucide-react";
+import { useAlert } from "../../context/AlertContext";
 import L from "leaflet";
 
 // Fix marker icons
@@ -29,6 +30,7 @@ function Recenter({ position }) {
 export default function LocationPicker({ position, onSelect }) {
   const [search, setSearch] = useState("");
   const [searching, setSearching] = useState(false);
+  const { showAlert } = useAlert();
   const defaultCenter = [14.5995, 120.9842]; 
 
   const handleSearch = async () => {
@@ -39,7 +41,7 @@ export default function LocationPicker({ position, onSelect }) {
       const data = await res.json();
       if (data.length > 0) {
         onSelect({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
-      } else { alert("Location not found"); }
+      } else { showAlert("Location not found", "Search Failed", "warning"); }
     } catch (err) { console.error(err); } 
     finally { setSearching(false); }
   };

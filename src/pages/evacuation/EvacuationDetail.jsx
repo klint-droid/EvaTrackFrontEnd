@@ -35,12 +35,14 @@ import UnitModal from '../../components/units/UnitModal';
 import AssignHouseholdModal from '../../components/units/AssignHouseholdModal';
 import AlertConfirmModal from '../../components/AlertConfirmModal';
 import { isAdmin, isSuperAdmin, isPersonnel } from '../../utils/roles';
+import { useAlert } from '../../context/AlertContext';
 
 export default function EvacuationDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const activeTab = searchParams.get('tab') || 'units';
+    const { showAlert } = useAlert();
 
     const setActiveTab = (tab) => {
         setSearchParams({ tab });
@@ -95,7 +97,7 @@ export default function EvacuationDetail() {
         try {
             await exportCenterData(id, type);
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to export data.');
+            showAlert(err.response?.data?.message || 'Failed to export data.', 'Export Error', 'danger');
         } finally {
             setExporting(false);
         }
@@ -205,7 +207,7 @@ export default function EvacuationDetail() {
             setDeleteUnitModal(null);
             fetchUnits();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to delete unit.');
+            showAlert(err.response?.data?.message || 'Failed to delete unit.', 'Error', 'danger');
         } finally {
             setIsDeletingUnit(false);
         }
@@ -221,7 +223,7 @@ export default function EvacuationDetail() {
             fetchEvacuatedHouseholds();
             setUnassignModal(null);
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to unassign.');
+            showAlert(err.response?.data?.message || 'Failed to unassign.', 'Error', 'danger');
         } finally {
             setIsUnassigning(false);
         }
@@ -246,7 +248,7 @@ export default function EvacuationDetail() {
 
             setDeleteRecordModal(null);
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to delete evacuation record.');
+            showAlert(err.response?.data?.message || 'Failed to delete evacuation record.', 'Error', 'danger');
         } finally {
             setIsDeletingRecord(false);
         }

@@ -1,4 +1,4 @@
-import logo from "../assets/logo.png";
+import logo from "../assets/evatrack_logo_horizontal.svg";
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { logout } from "../api/auth/logout";
@@ -97,27 +97,22 @@ const Sidebar = ({ isOpen, onClose }) => {
                 </button>
 
                 {/* BRANDING / LOGO SECTION */}
-                <div className="h-20 flex items-center px-5 border-b border-slate-800/50">
-                    <div className="flex items-center gap-3">
-                        <div className="min-w-[40px] h-10 flex items-center justify-center">
-    <img 
-        src={logo} 
-        alt="logo" 
-        className="h-10 w-10 object-contain"
-    />
-</div>
-                        {/* On mobile drawer: always show label. On desktop: respect collapse state */}
-                        {(!isCollapsed || isOpen) && (
-                            <div className={`flex flex-col overflow-hidden whitespace-nowrap ${isCollapsed ? "lg:hidden" : ""}`}>
-                                <span className="text-lg font-bold tracking-tight text-white italic">
-                                    EVA<span className="text-blue-500">TRACK</span>
-                                </span>
-                                <span className="text-[10px] text-slate-500 font-medium tracking-[0.2em] -mt-1 uppercase">
-                                    Streamline Evacuation Process
-                                </span>
-                            </div>
-                        )}
-                    </div>
+                <div className="h-20 flex items-center justify-center px-4 border-b border-slate-800/50">
+                    {(!isCollapsed || isOpen) ? (
+                        <img 
+                            src={logo} 
+                            alt="EvaTrack Logo" 
+                            className="h-12 object-contain drop-shadow-md"
+                        />
+                    ) : (
+                        <div className="w-12 h-12 overflow-hidden flex items-center justify-start">
+                            <img 
+                                src={logo} 
+                                alt="EvaTrack Logo" 
+                                className="h-12 max-w-none object-cover object-left"
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* NAVIGATION */}

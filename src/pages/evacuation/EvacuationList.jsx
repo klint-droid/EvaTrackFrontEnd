@@ -13,6 +13,7 @@ import { isAdmin, isSuperAdmin, isPersonnel, getAssignedCenterId } from "../../u
 
 import CenterModal  from "../../components/evacuation/CenterModal";
 import AlertConfirmModal from "../../components/AlertConfirmModal";
+import { useAlert } from "../../context/AlertContext";
 
 const CenterSkeleton = () => (
   <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-4 animate-pulse flex flex-col justify-between h-[308px]">
@@ -67,6 +68,7 @@ export default function EvacuationList() {
   const [selected, setSelected]       = useState(null);
   const [sortBy, setSortBy]           = useState("name");
   const [activeTab, setActiveTab]     = useState("assigned");
+  const { showAlert } = useAlert();
 
   const canCreate = isAdmin() || isSuperAdmin();
   const canEdit   = isAdmin() || isSuperAdmin();
@@ -104,7 +106,7 @@ export default function EvacuationList() {
       setSaveConfirmState({ isOpen: false, formData: null, isLoading: false });
       fetchCenters();
     } catch (err) {
-      alert(err.response?.data?.message || "Operation failed");
+      showAlert(err.response?.data?.message || "Operation failed", "Error", "danger");
       setSaveConfirmState(prev => ({ ...prev, isLoading: false }));
     }
   };
@@ -119,7 +121,7 @@ export default function EvacuationList() {
       setDeleteConfirmState({ isOpen: false, centerId: null, isLoading: false });
       fetchCenters();
     } catch (err) {
-      alert(err.response?.data?.message || "Delete failed");
+      showAlert(err.response?.data?.message || "Delete failed", "Error", "danger");
       setDeleteConfirmState(prev => ({ ...prev, isLoading: false }));
     }
   };

@@ -11,6 +11,7 @@ import { getEvents } from '../api/events/getEvents';
 import { isAdmin, isPersonnel } from '../utils/roles';
 import CreateAlertModal from '../components/alerts/CreateAlertModal';
 import AlertDetailModal from '../components/alerts/AlertDetailModal';
+import { useAlert } from '../context/AlertContext';
 
 export default function EvacuationAlerts() {
     const [alerts, setAlerts] = useState([]);
@@ -20,6 +21,7 @@ export default function EvacuationAlerts() {
     const [detailId, setDetailId] = useState(null);
     const [events, setEvents] = useState([]);
     const [selectedEvent, setSelectedEvent] = useState('');
+    const { showAlert, showConfirm } = useAlert();
     
     // Search & Filter state
     const [searchTerm, setSearchTerm] = useState('');
@@ -50,13 +52,20 @@ export default function EvacuationAlerts() {
     useEffect(() => { fetchAlerts(); }, [selectedEvent]);
 
     const handleCancel = async (id) => {
-        if (!confirm('Cancel this scheduled alert?')) return;
-        try {
-            await cancelAlert(id);
-            fetchAlerts(pagination.current_page);
-        } catch (err) {
-            alert(err.response?.data?.message || 'Failed to cancel alert.');
-        }
+        showConfirm(
+            'Cancel this scheduled alert?',
+            async () => {
+                try {
+                    await cancelAlert(id);
+                    fetchAlerts(pagination.current_page);
+                } catch (err) {
+                    showAlert(err.response?.data?.message || 'Failed to cancel alert.', 'Error', 'danger');
+                }
+            },
+            'Cancel Alert',
+            'warning',
+            'Cancel Schedule'
+        );
     };
 
 

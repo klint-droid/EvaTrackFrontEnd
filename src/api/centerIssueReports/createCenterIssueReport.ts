@@ -15,8 +15,11 @@ export interface CreateCenterIssueReportResponse {
 }
 
 export const createCenterIssueReport = async (
-    payload: CreateCenterIssueReportPayload
+    payload: CreateCenterIssueReportPayload | FormData
 ): Promise<CreateCenterIssueReportResponse> => {
+    if (payload instanceof FormData) {
+        // Axios sets Content-Type to multipart/form-data with the correct boundary automatically
+    }
     const response = await API.post<CreateCenterIssueReportResponse>('/api/center-issue-reports', payload);
     return response.data;
 };

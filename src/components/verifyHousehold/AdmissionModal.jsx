@@ -17,7 +17,10 @@ export default function AdmissionModal({
     setSelectedUnitId,
     units,
     loading,
-    handleConfirmAdmission
+    handleConfirmAdmission,
+    centers,
+    activeCenterId,
+    setActiveCenterId
 }) {
     if (!assignmentModal) return null;
 
@@ -222,6 +225,36 @@ export default function AdmissionModal({
                             <p className="text-[10px] text-slate-400 font-medium px-1 leading-snug">
                                 This household does not have members pre-registered. Specify the count to log details properly.
                             </p>
+                        </div>
+                    )}
+
+                    {/* EVACUATION CENTER ASSIGNMENT (ADMIN ONLY) */}
+                    {centers && centers.length > 0 && (
+                        <div className="space-y-2">
+                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                                Evacuation Center
+                            </h4>
+
+                            <div className="relative border border-slate-202 rounded-xl px-3 py-2.5 bg-amber-50 focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-500/10 transition-all">
+                                <label className="absolute -top-2 left-3 bg-amber-50 px-1 text-[9px] font-black text-amber-600 uppercase tracking-widest">
+                                    Select Station
+                                </label>
+                                <select
+                                    value={activeCenterId || ""}
+                                    onChange={(e) => {
+                                        setActiveCenterId(e.target.value);
+                                        setSelectedUnitId(""); // Reset unit selection when center changes
+                                    }}
+                                    className="w-full bg-transparent text-xs font-semibold text-amber-800 outline-none border-none py-1 cursor-pointer"
+                                >
+                                    <option value="" disabled>Select a center...</option>
+                                    {centers.map(c => (
+                                        <option key={c.evacuation_center_id || c.center_id} value={c.evacuation_center_id || c.center_id}>
+                                            {c.name || c.center_name || `Center ${c.evacuation_center_id || c.center_id}`}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
                     )}
 

@@ -7,30 +7,32 @@ import { deleteMember } from '../api/households/deleteMember';
 import { getEvacuationRecord } from '../api/evacuationRecords/getEvacuationRecord';
 import { updateMemberEvacuationStatus } from '../api/evacuationRecords/updateMemberEvacuationStatus';
 import { isAdmin, isSuperAdmin, isPersonnel } from '../utils/roles';
+import { useAlert } from '../context/AlertContext';
 
 export const useHouseholdDetail = () => {
-    const { id } = useParams();
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
-    const evacuationIdFromUrl = searchParams.get('evacuation_id');
-    const centerIdFromUrl = searchParams.get('center_id');
+    const evacuationIdFromUrl: string | null = searchParams.get('evacuation_id');
+    const centerIdFromUrl: string | null = searchParams.get('center_id');
 
-    const [household, setHousehold] = useState(null);
-    const [evacuationContext, setEvacuationContext] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [memberModal, setMemberModal] = useState(false);
-    const [editingMember, setEditingMember] = useState(null);
-    const [statusUpdatingMemberId, setStatusUpdatingMemberId] = useState(null);
-    const [activeEvacTab, setActiveEvacTab] = useState(null);
-    const [memberSearch, setMemberSearch] = useState('');
-    const [checkInModal, setCheckInModal] = useState({ open: false, member: null });
+    const [household, setHousehold] = useState<any>(null);
+    const [evacuationContext, setEvacuationContext] = useState<any>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [memberModal, setMemberModal] = useState<boolean>(false);
+    const [editingMember, setEditingMember] = useState<any>(null);
+    const [statusUpdatingMemberId, setStatusUpdatingMemberId] = useState<string | number | null>(null);
+    const [activeEvacTab, setActiveEvacTab] = useState<string | number | null>(null);
+    const [memberSearch, setMemberSearch] = useState<string>('');
+    const [checkInModal, setCheckInModal] = useState<{ open: boolean, member: any }>({ open: false, member: null });
+    const { showAlert, showConfirm } = useAlert();
 
     const storedUser = localStorage.getItem("user");
     const currentUser = storedUser ? JSON.parse(storedUser) : null;
-    const isSuperAdminUser = isSuperAdmin();
-    const isAdminUser = isAdmin();
-    const isPersonnelUser = isPersonnel();
+    const isSuperAdminUser: boolean = isSuperAdmin();
+    const isAdminUser: boolean = isAdmin();
+    const isPersonnelUser: boolean = isPersonnel();
 
     const assignedCenterId = currentUser?.assigned_center?.id || currentUser?.assigned_center_id;
 
@@ -44,12 +46,12 @@ export const useHouseholdDetail = () => {
 
     const povCenterId = isPersonnelUser ? assignedCenterId : targetCenterId;
 
-    const isHouseholdManageable = isSuperAdminUser || isAdminUser ||
+    const isHouseholdManageable: boolean = isSuperAdminUser || isAdminUser ||
         (isPersonnelUser && (!targetCenterId || String(targetCenterId) === String(assignedCenterId)));
 
-    const canEdit = isHouseholdManageable;
-    const canDelete = isSuperAdminUser || isAdminUser;
-    const isEvacuationContext = !!evacuationIdFromUrl;
+    const canEdit: boolean = isHouseholdManageable;
+    const canDelete: boolean = isSuperAdminUser || isAdminUser;
+    const isEvacuationContext: boolean = !!evacuationIdFromUrl;
 
     const fetchHousehold = async () => {
         try {
@@ -65,9 +67,9 @@ export const useHouseholdDetail = () => {
         try {
             const res = await getEvacuationRecord(evacuationIdFromUrl);
             setEvacuationContext(res.data || res);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            alert(err.response?.data?.message || 'Failed to load evacuation record.');
+            showAlert(err.response?.data?.message || 'Failed to load evacuation record.', 'Error', 'danger');
         }
     };
 
@@ -89,12 +91,12 @@ export const useHouseholdDetail = () => {
         setMemberModal(true);
     };
 
-    const openEdit = (member) => {
+    const openEdit = (member: any) => {
         setEditingMember(member);
         setMemberModal(true);
     };
 
-    const handleSave = async (formData) => {
+    const handleSave = async (formData: any) => {
         if (editingMember) {
             await updateMember(id, editingMember.member_id, formData);
         } else {
@@ -108,18 +110,25 @@ export const useHouseholdDetail = () => {
         }
     };
 
-    const handleDelete = async (memberId) => {
-        if (!confirm('Remove this member?')) return;
-        try {
-            await deleteMember(id, memberId);
-            await fetchHousehold();
-            if (evacuationIdFromUrl) await fetchEvacuationContext();
-        } catch (err) {
-            alert(err.response?.data?.message || 'Failed to remove member.');
-        }
+    const handleDelete = async (memberId: string | number) => {
+        showConfirm(
+            'Remove this member?',
+            async () => {
+                try {
+                    await deleteMember(id as string, String(memberId));
+                    await fetchHousehold();
+                    if (evacuationIdFromUrl) await fetchEvacuationContext();
+                } catch (err: any) {
+                    showAlert(err.response?.data?.message || 'Failed to remove member.', 'Error', 'danger');
+                }
+            },
+            'Remove Member',
+            'danger',
+            'Remove'
+        );
     };
 
-    const handleMemberStatusChange = async (memberId, status, evacId) => {
+    const handleMemberStatusChange = async (memberId: string | number, status: string, evacId?: string | number) => {
         const activeEvacuation = evacId
             ? { evacuation_id: evacId }
             : evacuationContext ||
@@ -127,21 +136,21 @@ export const useHouseholdDetail = () => {
               household?.currentEvacuation;
 
         if (!activeEvacuation?.evacuation_id) {
-            alert('No evacuation record selected.');
+            showAlert('No evacuation record selected.', 'Error', 'danger');
             return;
         }
 
         try {
             setStatusUpdatingMemberId(memberId);
             await updateMemberEvacuationStatus(
-                activeEvacuation.evacuation_id,
-                memberId,
-                status
+                String(activeEvacuation.evacuation_id),
+                String(memberId),
+                status as any
             );
             await fetchHousehold();
             if (evacuationIdFromUrl) await fetchEvacuationContext();
-        } catch (err) {
-            alert(err.response?.data?.message || 'Failed to update member evacuation status.');
+        } catch (err: any) {
+            showAlert(err.response?.data?.message || 'Failed to update member evacuation status.', 'Error', 'danger');
         } finally {
             setStatusUpdatingMemberId(null);
         }
@@ -155,7 +164,7 @@ export const useHouseholdDetail = () => {
         navigate(-1);
     };
 
-    const allActiveEvacuations = useMemo(() => {
+    const allActiveEvacuations = useMemo<any[]>(() => {
         if (!household) return [];
         const evacsList = household.current_evacuations || household.currentEvacuations || [];
         if (evacsList.length > 0) return evacsList;
@@ -173,23 +182,23 @@ export const useHouseholdDetail = () => {
         });
     }, [allActiveEvacuations, assignedCenterId]);
 
-    const allEvacuatedMemberIds = useMemo(() => {
-        const ids = new Set();
+    const allEvacuatedMemberIds = useMemo<Set<string | number>>(() => {
+        const ids = new Set<string | number>();
         allActiveEvacuations.forEach(evac => {
             const members = evac.evacuated_members || evac.evacuatedMembers || [];
-            members.forEach(em => ids.add(em.member_id));
+            members.forEach((em: any) => ids.add(em.member_id));
         });
         return ids;
     }, [allActiveEvacuations]);
 
-    const memberEvacMap = useMemo(() => {
-        const map = {};
+    const memberEvacMap = useMemo<{ [key: string]: any }>(() => {
+        const map: { [key: string]: any } = {};
         allActiveEvacuations.forEach(evac => {
             const centerId = evac.center_id || evac.center?.evacuation_center_id;
             const centerName = evac.center?.name || 'Unknown Center';
             const evacuationId = evac.evacuation_id;
             const members = evac.evacuated_members || evac.evacuatedMembers || [];
-            members.forEach(em => {
+            members.forEach((em: any) => {
                 map[em.member_id] = {
                     center_id: centerId,
                     center_name: centerName,
@@ -215,17 +224,17 @@ export const useHouseholdDetail = () => {
         }
     }, [allActiveEvacuations, povCenterId]);
 
-    const filteredMembers = useMemo(() => {
+    const filteredMembers = useMemo<any[]>(() => {
         if (!household?.members) return [];
         if (!memberSearch.trim()) return household.members;
         const q = memberSearch.toLowerCase();
-        return household.members.filter(m => {
+        return household.members.filter((m: any) => {
             const fullName = [m.first_name, m.middle_name, m.last_name].filter(Boolean).join(' ').toLowerCase();
-            return fullName.includes(q) || m.member_id?.toLowerCase().includes(q);
+            return fullName.includes(q) || m.member_id?.toString().toLowerCase().includes(q);
         });
     }, [household?.members, memberSearch]);
 
-    const canModifyMember = (memberId) => {
+    const canModifyMember = (memberId: string | number) => {
         if (isSuperAdminUser || isAdminUser) return true;
         if (!isPersonnelUser) return false;
 
@@ -234,7 +243,7 @@ export const useHouseholdDetail = () => {
         return String(memberEvac.center_id) === String(assignedCenterId);
     };
 
-    const getTabMembers = (centerId) => {
+    const getTabMembers = (centerId: string | number) => {
         return filteredMembers.filter(m => {
             const evac = memberEvacMap[m.member_id];
             return evac && String(evac.center_id) === String(centerId);
@@ -248,7 +257,7 @@ export const useHouseholdDetail = () => {
         return String(cId) === String(activeEvacTab);
     });
 
-    const isMyCenter = (centerId) => String(centerId) === String(assignedCenterId);
+    const isMyCenter = (centerId: string | number) => String(centerId) === String(assignedCenterId);
 
     const primaryEvacuation =
         evacuationContext ||

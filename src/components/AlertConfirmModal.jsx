@@ -57,7 +57,7 @@ function AlertConfirmModal({
   const activeStyle = config[type] || config.danger;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
       {/* ── BACKDROP OVERLAY ── */}
       <div 
         onClick={!isLoading ? onClose : undefined} 
@@ -96,14 +96,16 @@ function AlertConfirmModal({
         {/* ── FOOTER ACTIONS ── */}
         <div className="flex items-center gap-3 w-full mt-7">
           {/* Cancel Control */}
-          <button
-            type="button"
-            disabled={isLoading}
-            onClick={onClose}
-            className="flex-1 h-12 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 font-bold text-xs transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
-          >
-            {cancelText}
-          </button>
+          {cancelText && (
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={onClose}
+              className="flex-1 h-12 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 font-bold text-xs transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
+            >
+              {cancelText}
+            </button>
+          )}
 
           {/* Confirm Control */}
           <button

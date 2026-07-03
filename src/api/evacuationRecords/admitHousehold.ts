@@ -6,6 +6,7 @@ export interface AdmitHouseholdPayload {
     member_count?: number;
     event_id?: string | null;
     member_ids?: string[];
+    center_id?: string | null;
 }
 
 export interface AdmitHouseholdResponse {

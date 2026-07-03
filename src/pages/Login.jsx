@@ -4,6 +4,7 @@ import { AlertCircle, ArrowLeft, Eye, EyeOff, ShieldCheck, Lock, Award, IdCard }
 import API from "../api";
 import placeImage from "../assets/place.png";
 import evaTrackLogo from "../assets/evatrack_logo_stacked.svg";
+import { useAlert } from "../context/AlertContext";
 
 function Login() {
   const [userId, setUserId] = useState("");
@@ -14,6 +15,7 @@ function Login() {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
+  const { showAlert } = useAlert();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -155,7 +157,7 @@ function Login() {
                 href="#" 
                 onClick={(e) => {
                   e.preventDefault();
-                  alert("Please contact your municipal system administrator to reset credentials.");
+                  showAlert("Please contact your municipal system administrator to reset credentials.", "Reset Credentials", "info");
                 }} 
                 className="text-[11px] font-bold text-slate-500 hover:text-slate-800 transition"
               >

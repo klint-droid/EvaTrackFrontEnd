@@ -1,122 +1,165 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getCenters } from '../../api/evacuation/getCenters';
 import { assignCenters } from '../../api/events/assignCenters';
+import { unassignCenter } from '../../api/events/unassignCenter';
+import AlertConfirmModal from '../AlertConfirmModal';
+import { ShieldAlert, ShieldCheck } from 'lucide-react';
 
 export default function AssignCentersModal({ event, onClose, onSaved }) {
     const [centers, setCenters] = useState([]);
-    const [selected, setSelected] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
 
+    const [confirmState, setConfirmState] = useState({
+        isOpen: false,
+        type: 'assign', // 'assign' | 'unassign'
+        center: null,
+        isLoading: false
+    });
+
+    const fetchCenters = useCallback(async () => {
+        try {
+            const res = await getCenters();
+            const list = Array.isArray(res) ? res : (res?.data ?? []);
+            setCenters(list);
+        } catch {
+            setError('Failed to load centers.');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
-        const fetchCenters = async () => {
-            try {
-                const res = await getCenters();
-                const list = Array.isArray(res) ? res : (res?.data ?? []);
-                setCenters(list);
-
-                // pre-check centers already assigned to this event
-                const alreadyAssigned = list
-                    .filter(c => c.current_event_id === event.event_id)
-                    .map(c => c.evacuation_center_id);
-                setSelected(alreadyAssigned);
-            } catch {
-                setError('Failed to load centers.');
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchCenters();
-    }, [event.event_id]);
+    }, [fetchCenters]);
 
-    const toggle = (centerId) => {
-        setSelected(prev =>
-            prev.includes(centerId)
-                ? prev.filter(id => id !== centerId)
-                : [...prev, centerId]
-        );
+    const openConfirm = (type, center) => {
+        setConfirmState({
+            isOpen: true,
+            type,
+            center,
+            isLoading: false
+        });
     };
 
-    const handleSave = async () => {
-        setSaving(true);
+    const handleConfirmAction = async () => {
+        setConfirmState(prev => ({ ...prev, isLoading: true }));
         setError(null);
+        
         try {
-            await assignCenters(event.event_id, selected);
+            if (confirmState.type === 'assign') {
+                await assignCenters(event.event_id, [confirmState.center.evacuation_center_id]);
+            } else {
+                await unassignCenter(confirmState.center.evacuation_center_id);
+            }
             onSaved();
-            onClose();
+            await fetchCenters();
+            setConfirmState(prev => ({ ...prev, isOpen: false }));
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to assign centers.');
-        } finally {
-            setSaving(false);
+            setError(err.response?.data?.message || `Failed to ${confirmState.type} center.`);
+            setConfirmState(prev => ({ ...prev, isLoading: false }));
         }
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
-                <h2 className="text-lg font-semibold mb-1">Assign Centers</h2>
-                <p className="text-sm text-gray-500 mb-4">
-                    Event: <span className="font-medium text-gray-700">{event.name}</span>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] animate-in fade-in">
+            <div className="bg-white rounded-3xl p-6 md:p-8 w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+                <h2 className="text-xl font-black text-slate-800 tracking-tight mb-1">Assign Centers</h2>
+                <p className="text-xs text-slate-500 font-bold mb-5">
+                    Event: <span className="text-slate-700">{event.name}</span>
                 </p>
 
-                {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
+                {error && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-bold border border-red-100">{error}</div>}
 
                 {loading ? (
-                    <p className="text-gray-500 text-sm">Loading centers...</p>
+                    <div className="flex-1 flex items-center justify-center p-8">
+                        <span className="text-slate-400 text-xs font-bold animate-pulse">Loading centers...</span>
+                    </div>
                 ) : centers.length === 0 ? (
-                    <p className="text-gray-500 text-sm">No centers available.</p>
+                    <div className="flex-1 flex items-center justify-center p-8">
+                        <span className="text-slate-400 text-xs font-bold">No centers available.</span>
+                    </div>
                 ) : (
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                    <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar min-h-0">
                         {centers.map(center => {
-                            const isAssignedElsewhere =
-                                center.current_event_id &&
-                                center.current_event_id !== event.event_id;
+                            const isAssignedToThis = center.current_event_id === event.event_id;
+                            const isAssignedElsewhere = center.current_event_id && !isAssignedToThis;
 
                             return (
-                                <label
+                                <div
                                     key={center.evacuation_center_id}
-                                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50 ${
-                                        isAssignedElsewhere ? 'opacity-50 cursor-not-allowed' : ''
+                                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                                        isAssignedToThis ? 'bg-indigo-50/50 border-indigo-100' : 
+                                        isAssignedElsewhere ? 'bg-slate-50 opacity-60 border-slate-200' : 'bg-white border-slate-100 hover:border-slate-200 hover:shadow-sm'
                                     }`}
                                 >
-                                    <input
-                                        type="checkbox"
-                                        checked={selected.includes(center.evacuation_center_id)}
-                                        onChange={() => !isAssignedElsewhere && toggle(center.evacuation_center_id)}
-                                        disabled={isAssignedElsewhere}
-                                    />
                                     <div>
-                                        <p className="text-sm font-medium">{center.name}</p>
-                                        {isAssignedElsewhere && (
-                                            <p className="text-xs text-orange-500">
-                                                Already assigned to another event
-                                            </p>
+                                        <p className="text-sm font-bold text-slate-800">{center.name}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            {isAssignedToThis ? (
+                                                <span className="inline-flex items-center gap-1 text-[10px] font-black text-indigo-600 uppercase tracking-wider">
+                                                    <ShieldCheck size={12} /> Assigned to this event
+                                                </span>
+                                            ) : isAssignedElsewhere ? (
+                                                <span className="inline-flex items-center gap-1 text-[10px] font-black text-orange-500 uppercase tracking-wider">
+                                                    <ShieldAlert size={12} /> Assigned to another event
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-600 uppercase tracking-wider">
+                                                    <ShieldCheck size={12} /> Available
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        {isAssignedToThis ? (
+                                            <button
+                                                onClick={() => openConfirm('unassign', center)}
+                                                className="px-4 py-2 rounded-xl text-xs font-bold bg-white text-red-600 border border-red-100 hover:bg-red-50 hover:border-red-200 transition-colors shadow-sm"
+                                            >
+                                                Unassign
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => openConfirm('assign', center)}
+                                                disabled={isAssignedElsewhere}
+                                                className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-500/20 transition-colors disabled:opacity-50 disabled:shadow-none"
+                                            >
+                                                Assign
+                                            </button>
                                         )}
                                     </div>
-                                </label>
+                                </div>
                             );
                         })}
                     </div>
                 )}
 
-                <div className="flex justify-end gap-2 mt-5">
+                <div className="flex justify-end pt-5 mt-5 border-t border-slate-100">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50"
+                        className="px-6 py-2.5 text-xs font-bold rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
                     >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={saving || loading}
-                        className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-                    >
-                        {saving ? 'Saving...' : 'Save'}
+                        Close
                     </button>
                 </div>
             </div>
+
+            <AlertConfirmModal
+                isOpen={confirmState.isOpen}
+                title={confirmState.type === 'assign' ? 'Assign Center' : 'Unassign Center'}
+                message={
+                    confirmState.type === 'assign'
+                        ? `Are you sure you want to assign ${confirmState.center?.name} to ${event.name}?`
+                        : `Are you sure you want to unassign ${confirmState.center?.name} from ${event.name}?`
+                }
+                confirmText={confirmState.type === 'assign' ? 'Yes, Assign' : 'Yes, Unassign'}
+                cancelText="Cancel"
+                type={confirmState.type === 'assign' ? 'success' : 'danger'}
+                isLoading={confirmState.isLoading}
+                onConfirm={handleConfirmAction}
+                onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+            />
         </div>
     );
 }

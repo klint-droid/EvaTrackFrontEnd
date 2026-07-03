@@ -15,8 +15,13 @@ export interface UpdateCenterIssueReportResponse {
 
 export const updateCenterIssueReport = async (
     reportId: string,
-    payload: UpdateCenterIssueReportPayload
+    payload: UpdateCenterIssueReportPayload | FormData
 ): Promise<UpdateCenterIssueReportResponse> => {
+    if (payload instanceof FormData) {
+        payload.append('_method', 'PATCH');
+        const response = await API.post<UpdateCenterIssueReportResponse>(`/api/center-issue-reports/${reportId}`, payload);
+        return response.data;
+    }
     const response = await API.patch<UpdateCenterIssueReportResponse>(`/api/center-issue-reports/${reportId}`, payload);
     return response.data;
 };

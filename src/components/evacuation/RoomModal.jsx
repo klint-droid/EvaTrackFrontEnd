@@ -2,20 +2,22 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { X, DoorOpen, Loader2 } from "lucide-react";
 import { createRoom } from "../../api/rooms/createRoom";
+import { useAlert } from "../../context/AlertContext";
 
 export default function RoomModal({ centerId, onClose, onSuccess }) {
   const [roomNumber, setRoomNumber] = useState("");
   const [capacity, setCapacity] = useState("");
   const [loading, setLoading] = useState(false);
+  const { showAlert } = useAlert();
 
   const handleSubmit = async () => {
     if (!roomNumber.trim() || !capacity) {
-      alert("Please fill all fields");
+      showAlert("Please fill all fields", "Validation Error", "danger");
       return;
     }
 
     if (Number(capacity) <= 0) {
-      alert("Capacity must be greater than 0");
+      showAlert("Capacity must be greater than 0", "Validation Error", "danger");
       return;
     }
 
@@ -36,9 +38,9 @@ export default function RoomModal({ centerId, onClose, onSuccess }) {
       console.error(err);
       if (err.response?.data?.errors) {
         const errors = Object.values(err.response.data.errors).flat();
-        alert(errors.join("\n"));
+        showAlert(errors.join("\n"), "Validation Error", "danger");
       } else {
-        alert(err.response?.data?.message || "Failed to create room");
+        showAlert(err.response?.data?.message || "Failed to create room", "Error", "danger");
       }
     } finally {
       setLoading(false);

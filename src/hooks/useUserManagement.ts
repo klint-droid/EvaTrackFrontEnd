@@ -6,25 +6,37 @@ import { deleteUser as deleteUserAPI } from "../api/users/deleteUser";
 import { assignCenter } from "../api/users/assignCenter";
 import { getCenters } from "../api/evacuation/getCenters";
 import { isAdmin, isSuperAdmin } from "../utils/roles";
+import { useAlert } from "../context/AlertContext";
+
+interface UserFormState {
+  first_name: string;
+  last_name: string;
+  email: string;
+  password?: string;
+  role: string;
+  contact_number: string;
+  assigned_center_id: string;
+}
 
 export const useUserManagement = () => {
-  const [users, setUsers] = useState([]);
-  const [centers, setCenters] = useState([]);
-  const [pagination, setPagination] = useState({});
-  const [editingUser, setEditingUser] = useState(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [assigningUserId, setAssigningUserId] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState<any[]>([]);
+  const [centers, setCenters] = useState<any[]>([]);
+  const [pagination, setPagination] = useState<any>({});
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
+  const [assigningUserId, setAssigningUserId] = useState<string | number | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const [deleteConfirmState, setDeleteConfirmState] = useState({ isOpen: false, userId: null, isLoading: false });
-  const [createConfirmState, setCreateConfirmState] = useState({ isOpen: false, isLoading: false });
-  const [updateConfirmState, setUpdateConfirmState] = useState({ isOpen: false, isLoading: false });
-  const [assignConfirmState, setAssignConfirmState] = useState({ isOpen: false, userId: null, centerId: null, isLoading: false });
+  const [deleteConfirmState, setDeleteConfirmState] = useState<{ isOpen: boolean; userId: any; isLoading: boolean }>({ isOpen: false, userId: null, isLoading: false });
+  const [createConfirmState, setCreateConfirmState] = useState<{ isOpen: boolean; isLoading: boolean }>({ isOpen: false, isLoading: false });
+  const [updateConfirmState, setUpdateConfirmState] = useState<{ isOpen: boolean; isLoading: boolean }>({ isOpen: false, isLoading: false });
+  const [assignConfirmState, setAssignConfirmState] = useState<{ isOpen: boolean; userId: any; centerId: any; isLoading: boolean }>({ isOpen: false, userId: null, centerId: null, isLoading: false });
 
-  const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
+  const [search, setSearch] = useState<string>("");
+  const [roleFilter, setRoleFilter] = useState<string>("");
+  const { showAlert } = useAlert();
 
-  const [newUser, setNewUser] = useState({
+  const [newUser, setNewUser] = useState<UserFormState>({
     first_name: "",
     last_name: "",
     email: "",
@@ -42,32 +54,32 @@ export const useUserManagement = () => {
 
   const storedUser = localStorage.getItem("user");
   const currentUser = storedUser ? JSON.parse(storedUser) : null;
-  const isAdminUser = isAdmin();
-  const isSuperAdminUser = isSuperAdmin();
+  const isAdminUser: boolean = isAdmin();
+  const isSuperAdminUser: boolean = isSuperAdmin();
 
-  const canEdit = (targetUser) => {
+  const canEdit = (targetUser: any): boolean => {
     if (isSuperAdminUser) return true;
     if (isAdminUser) return targetUser.role !== "super_admin";
     return false;
   };
 
-  const canDelete = (targetUser) => {
+  const canDelete = (targetUser: any): boolean => {
     if (isSuperAdminUser) return true;
     if (isAdminUser) return targetUser.role === "evac_personnel";
     return false;
   };
 
-  const canAssign = (targetUser) => {
+  const canAssign = (targetUser: any): boolean => {
     if(targetUser.role !== "evac_personnel") return false;
     if(isSuperAdminUser) return true;
     if(isAdminUser) return true;
     return false;
   };
 
-  const fetchUsers = async (page = 1, searchQuery = search, role = roleFilter) => {
+  const fetchUsers = async (page: number = 1, searchQuery: string = search, role: string = roleFilter) => {
     try {
       setLoading(true);
-      const res = await getUsers(page, searchQuery, role);
+      const res: any = await getUsers(page, searchQuery, role);
       setUsers(res.data);
       setPagination(res);
     } catch (err) {
@@ -79,7 +91,7 @@ export const useUserManagement = () => {
 
   const loadCenters = async () => {
     try {
-      const res = await getCenters();
+      const res: any = await getCenters();
       const list = Array.isArray(res) ? res : (res?.data ?? []);
       setCenters(list);
     } catch (err) {
@@ -95,7 +107,7 @@ export const useUserManagement = () => {
 
   const triggerCreateUser = () => {
     if (!newUser.first_name || !newUser.last_name || !newUser.email || !newUser.password) {
-      alert("Please fill in all required fields.");
+      showAlert("Please fill in all required fields.", "Validation Error", "danger");
       return;
     }
     setCreateConfirmState({ isOpen: true, isLoading: false });
@@ -104,7 +116,7 @@ export const useUserManagement = () => {
   const handleCreateUser = async () => {
     try {
       setCreateConfirmState(prev => ({ ...prev, isLoading: true }));
-      const payload = {
+      const payload: any = {
         first_name: newUser.first_name,
         last_name: newUser.last_name,
         email: newUser.email,
@@ -127,19 +139,19 @@ export const useUserManagement = () => {
       setShowCreateModal(false);
       setNewUser({ first_name: "", last_name: "", email: "", password: "", role: "evac_personnel", contact_number: "", assigned_center_id: "" });
       setCreateConfirmState({ isOpen: false, isLoading: false });
-    } catch (err) {
-      alert(err.response?.data?.message || "Create Failed");
+    } catch (err: any) {
+      showAlert(err.response?.data?.message || "Create Failed", "Error", "danger");
       setCreateConfirmState(prev => ({ ...prev, isLoading: false }));
     }
   };
 
   const triggerUpdateUser = () => {
     if (editingUser.user_id === currentUser.user_id && editingUser.role !== currentUser.role) {
-      alert("You cannot change your own role");
+      showAlert("You cannot change your own role", "Validation Error", "warning");
       return;
     }
     if (!editingUser.first_name || !editingUser.last_name || !editingUser.email) {
-      alert("Please fill in all required fields.");
+      showAlert("Please fill in all required fields.", "Validation Error", "danger");
       return;
     }
     setUpdateConfirmState({ isOpen: true, isLoading: false });
@@ -179,14 +191,14 @@ export const useUserManagement = () => {
 
       setEditingUser(null);
       setUpdateConfirmState({ isOpen: false, isLoading: false });
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert(err.response?.data?.message || "Update Failed");
+      showAlert(err.response?.data?.message || "Update Failed", "Error", "danger");
       setUpdateConfirmState(prev => ({ ...prev, isLoading: false }));
     }
   };
 
-  const triggerDeleteUser = (id) => {
+  const triggerDeleteUser = (id: string | number) => {
     setDeleteConfirmState({ isOpen: true, userId: id, isLoading: false });
   };
 
@@ -199,13 +211,13 @@ export const useUserManagement = () => {
       await deleteUserAPI(id);
       setUsers((prev) => prev.filter(u => u.user_id !== id));
       setDeleteConfirmState({ isOpen: false, userId: null, isLoading: false });
-    } catch (err) {
-      alert(err.response?.data?.message || "Delete Failed");
+    } catch (err: any) {
+      showAlert(err.response?.data?.message || "Delete Failed", "Error", "danger");
       setDeleteConfirmState((prev) => ({ ...prev, isLoading: false }));
     }
   };
 
-  const triggerAssignCenter = (userId, centerId) => {
+  const triggerAssignCenter = (userId: string | number, centerId: string | number) => {
     setAssignConfirmState({ isOpen: true, userId, centerId, isLoading: false });
   };
 
@@ -223,16 +235,16 @@ export const useUserManagement = () => {
         )
       );
       setAssignConfirmState({ isOpen: false, userId: null, centerId: null, isLoading: false });
-    } catch (err){
-      alert(err.response?.data?.message || "Assign failed");
+    } catch (err: any){
+      showAlert(err.response?.data?.message || "Assign failed", "Error", "danger");
       setAssignConfirmState(prev => ({ ...prev, isLoading: false }));
     } finally {
       setAssigningUserId(null);
     }
   };
 
-  const getRoleBadge = (role) => {
-    const styles = {
+  const getRoleBadge = (role: string) => {
+    const styles: Record<string, string> = {
       super_admin: "bg-violet-50 text-violet-600 border-violet-200",
       evac_admin: "bg-blue-50 text-blue-600 border-blue-200",
       evac_personnel: "bg-red-100 text-red-600 border-red-200",
@@ -240,8 +252,8 @@ export const useUserManagement = () => {
     return styles[role] || styles.evac_personnel;
   };
 
-  const getRoleLabel = (role) => {
-    const labels = {
+  const getRoleLabel = (role: string) => {
+    const labels: Record<string, string> = {
       super_admin: "Super Admin",
       evac_admin: "Admin",
       evac_personnel: "Personnel",
@@ -249,12 +261,11 @@ export const useUserManagement = () => {
     return labels[role] || role.replace('_', ' ');
   };
 
-  const formatPhone = (num) => {
+  const formatPhone = (num: string) => {
     if (!num) return "—";
     return num.replace(/^0/, "+63");
   };
 
-  // Compute stat card metrics
   const totalUsers = pagination.total || users.length;
   const personnelCount = users.filter(u => u.role === "evac_personnel").length;
   const adminCount = users.filter(u => u.role === "evac_admin" || u.role === "super_admin").length;

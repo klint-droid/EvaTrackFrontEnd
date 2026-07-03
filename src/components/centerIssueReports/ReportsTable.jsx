@@ -47,7 +47,7 @@ export default function ReportsTable({
   getSeverityClass, getStatusClass,
   canUpdateStatus, handleStatusChange,
   formatDateTime, canModifyReport,
-  openEditModal, handleDelete
+  openEditModal, handleDelete, setViewingReport
 }) {
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
@@ -230,6 +230,12 @@ export default function ReportsTable({
                       <p className="text-xs text-slate-400 mt-1 max-w-xs truncate">
                         {report.description}
                       </p>
+                      <button 
+                        onClick={() => setViewingReport(report)}
+                        className="inline-flex items-center gap-1 mt-2 text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline"
+                      >
+                        View Details
+                      </button>
                     </td>
 
                     <td className="px-6 py-4">

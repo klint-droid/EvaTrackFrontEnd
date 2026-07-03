@@ -8,54 +8,67 @@ import { getUser } from '../api/auth/getUser';
 import { getCenters } from '../api/evacuation/getCenters';
 import { getEvents } from '../api/events/getEvents';
 import { isAdmin, isSuperAdmin, isPersonnel } from '../utils/roles';
+import { useAlert } from '../context/AlertContext';
 
-const EMPTY_FORM = {
+interface FormState {
+  evacuation_center_id: string;
+  category: string;
+  title: string;
+  description: string;
+  severity: string;
+  attachment: File | null;
+}
+
+const EMPTY_FORM: FormState = {
   evacuation_center_id: '',
   category: 'incident',
   title: '',
   description: '',
   severity: 'medium',
+  attachment: null,
 };
 
 export const useCenterIssueReports = () => {
-  const [user, setUser] = useState(null);
-  const [reports, setReports] = useState([]);
-  const [centers, setCenters] = useState([]);
+  const [user, setUser] = useState<any>(null);
+  const [reports, setReports] = useState<any[]>([]);
+  const [centers, setCenters] = useState<any[]>([]);
 
-  const [summary, setSummary] = useState({
+  const [summary, setSummary] = useState<any>({
     open: 0,
     in_progress: 0,
     resolved: 0,
     critical: 0,
   });
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingReport, setEditingReport] = useState(null);
-  const [showFilters, setShowFilters] = useState(false);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [editingReport, setEditingReport] = useState<any>(null);
+  const [viewingReport, setViewingReport] = useState<any>(null);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
 
-  const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [severityFilter, setSeverityFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [activeEvents, setActiveEvents] = useState([]);
-  const [selectedEventId, setSelectedEventId] = useState("all");
+  const [search, setSearch] = useState<string>('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('');
+  const [severityFilter, setSeverityFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [activeEvents, setActiveEvents] = useState<any[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string>("all");
 
-  const [message, setMessage] = useState(null);
+  const [message, setMessage] = useState<{ text: string; type: string } | null>(null);
+  const { showConfirm } = useAlert();
 
-  const canCreate = isAdmin() || isSuperAdmin() || isPersonnel();
-  const canUpdateStatus = isAdmin() || isSuperAdmin();
-  const canChooseCenter = isAdmin() || isSuperAdmin();
+  const canCreate: boolean = isAdmin() || isSuperAdmin() || isPersonnel();
+  const canUpdateStatus: boolean = isAdmin() || isSuperAdmin();
+  const canChooseCenter: boolean = isAdmin() || isSuperAdmin();
 
-  const showMessage = (text, type = 'success') => {
+  const showMessage = (text: string, type: string = 'success') => {
     setMessage({ text, type });
     setTimeout(() => setMessage(null), 3500);
   };
 
-  const normalizeArray = (res) => {
+  const normalizeArray = (res: any): any[] => {
     if (Array.isArray(res)) return res;
     if (Array.isArray(res?.data)) return res.data;
     if (Array.isArray(res?.data?.data)) return res.data.data;
@@ -84,7 +97,7 @@ export const useCenterIssueReports = () => {
 
   const fetchActiveEvents = async () => {
     try {
-      const res = await getEvents();
+      const res: any = await getEvents();
       const list = res.data || res || [];
       setActiveEvents(list);
     } catch (err) {
@@ -97,14 +110,14 @@ export const useCenterIssueReports = () => {
       setLoading(true);
       const res = await getCenterIssueReports({
         q: search || undefined,
-        category: categoryFilter || undefined,
-        severity: severityFilter || undefined,
-        status: statusFilter || undefined,
+        category: categoryFilter ? (categoryFilter as any) : undefined,
+        severity: severityFilter ? (severityFilter as any) : undefined,
+        status: statusFilter ? (statusFilter as any) : undefined,
       });
 
       setReports(res.data || []);
       setSummary(res.summary || {});
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       showMessage(err.response?.data?.message || 'Failed to load center issue reports.', 'error');
     } finally {
@@ -178,7 +191,7 @@ export const useCenterIssueReports = () => {
     setModalOpen(true);
   };
 
-  const openEditModal = (report) => {
+  const openEditModal = (report: any) => {
     setEditingReport(report);
     setForm({
       evacuation_center_id: report.evacuation_center_id || '',
@@ -186,6 +199,7 @@ export const useCenterIssueReports = () => {
       title: report.title || '',
       description: report.description || '',
       severity: report.severity || report.severity_key || 'medium',
+      attachment: null,
     });
     setModalOpen(true);
   };
@@ -203,22 +217,37 @@ export const useCenterIssueReports = () => {
 
     try {
       setSaving(true);
-      const payload = {
-        category: form.category,
-        title: form.title,
-        description: form.description,
-        severity: form.severity,
-      };
+      
+      let payloadToSubmit: any;
 
-      if (canChooseCenter) {
-        payload.evacuation_center_id = form.evacuation_center_id;
+      if (form.attachment) {
+        const formData = new FormData();
+        formData.append('category', form.category);
+        formData.append('title', form.title);
+        formData.append('description', form.description);
+        formData.append('severity', form.severity);
+        if (canChooseCenter && form.evacuation_center_id) {
+            formData.append('evacuation_center_id', form.evacuation_center_id);
+        }
+        formData.append('attachment', form.attachment);
+        payloadToSubmit = formData;
+      } else {
+        payloadToSubmit = {
+          category: form.category,
+          title: form.title,
+          description: form.description,
+          severity: form.severity,
+        };
+        if (canChooseCenter) {
+          payloadToSubmit.evacuation_center_id = form.evacuation_center_id;
+        }
       }
 
       if (editingReport) {
-        await updateCenterIssueReport(editingReport.report_id, payload);
+        await updateCenterIssueReport(editingReport.report_id, payloadToSubmit);
         showMessage('Issue report updated successfully.');
       } else {
-        await createCenterIssueReport(payload);
+        await createCenterIssueReport(payloadToSubmit);
         showMessage('Issue report submitted successfully.');
       }
 
@@ -226,35 +255,42 @@ export const useCenterIssueReports = () => {
       setEditingReport(null);
       setForm(EMPTY_FORM);
       fetchReports();
-    } catch (err) {
+    } catch (err: any) {
       showMessage(err.response?.data?.message || 'Failed to save issue report.', 'error');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleStatusChange = async (reportId, status) => {
+  const handleStatusChange = async (reportId: string | number, status: string) => {
     try {
-      await updateCenterIssueReportStatus(reportId, status);
+      await updateCenterIssueReportStatus(reportId as any, status as any);
       showMessage('Issue report status updated.');
       fetchReports();
-    } catch (err) {
+    } catch (err: any) {
       showMessage(err.response?.data?.message || 'Failed to update status.', 'error');
     }
   };
 
-  const handleDelete = async (reportId) => {
-    if (!confirm('Delete this issue report?')) return;
-    try {
-      await deleteCenterIssueReport(reportId);
-      showMessage('Issue report deleted successfully.');
-      fetchReports();
-    } catch (err) {
-      showMessage(err.response?.data?.message || 'Failed to delete issue report.', 'error');
-    }
+  const handleDelete = async (reportId: string | number) => {
+    showConfirm(
+      'Delete this issue report?',
+      async () => {
+        try {
+          await deleteCenterIssueReport(reportId as any);
+          showMessage('Issue report deleted successfully.');
+          fetchReports();
+        } catch (err: any) {
+          showMessage(err.response?.data?.message || 'Failed to delete issue report.', 'error');
+        }
+      },
+      'Delete Report',
+      'danger',
+      'Delete'
+    );
   };
 
-  const canModifyReport = (report) => {
+  const canModifyReport = (report: any): boolean => {
     if (isAdmin() || isSuperAdmin()) return true;
     if (isPersonnel()) {
       return report.status === 'open' && report.reported_by === user?.user_id;
@@ -271,6 +307,7 @@ export const useCenterIssueReports = () => {
     saving,
     modalOpen, setModalOpen,
     editingReport, setEditingReport,
+    viewingReport, setViewingReport,
     showFilters, setShowFilters,
     form, setForm,
     search, setSearch,

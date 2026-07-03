@@ -1,21 +1,29 @@
 import { useState } from 'react';
 import { endEvent } from '../../api/events/endEvent';
+import { useAlert } from '../../context/AlertContext';
 
 export default function EndEventButton({ eventId, onEnded }) {
     const [loading, setLoading] = useState(false);
+    const { showAlert, showConfirm } = useAlert();
 
     const handleEnd = async () => {
-        if (!confirm('Are you sure you want to end this event?')) return;
-
-        setLoading(true);
-        try {
-            await endEvent(eventId);
-            onEnded();
-        } catch (err) {
-            alert(err.response?.data?.message || 'Failed to end event.');
-        } finally {
-            setLoading(false);
-        }
+        showConfirm(
+            'Are you sure you want to end this event?',
+            async () => {
+                setLoading(true);
+                try {
+                    await endEvent(eventId);
+                    onEnded();
+                } catch (err) {
+                    showAlert(err.response?.data?.message || 'Failed to end event.', 'Error', 'danger');
+                } finally {
+                    setLoading(false);
+                }
+            },
+            'End Event',
+            'danger',
+            'End'
+        );
     };
 
     return (

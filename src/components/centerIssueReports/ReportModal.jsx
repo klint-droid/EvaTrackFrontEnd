@@ -142,10 +142,47 @@ export default function ReportModal({
             <label className="text-xs font-bold text-slate-700">
               Attach Photo (Optional)
             </label>
-            <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-colors">
-              <UploadCloud size={28} className="text-slate-400 mb-3" />
-              <p className="text-sm text-slate-600 font-medium">Click to upload or drag and drop</p>
-              <p className="text-[10px] text-slate-400 mt-1 font-bold tracking-widest uppercase">PNG, JPG, or PDF up to 5MB</p>
+            <div 
+              className="border-2 border-dashed border-slate-300 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-colors relative"
+              onClick={() => document.getElementById('issue-attachment')?.click()}
+            >
+              <input 
+                id="issue-attachment"
+                type="file" 
+                className="hidden" 
+                accept=".jpg,.jpeg,.png,.pdf" 
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setForm({ ...form, attachment: file });
+                  }
+                }}
+              />
+              {form.attachment ? (
+                <div className="flex flex-col items-center">
+                  <div className="p-3 bg-blue-50 text-blue-600 rounded-full mb-2">
+                    <UploadCloud size={24} />
+                  </div>
+                  <p className="text-sm font-bold text-slate-800">{form.attachment.name}</p>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setForm({ ...form, attachment: null });
+                      const input = document.getElementById('issue-attachment');
+                      if (input) input.value = '';
+                    }}
+                    className="text-xs font-medium text-red-500 mt-2 hover:underline"
+                  >
+                    Remove File
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <UploadCloud size={28} className="text-slate-400 mb-3" />
+                  <p className="text-sm text-slate-600 font-medium">Click to upload or drag and drop</p>
+                  <p className="text-[10px] text-slate-400 mt-1 font-bold tracking-widest uppercase">PNG, JPG, or PDF up to 5MB</p>
+                </>
+              )}
             </div>
           </div>
         </div>

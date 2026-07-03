@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from "react-leaflet";
 import L from "leaflet";
 import API from "../api";
+import { useAlert } from "../context/AlertContext";
 
 // 🎨 Status-Colored Custom SVG Pins
 const createStatusIcon = (colorHex) => {
@@ -133,6 +134,7 @@ const MapUpdater = ({ primaryRoute, altRoute, userLocation, selectedCenter, alte
 };
 
 const PublicPortal = () => {
+  const { showAlert } = useAlert();
   const [centers, setCenters] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -185,18 +187,17 @@ const PublicPortal = () => {
   // 📍 Request Geolocation Coordinates
   const requestUserLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser.");
+      showAlert("Geolocation is not supported by your browser.", "Unsupported", "danger");
       return;
     }
 
     // Geolocation requires HTTPS on non-localhost origins in modern browsers
     const isSecure = window.isSecureContext;
     if (!isSecure) {
-      alert(
-        "Location access requires a secure connection (HTTPS).\n\n" +
-        "If you're on a local network, try accessing this page via:\n" +
-        "• http://localhost:5173\n" +
-        "• Or deploy with HTTPS enabled."
+      showAlert(
+        "Location access requires a secure connection (HTTPS).\n\nIf you're on a local network, try accessing this page via localhost or deploy with HTTPS enabled.",
+        "Insecure Connection",
+        "warning"
       );
       return;
     }
@@ -230,25 +231,28 @@ const PublicPortal = () => {
         setIsLocating(false);
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            alert(
-              "Location permission was denied.\n\n" +
-              "Please allow location access in your browser settings and try again."
+            showAlert(
+              "Location permission was denied. Please allow location access in your browser settings and try again.",
+              "Permission Denied",
+              "danger"
             );
             break;
           case error.POSITION_UNAVAILABLE:
-            alert(
-              "Your location could not be determined.\n\n" +
-              "Make sure your device's location services (GPS) are enabled."
+            showAlert(
+              "Your location could not be determined. Make sure your device's location services (GPS) are enabled.",
+              "Location Unavailable",
+              "danger"
             );
             break;
           case error.TIMEOUT:
-            alert(
-              "Location request timed out.\n\n" +
-              "Please check your internet connection and try again."
+            showAlert(
+              "Location request timed out. Please check your internet connection and try again.",
+              "Request Timeout",
+              "warning"
             );
             break;
           default:
-            alert("An unknown error occurred while fetching your location.");
+            showAlert("An unknown error occurred while fetching your location.", "Error", "danger");
             break;
         }
       },

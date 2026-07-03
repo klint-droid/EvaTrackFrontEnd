@@ -5,6 +5,7 @@ import ManualEntry from "../components/verifyHousehold/ManualEntry";
 import QrScannerModal from "../components/verifyHousehold/QrScannerModal";
 import AdmissionModal from "../components/verifyHousehold/AdmissionModal";
 import { useVerifyHousehold } from "../hooks/useVerifyHousehold";
+import { isAdmin, isSuperAdmin } from "../utils/roles";
 
 export default function VerifyHousehold() {
   const {
@@ -17,6 +18,9 @@ export default function VerifyHousehold() {
     loading,
     user,
     centerName,
+    centers,
+    activeCenterId,
+    setActiveCenterId,
     assignmentModal,
     qrModalOpen, setQrModalOpen,
     scannedData,
@@ -37,6 +41,8 @@ export default function VerifyHousehold() {
     getActiveEvacuation,
   } = useVerifyHousehold();
 
+  const isUserAdmin = isAdmin() || isSuperAdmin();
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
       {/* Header matching Disaster Events style */}
@@ -49,7 +55,7 @@ export default function VerifyHousehold() {
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">
               Household Verification
             </h1>
-            {user && (
+            {user && !isUserAdmin && (
               <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-800 font-semibold rounded-md text-xs border border-amber-100 mt-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                 Station: {centerName ?? "---"}
@@ -134,6 +140,9 @@ export default function VerifyHousehold() {
         units={units}
         loading={loading}
         handleConfirmAdmission={handleConfirmAdmission}
+        centers={centers}
+        activeCenterId={activeCenterId}
+        setActiveCenterId={setActiveCenterId}
       />
     </div>
   );

@@ -21,10 +21,12 @@ import { getHouseholds } from "../api/households/getHouseholds";
 import { updateHousehold } from "../api/households/updateHousehold";
 import { getEvents } from "../api/events/getEvents";
 import { isAdmin, isSuperAdmin } from "../utils/roles";
+import { useAlert } from "../context/AlertContext";
 
 export default function HouseholdManagement() {
     const navigate = useNavigate();
     const isMounted = useRef(false);
+    const { showAlert, showConfirm } = useAlert();
 
     const [households, setHouseholds] = useState([]);
     const [centers, setCenters] = useState([]);
@@ -146,20 +148,26 @@ export default function HouseholdManagement() {
             );
             setEditingHousehold(null);
         } catch (err) {
-            alert(err.response?.data?.message || 'Update failed.');
+            showAlert(err.response?.data?.message || 'Update failed.', 'Update Error', 'danger');
         }
     };
 
     const handleDelete = async (householdId) => {
-        if(!confirm('Are you sure you want to delete this household? This action cannot be undone.')) return;
-
-        try{
-            await deleteHousehold(householdId);
-            fetchHouseholds(pagination.current_page);
-        } catch (err) {
-            alert(err.response?.data?.message || 'Delete failed.');
-        }
-    }
+        showConfirm(
+            'Are you sure you want to delete this household? This action cannot be undone.',
+            async () => {
+                try{
+                    await deleteHousehold(householdId);
+                    fetchHouseholds(pagination.current_page);
+                } catch (err) {
+                    showAlert(err.response?.data?.message || 'Delete failed.', 'Delete Error', 'danger');
+                }
+            },
+            'Delete Household',
+            'danger',
+            'Delete'
+        );
+    };
     const getStatusBadge = (household) => {
         const currentEvac = household.current_evacuation || household.currentEvacuation;
         const isEvacuated = currentEvac && (currentEvac.household_status_id === 2 || currentEvac.household_status_id === "2");
