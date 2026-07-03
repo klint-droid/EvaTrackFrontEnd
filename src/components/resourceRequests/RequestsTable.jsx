@@ -14,7 +14,7 @@ export default function RequestsTable({
   activeEvents, loading, displayedRequests,
   canUpdateStatus, handleStatusChange,
   getStatusClass, getUrgencyClass, formatDateTime,
-  handleDelete
+  handleDelete, setViewingRequest
 }) {
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
@@ -171,6 +171,12 @@ export default function RequestsTable({
                     {req.description && (
                       <p className="text-xs text-slate-400 mt-1 max-w-xs truncate">{req.description}</p>
                     )}
+                    <button 
+                      onClick={() => setViewingRequest(req)}
+                      className="inline-flex items-center gap-1 mt-2 text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline"
+                    >
+                      View Details
+                    </button>
                   </td>
 
                   <td className="px-6 py-4">

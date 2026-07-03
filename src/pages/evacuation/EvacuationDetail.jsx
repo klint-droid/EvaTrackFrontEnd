@@ -260,7 +260,66 @@ export default function EvacuationDetail() {
         return new Date(value).toLocaleString();
     };
 
-    if (loading) return <div className="p-6 text-gray-500">Loading...</div>;
+    if (loading) {
+        return (
+            <div className="p-6 space-y-6 text-left animate-pulse">
+                {/* Header Skeleton */}
+                <div className="flex flex-col gap-2 items-start">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-slate-200 rounded-full" />
+                        <div className="w-48 h-8 bg-slate-200 rounded-lg" />
+                        <div className="w-24 h-5 bg-slate-200 rounded-full ml-3" />
+                    </div>
+                    <div className="w-64 h-4 bg-slate-100 rounded-md ml-10" />
+                </div>
+
+                {/* Stats Skeleton */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 space-y-2 shadow-sm">
+                            <div className="w-24 h-3 bg-slate-200 rounded uppercase" />
+                            <div className="w-12 h-8 bg-slate-200 rounded-md" />
+                        </div>
+                    ))}
+                </div>
+
+                {/* Tabs Skeleton */}
+                <div className="border-b border-slate-200 flex space-x-8 pb-4">
+                    <div className="w-40 h-6 bg-slate-200 rounded-md" />
+                    <div className="w-48 h-6 bg-slate-200 rounded-md" />
+                </div>
+
+                {/* Table Area Skeleton */}
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center mb-2">
+                        <div className="space-y-2">
+                            <div className="w-48 h-6 bg-slate-200 rounded-md" />
+                            <div className="w-64 h-4 bg-slate-100 rounded-md" />
+                        </div>
+                        <div className="w-24 h-9 bg-slate-200 rounded-lg" />
+                    </div>
+                    
+                    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                        <div className="bg-slate-50 border-b border-slate-200 p-4 flex gap-8">
+                            {[1, 2, 3, 4, 5].map(i => (
+                                <div key={i} className="w-24 h-4 bg-slate-200 rounded-md" />
+                            ))}
+                        </div>
+                        <div className="divide-y divide-slate-100">
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} className="p-4 flex gap-8 items-center">
+                                    <div className="w-8 h-8 bg-slate-200 rounded-lg" />
+                                    <div className="w-32 h-5 bg-slate-200 rounded-md" />
+                                    <div className="w-20 h-5 bg-slate-200 rounded-md" />
+                                    <div className="w-16 h-5 bg-slate-200 rounded-md" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
     if (!center) return <div className="p-6 text-red-500">Center not found.</div>;
 
     return (

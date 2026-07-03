@@ -20,8 +20,12 @@ export default function Profile() {
         contact_number: "",
         role: "",
         role_label: "",
-        assigned_center: null
+        assigned_center: null,
+        profile_photo_url: null
     });
+
+    const [selectedPhoto, setSelectedPhoto] = useState(null);
+    const [photoPreview, setPhotoPreview] = useState(null);
 
     // Password fields state
     const [passwordData, setPasswordData] = useState({
@@ -48,7 +52,8 @@ export default function Profile() {
                 contact_number: rawUser.contact_number || "",
                 role: rawUser.role?.role_key || "",
                 role_label: rawUser.role?.role_name || "",
-                assigned_center: rawUser.assigned_center || rawUser.assignedCenter || null
+                assigned_center: rawUser.assigned_center || rawUser.assignedCenter || null,
+                profile_photo_url: rawUser.profile_photo_url || null
             });
         } catch (err) {
             console.error(err);
@@ -61,6 +66,14 @@ export default function Profile() {
     useEffect(() => {
         fetchUserProfile();
     }, []);
+
+    const handlePhotoChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setSelectedPhoto(file);
+            setPhotoPreview(URL.createObjectURL(file));
+        }
+    };
 
     const handleProfileSubmit = async (e) => {
         e.preventDefault();
@@ -78,11 +91,15 @@ export default function Profile() {
 
         setSubmitting(true);
         try {
-            const res = await updateProfile({
-                first_name: profileData.first_name,
-                last_name: profileData.last_name,
-                contact_number: profileData.contact_number
-            });
+            const formData = new FormData();
+            formData.append("first_name", profileData.first_name);
+            formData.append("last_name", profileData.last_name);
+            formData.append("contact_number", profileData.contact_number);
+            if (selectedPhoto) {
+                formData.append("profile_photo", selectedPhoto);
+            }
+
+            const res = await updateProfile(formData);
 
             const updatedUser = res.data?.user || res.user;
 
@@ -90,7 +107,8 @@ export default function Profile() {
             const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
             const newStoredUser = {
                 ...storedUser,
-                name: updatedUser.name
+                name: updatedUser.name,
+                profile_photo_url: updatedUser.profile_photo_url
             };
             localStorage.setItem("user", JSON.stringify(newStoredUser));
 
@@ -99,8 +117,16 @@ export default function Profile() {
                 ...prev,
                 first_name: updatedUser.first_name,
                 last_name: updatedUser.last_name,
-                contact_number: updatedUser.contact_number
+                contact_number: updatedUser.contact_number,
+                profile_photo_url: updatedUser.profile_photo_url
             }));
+            
+            // Clean up preview URL
+            if (photoPreview) {
+                URL.revokeObjectURL(photoPreview);
+                setPhotoPreview(null);
+            }
+            setSelectedPhoto(null);
 
             showMessage("Profile details updated successfully.");
             
@@ -199,8 +225,28 @@ export default function Profile() {
                 <div className="md:col-span-1 bg-white border border-slate-200 rounded-[1.5rem] p-6 shadow-sm flex flex-col items-center justify-between text-center min-h-[350px]">
                     <div className="space-y-4 w-full flex flex-col items-center">
                         {/* Avatar */}
-                        <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-3xl shadow-lg shadow-blue-500/20">
-                            {initials || <User size={40} />}
+                        <div className="relative w-24 h-24 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-3xl shadow-lg shadow-blue-500/20 group border-4 border-white">
+                            <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-transparent">
+                                {photoPreview || profileData.profile_photo_url ? (
+                                    <img src={photoPreview || profileData.profile_photo_url} alt="Profile" className="w-full h-full object-cover" />
+                                ) : (
+                                    initials || <User size={40} />
+                                )}
+                            </div>
+                            
+                            {/* Upload Badge */}
+                            <label className="absolute bottom-0 right-0 w-8 h-8 bg-white border border-slate-200 text-slate-600 rounded-full flex items-center justify-center cursor-pointer shadow-sm hover:bg-slate-50 hover:text-blue-600 transition-colors z-10">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                    <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                                <input 
+                                    type="file" 
+                                    className="hidden" 
+                                    accept="image/*"
+                                    onChange={handlePhotoChange}
+                                />
+                            </label>
                         </div>
 
                         <div>

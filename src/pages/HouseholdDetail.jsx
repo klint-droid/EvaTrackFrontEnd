@@ -32,10 +32,48 @@ export default function HouseholdDetail() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-white flex items-center justify-center">
-                <div className="flex flex-col items-center gap-3 text-slate-400">
-                    <Loader2 className="animate-spin" size={36} />
-                    <p className="text-xs font-bold uppercase tracking-widest">Loading household...</p>
+            <div className="space-y-6 animate-pulse text-left">
+                {/* Header Skeleton */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-slate-200 rounded-xl" />
+                        <div className="space-y-2">
+                            <div className="w-48 h-6 bg-slate-200 rounded-md" />
+                            <div className="w-32 h-4 bg-slate-100 rounded-md" />
+                        </div>
+                    </div>
+                    <div className="w-24 h-10 bg-slate-200 rounded-xl" />
+                </div>
+
+                {/* Stats Skeleton */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
+                            <div className="w-8 h-8 bg-slate-200 rounded-lg" />
+                            <div className="w-16 h-8 bg-slate-200 rounded-md" />
+                            <div className="w-24 h-3 bg-slate-100 rounded-md" />
+                        </div>
+                    ))}
+                </div>
+
+                {/* List Skeleton */}
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
+                    <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+                        <div className="w-32 h-5 bg-slate-200 rounded-md" />
+                        <div className="w-24 h-8 bg-slate-200 rounded-lg" />
+                    </div>
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="flex justify-between items-center py-3 border-b border-slate-50 last:border-0">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-slate-200 rounded-full" />
+                                <div className="space-y-2">
+                                    <div className="w-32 h-4 bg-slate-200 rounded-md" />
+                                    <div className="w-20 h-3 bg-slate-100 rounded-md" />
+                                </div>
+                            </div>
+                            <div className="w-16 h-6 bg-slate-200 rounded-full" />
+                        </div>
+                    ))}
                 </div>
             </div>
         );

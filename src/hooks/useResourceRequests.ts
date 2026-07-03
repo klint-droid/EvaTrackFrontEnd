@@ -48,6 +48,7 @@ export const useResourceRequests = () => {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [message, setMessage] = useState<{ text: string; type: string } | null>(null);
+  const [viewingRequest, setViewingRequest] = useState<any>(null);
   const { showConfirm } = useAlert();
 
   const canUpdateStatus: boolean = isAdmin() || isSuperAdmin();
@@ -252,6 +253,7 @@ export const useResourceRequests = () => {
     canUpdateStatus, canCreate,
     displayedRequests,
     pendingCount, acknowledgedCount, deliveredCount,
-    openModal, handleSubmit, handleStatusChange, handleDelete, fetchRequests
+    openModal, handleSubmit, handleStatusChange, handleDelete, fetchRequests,
+    viewingRequest, setViewingRequest
   };
 };

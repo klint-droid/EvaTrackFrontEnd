@@ -98,8 +98,12 @@ const DashboardLayout = () => {
                             </div>
 
                             <div className="relative group cursor-pointer">
-                                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-tr from-slate-100 to-slate-200 rounded-xl flex items-center justify-center text-slate-600 border border-slate-200 shadow-sm overflow-hidden group-hover:border-blue-300 transition-all">
-                                    <User size={18} />
+                                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-tr from-slate-100 to-slate-200 rounded-xl flex items-center justify-center text-slate-600 border border-slate-200 shadow-sm overflow-hidden group-hover:border-blue-300 transition-all font-bold text-sm">
+                                    {user?.profile_photo_url ? (
+                                        <img src={user.profile_photo_url} alt="Profile" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span>{(user?.first_name || user?.name || "?").charAt(0).toUpperCase()}</span>
+                                    )}
                                 </div>
                                 
                                 {/* Logout Dropdown */}

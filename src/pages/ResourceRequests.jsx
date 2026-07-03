@@ -4,6 +4,7 @@ import RequestsSummaryCards from '../components/resourceRequests/RequestsSummary
 import RequestsTable from '../components/resourceRequests/RequestsTable';
 import RequestModal from '../components/resourceRequests/RequestModal';
 import { useResourceRequests } from '../hooks/useResourceRequests';
+import ViewRequestDetailsModal from '../components/resourceRequests/ViewRequestDetailsModal';
 
 export default function ResourceRequests() {
   const {
@@ -24,7 +25,8 @@ export default function ResourceRequests() {
     canUpdateStatus, canCreate,
     displayedRequests,
     pendingCount, acknowledgedCount, deliveredCount,
-    openModal, handleSubmit, handleStatusChange, handleDelete, fetchRequests
+    openModal, handleSubmit, handleStatusChange, handleDelete, fetchRequests,
+    viewingRequest, setViewingRequest
   } = useResourceRequests();
 
   const getStatusClass = (statusKey) => {
@@ -97,6 +99,7 @@ export default function ResourceRequests() {
         getUrgencyClass={getUrgencyClass}
         formatDateTime={formatDateTime}
         handleDelete={handleDelete}
+        setViewingRequest={setViewingRequest}
       />
 
       <RequestModal 
@@ -109,6 +112,13 @@ export default function ResourceRequests() {
         centers={centers}
         handleSubmit={handleSubmit}
         saving={saving}
+      />
+
+      <ViewRequestDetailsModal 
+        request={viewingRequest}
+        onClose={() => setViewingRequest(null)}
+        getUrgencyClass={getUrgencyClass}
+        getStatusClass={getStatusClass}
       />
     </div>
   );

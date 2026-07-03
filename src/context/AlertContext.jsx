@@ -42,7 +42,7 @@ export const AlertProvider = ({ children }) => {
     }
   }, [modalState, closeAlert]);
 
-  const showAlert = useCallback((message, title = 'Alert', type = 'info') => {
+  const showAlert = useCallback((message, title = 'Alert', type = 'info', onConfirm = null) => {
     setModalState({
       isOpen: true,
       title,
@@ -50,11 +50,11 @@ export const AlertProvider = ({ children }) => {
       type,
       confirmText: 'OK',
       cancelText: null,
-      onConfirm: closeAlert, // Add closeAlert to onConfirm so it closes
-      onClose: closeAlert,
+      onConfirm: onConfirm || null,
+      onClose: null,
       isLoading: false,
     });
-  }, [closeAlert]);
+  }, []);
 
   const showConfirm = useCallback((message, onConfirm, title = 'Confirm', type = 'warning', confirmText = 'Confirm') => {
     setModalState({

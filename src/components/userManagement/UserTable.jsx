@@ -70,9 +70,13 @@ export default function UserTable({
                             <tr key={user.user_id} className="hover:bg-slate-50/20 transition-colors group">
                                 <td className="px-6 py-3.5">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-sm font-semibold flex-shrink-0">
-                                            {(user.first_name || user.name || "?").charAt(0).toUpperCase()}
-                                        </div>
+                                        {user.profile_photo_url ? (
+                                            <img src={user.profile_photo_url} alt={user.name} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+                                        ) : (
+                                            <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-sm font-semibold flex-shrink-0">
+                                                {(user.first_name || user.name || "?").charAt(0).toUpperCase()}
+                                            </div>
+                                        )}
                                         <div>
                                             <p className="text-sm font-medium text-slate-800">
                                                 {user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : (user.name || "—")}
@@ -186,9 +190,13 @@ export default function UserTable({
                                 {/* Top row: Avatar + Name + Role Badge */}
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-sm font-semibold flex-shrink-0">
-                                            {(user.first_name || user.name || "?").charAt(0).toUpperCase()}
-                                        </div>
+                                        {user.profile_photo_url ? (
+                                            <img src={user.profile_photo_url} alt={user.name} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+                                        ) : (
+                                            <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-sm font-semibold flex-shrink-0">
+                                                {(user.first_name || user.name || "?").charAt(0).toUpperCase()}
+                                            </div>
+                                        )}
                                         <div className="min-w-0">
                                             <p className="text-sm font-medium text-slate-800 leading-tight truncate">
                                                 {user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : (user.name || "—")}

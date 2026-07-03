@@ -36,7 +36,7 @@ export const useVerifyHousehold = () => {
   const [modalError, setModalError] = useState<string | null>(null);
   const [units, setUnits] = useState<any[]>([]);
   const [selectedUnitId, setSelectedUnitId] = useState<string>("");
-  const { showConfirm } = useAlert();
+  const { showConfirm, showAlert } = useAlert();
 
   const records = Array.isArray(results) ? results : (Array.isArray(results?.data) ? results.data : (results?.data?.data || []));
 
@@ -348,7 +348,6 @@ export const useVerifyHousehold = () => {
         }
       }
 
-      showMessage(getMessage(res, "Admission complete."));
       setAssignmentModal(false);
       setScannedData(null);
       setMemberCount("");
@@ -368,7 +367,14 @@ export const useVerifyHousehold = () => {
          }
       };
 
-      navigateToHouseholdDetail(navPayload);
+      showAlert(
+        getMessage(res, "Admission complete."),
+        "Success",
+        "success",
+        () => {
+          navigateToHouseholdDetail(navPayload);
+        }
+      );
     } catch (err: any) {
       const errMsg = err.response?.data?.message || err.message || "Admission failed.";
       setModalError(errMsg);

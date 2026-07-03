@@ -1,11 +1,10 @@
 import API from "../../api";
 
-export interface UpdateProfileParams {
-    first_name: string;
-    last_name: string;
-    contact_number: string;
-}
-
-export const updateProfile = async (params: UpdateProfileParams): Promise<any> => {
-    return await API.put("/api/user/profile", params);
+export const updateProfile = async (formData: FormData): Promise<any> => {
+    formData.append("_method", "PUT");
+    return await API.post("/api/user/profile", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
 };
