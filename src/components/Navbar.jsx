@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
-import { MapPin, LogIn, Home, Radio } from "lucide-react";
+import { LogIn, Home, Radio } from "lucide-react";
+import Logo from "../assets/evatrack_logo_horizontal.svg";
 
 const Navbar = () => {
   const location = useLocation();
@@ -17,14 +18,8 @@ const Navbar = () => {
         <div className="flex justify-between h-14 items-center">
 
           {/* Logo / Brand */}
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/30 transition-shadow">
-              <MapPin size={16} className="text-white" strokeWidth={2.5} />
-            </div>
-            <div className="flex items-baseline gap-0">
-              <span className="text-[15px] font-extrabold tracking-tight text-white">Eva</span>
-              <span className="text-[15px] font-extrabold tracking-tight text-blue-400">Track</span>
-            </div>
+          <Link to="/" className="flex items-center group hover:opacity-90 transition-opacity">
+            <img src={Logo} alt="EvaTrack Logo" className="h-12 w-auto" />
           </Link>
 
           {/* Navigation Links */}
