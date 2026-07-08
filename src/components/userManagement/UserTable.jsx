@@ -1,5 +1,7 @@
 import React from "react";
 import { Phone, Edit3, Trash2, MoreHorizontal, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { Table, TableHeader, TableRow, TableHead, TableCell } from "../../ui/Table";
+import { Select } from "../../ui/Select";
 
 const UserRowSkeleton = () => (
     <tr className="animate-pulse">
@@ -44,17 +46,17 @@ export default function UserTable({
     return (
         <>
             {/* ── DESKTOP TABLE VIEW (md+) ── */}
-            <div className="overflow-x-auto hidden md:block">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-slate-900">
-                            <th className="px-6 py-3.5 text-[10px] font-bold text-white uppercase tracking-wider">Name</th>
-                            <th className="px-6 py-3.5 text-[10px] font-bold text-white uppercase tracking-wider">Contact</th>
-                            <th className="px-6 py-3.5 text-[10px] font-bold text-white uppercase tracking-wider">Role</th>
-                            <th className="px-6 py-3.5 text-[10px] font-bold text-white uppercase tracking-wider">Station Assignment</th>
-                            <th className="px-6 py-3.5 text-[10px] font-bold text-white uppercase tracking-wider text-right">Actions</th>
+            <div className="hidden md:block">
+                <Table>
+                    <TableHeader className="bg-slate-900 text-white">
+                        <tr className="border-none">
+                            <TableHead className="text-[10px] font-bold text-white uppercase tracking-wider">Name</TableHead>
+                            <TableHead className="text-[10px] font-bold text-white uppercase tracking-wider">Contact</TableHead>
+                            <TableHead className="text-[10px] font-bold text-white uppercase tracking-wider">Role</TableHead>
+                            <TableHead className="text-[10px] font-bold text-white uppercase tracking-wider">Station Assignment</TableHead>
+                            <TableHead className="text-[10px] font-bold text-white uppercase tracking-wider text-right">Actions</TableHead>
                         </tr>
-                    </thead>
+                    </TableHeader>
                     <tbody className="divide-y divide-slate-100">
                         {loading ? (
                             [...Array(5)].map((_, i) => <UserRowSkeleton key={i} />)
@@ -99,22 +101,18 @@ export default function UserTable({
                                 <td className="px-6 py-3.5">
                                     {user.role === "evac_personnel" ? (
                                         <div className="flex flex-col gap-1 min-w-[180px]">
-                                            <select
-                                                className="text-sm bg-white border border-slate-200 rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 disabled:opacity-50 transition-all cursor-pointer"
+                                            <Select
                                                 value={user.assigned_center_id || ""}
                                                 disabled={assigningUserId === user.user_id || !canAssign(user)}
                                                 onChange={(e) => {
                                                     if (e.target.value === user.assigned_center_id) return;
                                                     triggerAssignCenter(user.user_id, e.target.value);
                                                 }}
-                                            >
-                                                <option value="">Unassigned</option>
-                                                {centers.map((c) => (
-                                                    <option key={c.evacuation_center_id} value={c.evacuation_center_id}>
-                                                        {c.name}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                                options={[
+                                                    { label: "Unassigned", value: "" },
+                                                    ...centers.map(c => ({ label: c.name, value: c.evacuation_center_id }))
+                                                ]}
+                                            />
 
                                             {assigningUserId === user.user_id && (
                                                 <span className="text-xs text-blue-500 font-medium animate-pulse px-1">
@@ -154,7 +152,7 @@ export default function UserTable({
                             </tr>
                         ))}
                     </tbody>
-                </table>
+                </Table>
             </div>
 
             {/* ── MOBILE CARD VIEW (below md) ── */}
@@ -219,22 +217,19 @@ export default function UserTable({
                                 {user.role === "evac_personnel" && (
                                     <div className="space-y-1">
                                         <label className="text-xs font-medium text-slate-400">Station</label>
-                                        <select
-                                            className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 disabled:opacity-50 transition-all cursor-pointer"
+                                        <Select
+                                            className="w-full"
                                             value={user.assigned_center_id || ""}
                                             disabled={assigningUserId === user.user_id || !canAssign(user)}
                                             onChange={(e) => {
                                                 if (e.target.value === user.assigned_center_id) return;
                                                 triggerAssignCenter(user.user_id, e.target.value);
                                             }}
-                                        >
-                                            <option value="">Unassigned</option>
-                                            {centers.map((c) => (
-                                                <option key={c.evacuation_center_id} value={c.evacuation_center_id}>
-                                                    {c.name}
-                                                </option>
-                                            ))}
-                                        </select>
+                                            options={[
+                                                { label: "Unassigned", value: "" },
+                                                ...centers.map(c => ({ label: c.name, value: c.evacuation_center_id }))
+                                            ]}
+                                        />
                                         {assigningUserId === user.user_id && (
                                             <span className="text-xs text-blue-500 font-medium animate-pulse">Updating...</span>
                                         )}

@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import {
-    X, CheckCircle, XCircle, Clock, Loader2,
-    RefreshCw, User, Hash, Radio
-} from 'lucide-react';
+import { X, CheckCircle, XCircle, Clock, Loader2, RefreshCw, User, Hash, Radio } from 'lucide-react';
 import { getAlertDetail } from '../../api/alerts/getAlertDetail';
+import { Modal } from '../../ui/Modal';
+import { Badge } from '../../ui/Badge';
 
 export default function AlertDetailModal({ notifId, onClose }) {
     const [alert, setAlert] = useState(null);
@@ -19,23 +18,23 @@ export default function AlertDetailModal({ notifId, onClose }) {
 
     const statusStyle = (status) => {
         const map = {
-            sent:      'bg-green-50 text-green-600 border-green-200',
-            failed:    'bg-red-50 text-red-600 border-red-200',
-            scheduled: 'bg-blue-50 text-blue-600 border-blue-200',
-            pending:   'bg-yellow-50 text-yellow-700 border-yellow-200',
-            cancelled: 'bg-slate-100 text-slate-500 border-slate-200',
+            sent:      'success',
+            failed:    'danger',
+            scheduled: 'primary',
+            pending:   'warning',
+            cancelled: 'default',
         };
-        return map[status] || map.pending;
+        return map[status] || 'warning';
     };
 
     const urgencyStyle = (key) => {
         const map = {
-            critical: 'bg-red-50 text-red-600 border-red-200',
-            high:     'bg-orange-50 text-orange-600 border-orange-200',
-            medium:   'bg-yellow-50 text-yellow-700 border-yellow-200',
-            low:      'bg-green-50 text-green-600 border-green-200',
+            critical: 'danger',
+            high:     'warning',
+            medium:   'warning',
+            low:      'success',
         };
-        return map[key] || map.low;
+        return map[key] || 'success';
     };
 
 
@@ -46,35 +45,18 @@ export default function AlertDetailModal({ notifId, onClose }) {
         total:  alert.logs.length,
     } : null;
 
-    return createPortal(
-        <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9999] p-4">
-            <div
-                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
-                onClick={onClose}
-            />
-
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
-
-                {/* Header */}
-                <div className="px-6 pt-6 pb-4 flex items-start justify-between">
-                    <div>
-                        <h2 className="text-lg font-black text-slate-900 tracking-tight">Alert Details</h2>
-                        {alert && (
-                            <p className="text-[10px] font-mono text-slate-400 mt-0.5">{alert.notif_id}</p>
-                        )}
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
-                    >
-                        <X size={18} />
-                    </button>
+    return (
+        <Modal 
+            isOpen={true} 
+            onClose={onClose} 
+            title={
+                <div>
+                    Alert Details
+                    {alert && <span className="block text-[10px] font-mono text-slate-400 mt-0.5">{alert.notif_id}</span>}
                 </div>
-
-                <div className="h-px bg-slate-100 mx-6" />
-
-                {/* Body */}
-                <div className="px-6 py-5 max-h-[70vh] overflow-y-auto space-y-5">
+            }
+        >
+            <div className="max-h-[70vh] overflow-y-auto space-y-5 pr-2">
 
                     {loading ? (
                         <div className="flex justify-center py-12">
@@ -85,24 +67,24 @@ export default function AlertDetailModal({ notifId, onClose }) {
                     ) : (
                         <>
                             {/* Badges row */}
-                            <div className="flex flex-wrap gap-1.5">
-                                <Badge cls={statusStyle(alert.status)}>
+                            <div className="flex flex-wrap gap-2">
+                                <Badge variant={statusStyle(alert.status)}>
                                     {alert.status === 'cancelled' ? 'stopped' : alert.status}
                                 </Badge>
-                                <Badge cls={urgencyStyle(alert.urgency_level?.urgency_key)}>
+                                <Badge variant={urgencyStyle(alert.urgency_level?.urgency_key)}>
                                     {alert.urgency_level?.urgency_label}
                                 </Badge>
-                                <Badge cls="bg-slate-100 text-slate-600 border-slate-200">
+                                <Badge variant="default">
                                     {alert.channel?.toUpperCase()}
                                 </Badge>
                                 {alert.target_filter && (
-                                    <Badge cls="bg-slate-100 text-slate-600 border-slate-200">
+                                    <Badge variant="default">
                                         {alert.target_filter.replace('_', ' ')}
                                     </Badge>
                                 )}
                                 {alert.is_recurring && (
-                                    <Badge cls="bg-blue-50 text-blue-600 border-blue-200">
-                                        <RefreshCw size={9} className="inline mr-1" />
+                                    <Badge variant="primary">
+                                        <RefreshCw size={10} className="inline mr-1" />
                                         {alert.recurrence_type}
                                     </Badge>
                                 )}
@@ -214,29 +196,10 @@ export default function AlertDetailModal({ notifId, onClose }) {
                         </>
                     )}
                 </div>
-
-                {/* Footer */}
-                <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50">
-                    <button
-                        onClick={onClose}
-                        className="w-full py-2.5 text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all"
-                    >
-                        Close
-                    </button>
-                </div>
-            </div>
-        </div>,
-        document.body
+        </Modal>
     );
 }
 
-function Badge({ cls, children }) {
-    return (
-        <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border ${cls}`}>
-            {children}
-        </span>
-    );
-}
 
 function MetaField({ icon, label, value }) {
     return (

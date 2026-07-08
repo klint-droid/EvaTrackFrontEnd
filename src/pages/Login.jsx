@@ -5,6 +5,7 @@ import API from "../api";
 import placeImage from "../assets/place.png";
 import evaTrackLogo from "../assets/evatrack_logo_stacked.svg";
 import { useAlert } from "../context/AlertContext";
+import { Input } from "../ui/Input";
 
 function Login() {
   const [userId, setUserId] = useState("");
@@ -95,51 +96,39 @@ function Login() {
           {/* Form */}
           <form onSubmit={handleLogin} className="space-y-5 text-left">
             {/* User ID Field */}
-            <div>
-              <label htmlFor="userId" className="block text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
-                Official User ID
-              </label>
-              <div className="relative">
-                <IdCard className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 pointer-events-none" />
-                <input
-                  id="userId"
-                  type="text"
-                  required
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value)}
-                  className="block h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-100 text-left"
-                  placeholder="EVA-BRGY-01"
-                />
-              </div>
-            </div>
+            <Input
+              id="userId"
+              label="Official User ID"
+              type="text"
+              required
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              placeholder="EVA-BRGY-01"
+              icon={IdCard}
+            />
 
             {/* Password Field */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label htmlFor="password" className="block text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                  Password
-                </label>
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 pointer-events-none" />
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-12 text-sm font-semibold text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-100 text-left"
-                  placeholder="••••••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((current) => !current)}
-                  className="absolute inset-y-0 right-3.5 flex items-center text-slate-400 transition hover:text-slate-700 focus:outline-none"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
-                </button>
-              </div>
+              <Input
+                id="password"
+                label="Password"
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••••••"
+                icon={Lock}
+                rightAction={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((current) => !current)}
+                    className="text-slate-400 transition hover:text-slate-700 focus:outline-none"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                  </button>
+                }
+              />
             </div>
 
             {/* Options Row */}

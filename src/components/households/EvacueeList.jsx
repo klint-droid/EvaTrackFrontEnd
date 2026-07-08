@@ -1,5 +1,7 @@
 import React from "react";
 import { Search, Plus, Building, Lock, AlertCircle, Shield, DoorOpen, CheckCircle, MapPin, Edit3, Trash2, XCircle, Loader2 } from "lucide-react";
+import { Table, TableHeader, TableRow, TableHead, TableCell } from "../../ui/Table";
+import { Input } from "../../ui/Input";
 
 export default function EvacueeList({
     household,
@@ -42,14 +44,14 @@ export default function EvacueeList({
         const memberAtMyCenter = memberEvac && String(memberEvac.center_id) === String(effectivePovCenterId);
 
         return (
-            <tr key={member.member_id} className="hover:bg-slate-50/30 group">
-                <td className="px-6 py-3 text-sm font-medium text-slate-700">
+            <TableRow key={member.member_id} className="group">
+                <TableCell className="text-sm font-medium text-slate-700">
                     {[member.first_name, member.middle_name, member.last_name]
                         .filter(Boolean)
                         .join(' ')}
-                </td>
+                </TableCell>
 
-                <td className="px-6 py-3 text-sm text-slate-500">
+                <TableCell className="text-sm text-slate-500">
                     {(() => {
                         if (!member.birth_date) return '—';
                         const birth = new Date(member.birth_date);
@@ -62,21 +64,21 @@ export default function EvacueeList({
                         }
                         return `${age} yrs old`;
                     })()}
-                </td>
+                </TableCell>
 
-                <td className="px-6 py-3 text-sm text-slate-500">
+                <TableCell className="text-sm text-slate-500">
                     {member.gender?.label || '—'}
-                </td>
+                </TableCell>
 
-                <td className="px-6 py-3 text-sm text-slate-500">
+                <TableCell className="text-sm text-slate-500">
                     {member.relationship?.label || '—'}
-                </td>
+                </TableCell>
 
-                <td className="px-6 py-3 text-sm text-slate-500">
+                <TableCell className="text-sm text-slate-500">
                     {member.civil_status?.label || '—'}
-                </td>
+                </TableCell>
 
-                <td className="px-6 py-3">
+                <TableCell>
                     <div className="flex flex-wrap gap-1">
                         {member.vulnerable_groups?.length
                             ? member.vulnerable_groups.map(v => (
@@ -90,18 +92,18 @@ export default function EvacueeList({
                             : <span className="text-slate-400 text-xs">—</span>
                         }
                     </div>
-                </td>
+                </TableCell>
 
                 {showStatus && (
                     <>
-                        <td className="px-6 py-3 text-xs text-slate-500 whitespace-nowrap">
+                        <TableCell className="text-xs text-slate-500 whitespace-nowrap">
                             {memberEvac?.verified_at 
                                 ? new Date(memberEvac.verified_at).toLocaleString('en-US', {
                                     month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
                                   })
                                 : '—'}
-                        </td>
-                        <td className="px-6 py-3">
+                        </TableCell>
+                        <TableCell>
                             {(() => {
                             if (!isMemberEvacuated) {
                                 const canCheckIn = canModify && (
@@ -173,11 +175,11 @@ export default function EvacueeList({
                                 </div>
                             );
                         })()}
-                        </td>
+                        </TableCell>
                     </>
                 )}
 
-                <td className="px-6 py-3">
+                <TableCell>
                     <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         {canModify && canEdit && (
                             <button
@@ -200,8 +202,8 @@ export default function EvacueeList({
                             </button>
                         )}
                     </div>
-                </td>
-            </tr>
+                </TableCell>
+            </TableRow>
         );
     };
 
@@ -215,10 +217,9 @@ export default function EvacueeList({
         }
 
         return (
-            <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                    <thead>
-                        <tr className="bg-slate-50/50 border-b border-slate-100">
+            <Table>
+                    <TableHeader className="bg-slate-50/50 border-b border-slate-100">
+                        <tr>
                             {[
                                 'Name',
                                 'Age',
@@ -229,18 +230,17 @@ export default function EvacueeList({
                                 ...(showStatus ? ['Verified At', 'Status'] : []),
                                 ''
                             ].map(h => (
-                                <th key={h} className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                <TableHead key={h} className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                     {h}
-                                </th>
+                                </TableHead>
                             ))}
                         </tr>
-                    </thead>
+                    </TableHeader>
 
                     <tbody className="divide-y divide-slate-50">
                         {members.map(member => renderMemberRow(member, showStatus, context))}
                     </tbody>
-                </table>
-            </div>
+                </Table>
         );
     };
 
@@ -263,14 +263,13 @@ export default function EvacueeList({
                 </div>
 
                 {/* Member Search */}
-                <div className="relative">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                        type="text"
+                <div className="w-44">
+                    <Input
+                        Icon={Search}
                         value={memberSearch}
                         onChange={e => setMemberSearch(e.target.value)}
                         placeholder="Search members..."
-                        className="pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all w-44"
+                        inputClassName="h-9 py-1.5 text-xs"
                     />
                 </div>
 
