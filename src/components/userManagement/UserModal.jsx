@@ -29,9 +29,9 @@ export default function UserModal({
                     </span>
                 </div>
             }
-            className="max-w-3xl"
+            className="!max-w-3xl w-full"
         >
-            <div className="space-y-8 max-h-[70vh] overflow-y-auto pr-2 pb-4">
+            <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2 pb-4">
                     {/* Personal Information */}
                     <div className="space-y-4">
                         <h3 className="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2">Personal Information</h3>

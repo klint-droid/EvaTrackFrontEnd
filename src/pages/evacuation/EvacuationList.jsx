@@ -12,6 +12,8 @@ import { updateCenter }  from "../../api/evacuation/updateCenter";
 import { isAdmin, isSuperAdmin, isPersonnel, getAssignedCenterId } from "../../utils/roles";
 
 import CenterModal  from "../../components/evacuation/CenterModal";
+import { Input } from "../../ui/Input";
+import { Select } from "../../ui/Select";
 import AlertConfirmModal from "../../components/AlertConfirmModal";
 import { useAlert } from "../../context/AlertContext";
 
@@ -187,26 +189,25 @@ export default function EvacuationList() {
 
       {/* SEARCH & FILTERS */}
       <div className="flex flex-col md:flex-row gap-3">
-        <div className="relative flex-1 group">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
-          <input
+        <div className="w-full flex-1 group">
+          <Input
+            icon={Search}
             type="text"
             placeholder="Quick search centers..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none"
           />
         </div>
         <div className="flex gap-2">
-          <select
+          <div className="w-48"><Select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:border-blue-300 transition-colors"
-          >
-            <option value="name">Sort by Name</option>
-            <option value="capacity">Sort by Capacity</option>
-            <option value="occupancy">Sort by Occupancy</option>
-          </select>
+            options={[
+                { value: 'name', label: 'Sort by Name' },
+                { value: 'capacity', label: 'Sort by Capacity' },
+                { value: 'occupancy', label: 'Sort by Occupancy' }
+            ]}
+          /></div>
         </div>
       </div>
 

@@ -1,4 +1,6 @@
 import React from "react";
+import { Select } from "../../ui/Select";
+import { Input } from "../../ui/Input";
 
 export default function AnalyticsFilters({
     selectedEventId,
@@ -20,36 +22,34 @@ export default function AnalyticsFilters({
                 {/* Disaster Event Dropdown */}
                 <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Disaster Event</span>
-                    <select
+                    <Select
                         value={selectedEventId}
                         onChange={(e) => setSelectedEventId(e.target.value)}
-                        className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none cursor-pointer hover:bg-slate-100/50 transition-colors"
-                    >
-                        <option value="all">🌐 All Disaster Events</option>
-                        {events.map(event => (
-                            <option key={event.event_id} value={event.event_id}>
-                                🚨 {event.name} ({event.type})
-                            </option>
-                        ))}
-                    </select>
+                        options={[
+                            { value: 'all', label: '🌐 All Disaster Events' },
+                            ...events.map(event => ({
+                                value: event.event_id,
+                                label: `🚨 ${event.name} (${event.type})`
+                            }))
+                        ]}
+                    />
                 </div>
 
                 {/* Center Dropdown (Admin Only) */}
                 <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Evacuation Center</span>
                     {!isPersonnel ? (
-                        <select
+                        <div className="min-w-[200px]"><Select
                             value={selectedCenterId}
                             onChange={(e) => setSelectedCenterId(e.target.value)}
-                            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none cursor-pointer hover:bg-slate-100/50 transition-colors min-w-[200px]"
-                        >
-                            <option value="all">🏢 All Evacuation Centers</option>
-                            {centers.map(center => (
-                                <option key={center.evacuation_center_id} value={center.evacuation_center_id}>
-                                    {center.name}
-                                </option>
-                            ))}
-                        </select>
+                            options={[
+                                { value: 'all', label: '🏢 All Evacuation Centers' },
+                                ...centers.map(center => ({
+                                    value: center.evacuation_center_id,
+                                    label: center.name
+                                }))
+                            ]}
+                        /></div>
                     ) : (
                         <span className="px-3 py-2 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-black rounded-xl inline-block max-w-[250px] truncate">
                             🏠 {assignedCenter?.name || "Assigned Center"}
@@ -62,20 +62,18 @@ export default function AnalyticsFilters({
             <div className="flex flex-row gap-4 items-center w-full lg:w-auto justify-start lg:justify-end">
                 <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">From Date</span>
-                    <input
+                    <Input
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none hover:bg-slate-100/50 transition-colors"
                     />
                 </div>
                 <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">To Date</span>
-                    <input
+                    <Input
                         type="date"
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none hover:bg-slate-100/50 transition-colors"
                     />
                 </div>
                 {(startDate || endDate || (selectedCenterId !== "all" && !isPersonnel)) && (

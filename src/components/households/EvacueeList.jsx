@@ -265,7 +265,7 @@ export default function EvacueeList({
                 {/* Member Search */}
                 <div className="w-44">
                     <Input
-                        Icon={Search}
+                        icon={Search}
                         value={memberSearch}
                         onChange={e => setMemberSearch(e.target.value)}
                         placeholder="Search members..."

@@ -101,7 +101,7 @@ export default function HistoricalEventsLog({
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="min-w-full text-left">
             <thead>
               <tr className="bg-slate-900">
                 {['Event ID', 'Name', 'Type', 'Severity', 'Duration', 'Status', 'Command'].map(h => (

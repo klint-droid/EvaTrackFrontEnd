@@ -36,6 +36,9 @@ import AssignHouseholdModal from '../../components/units/AssignHouseholdModal';
 import AlertConfirmModal from '../../components/AlertConfirmModal';
 import { isAdmin, isSuperAdmin, isPersonnel } from '../../utils/roles';
 import { useAlert } from '../../context/AlertContext';
+import { Table, TableHeader, TableRow, TableHead, TableCell } from '../../ui/Table';
+import { Select } from '../../ui/Select';
+import { Input } from '../../ui/Input';
 
 export default function EvacuationDetail() {
     const { id } = useParams();
@@ -444,16 +447,16 @@ export default function EvacuationDetail() {
                     ) : (
                         <div className="bg-white rounded-xl border overflow-hidden">
                             <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead className="bg-slate-50 border-b">
-                                        <tr>
-                                            <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs w-[250px]">Unit</th>
-                                            <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">Type</th>
-                                            <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">Capacity</th>
-                                            <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">Occupancy Status</th>
-                                            <th className="px-4 py-3 text-right font-bold text-slate-500 uppercase text-xs w-[200px]">Actions</th>
-                                        </tr>
-                                    </thead>
+                                <Table>
+                                    <TableHeader className="bg-slate-50">
+                                        <TableRow>
+                                            <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs w-[250px]">Unit</TableHead>
+                                            <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">Type</TableHead>
+                                            <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">Capacity</TableHead>
+                                            <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">Occupancy Status</TableHead>
+                                            <TableHead className="px-4 py-3 text-right font-bold text-slate-500 uppercase text-xs w-[200px]">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
                                     <tbody className="divide-y divide-slate-200">
                                         {units.map(unit => {
                                             const occupancy = Number(unit.current_occupancy ?? 0);
@@ -463,28 +466,28 @@ export default function EvacuationDetail() {
 
                                             return (
                                                 <Fragment key={unit.unit_id}>
-                                                    <tr className="hover:bg-slate-50 transition-colors">
-                                                        <td className="px-4 py-3">
+                                                    <TableRow className="hover:bg-slate-50 transition-colors">
+                                                        <TableCell className="px-4 py-3">
                                                             <div className="flex items-center gap-3">
                                                                 <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 border border-blue-100">
                                                                     <Home size={14} />
                                                                 </div>
                                                                 <p className="font-bold text-slate-800">{unit.name}</p>
                                                             </div>
-                                                        </td>
-                                                        <td className="px-4 py-3">
+                                                        </TableCell>
+                                                        <TableCell className="px-4 py-3">
                                                             <span className="text-xs text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md font-semibold">
                                                                 {unit.type?.type_label || 'Unknown'}
                                                             </span>
-                                                        </td>
-                                                        <td className="px-4 py-3">
+                                                        </TableCell>
+                                                        <TableCell className="px-4 py-3">
                                                             <div className="flex items-center gap-1.5 text-sm">
                                                                 <Users size={14} className="text-slate-400" />
                                                                 <span className="font-bold text-slate-700">{occupancy}</span>
                                                                 <span className="text-slate-400">/ {capacity}</span>
                                                             </div>
-                                                        </td>
-                                                        <td className="px-4 py-3">
+                                                        </TableCell>
+                                                        <TableCell className="px-4 py-3">
                                                             <div className="flex items-center gap-2 max-w-[150px]">
                                                                 <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                                                     <div
@@ -496,8 +499,8 @@ export default function EvacuationDetail() {
                                                                 </div>
                                                                 <span className="text-[11px] font-black text-slate-600 w-8">{percent}%</span>
                                                             </div>
-                                                        </td>
-                                                        <td className="px-4 py-3 text-right">
+                                                        </TableCell>
+                                                        <TableCell className="px-4 py-3 text-right">
                                                             <div className="flex items-center justify-end gap-1.5">
                                                                 {canManage && (
                                                                     <button
@@ -541,12 +544,12 @@ export default function EvacuationDetail() {
                                                                     {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
                                                                 </button>
                                                             </div>
-                                                        </td>
-                                                    </tr>
+                                                        </TableCell>
+                                                    </TableRow>
 
                                                     {isExpanded && (
-                                                        <tr>
-                                                            <td colSpan="5" className="p-0 border-b-0">
+                                                        <TableRow>
+                                                            <TableCell colSpan="5" className="p-0 border-b-0">
                                                                 <div className="bg-slate-50 border-t border-slate-100 p-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]">
                                                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">
                                                                         Assigned Households
@@ -597,14 +600,14 @@ export default function EvacuationDetail() {
                                                                         </div>
                                                                     )}
                                                                 </div>
-                                                            </td>
-                                                        </tr>
+                                                            </TableCell>
+                                                        </TableRow>
                                                     )}
                                                 </Fragment>
                                             );
                                         })}
                                     </tbody>
-                                </table>
+                                </Table>
                             </div>
 
                             {/* Pagination Controls */}
@@ -676,18 +679,17 @@ export default function EvacuationDetail() {
 
                         <div className="flex items-center gap-2">
                             {/* Event Filter Dropdown */}
-                            <select
+                            <Select
                                 value={selectedEventId}
                                 onChange={(e) => setSelectedEventId(e.target.value)}
-                                className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 outline-none cursor-pointer hover:border-blue-300 transition-colors"
-                            >
-                                <option value="all">All Events</option>
-                                {events.map(evt => (
-                                    <option key={evt.event_id} value={evt.event_id}>
-                                        {evt.name} {evt.ended_at ? "(Ended)" : "(Active)"}
-                                    </option>
-                                ))}
-                            </select>
+                                options={[
+                                    { value: 'all', label: 'All Events' },
+                                    ...events.map(evt => ({
+                                        value: evt.event_id,
+                                        label: `${evt.name} ${evt.ended_at ? "(Ended)" : "(Active)"}`
+                                    }))
+                                ]}
+                            />
 
                             <button
                                 onClick={() => fetchEvacuatedHouseholds(selectedEventId)}
@@ -756,53 +758,53 @@ export default function EvacuationDetail() {
 
                     <div className="bg-white rounded-xl border overflow-hidden">
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead className="bg-slate-50 border-b">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">
+                            <Table>
+                                <TableHeader className="bg-slate-50">
+                                    <TableRow>
+                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">
                                             Household
-                                        </th>
-                                        <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">
+                                        </TableHead>
+                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">
                                             Contact
-                                        </th>
-                                        <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">
+                                        </TableHead>
+                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">
                                             Members
-                                        </th>
-                                        <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">
+                                        </TableHead>
+                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">
                                             Unit
-                                        </th>
-                                        <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">
+                                        </TableHead>
+                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">
                                             Method
-                                        </th>
-                                        <th className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">
+                                        </TableHead>
+                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">
                                             Verified At
-                                        </th>
-                                        <th className="px-4 py-3 text-right font-bold text-slate-500 uppercase text-xs">
+                                        </TableHead>
+                                        <TableHead className="px-4 py-3 text-right font-bold text-slate-500 uppercase text-xs">
                                             Actions
-                                        </th>
-                                    </tr>
-                                </thead>
+                                        </TableHead>
+                                    </TableRow>
+                                </TableHeader>
 
                                 <tbody>
                                     {householdsLoading ? (
-                                        <tr>
-                                            <td colSpan="7" className="px-4 py-8 text-center text-slate-400">
+                                        <TableRow>
+                                            <TableCell colSpan="7" className="px-4 py-8 text-center text-slate-400">
                                                 Loading evacuated households...
-                                            </td>
-                                        </tr>
+                                            </TableCell>
+                                        </TableRow>
                                     ) : evacuatedHouseholds.length === 0 ? (
-                                        <tr>
-                                            <td colSpan="7" className="px-4 py-8 text-center text-slate-400">
+                                        <TableRow>
+                                            <TableCell colSpan="7" className="px-4 py-8 text-center text-slate-400">
                                                 No evacuated households yet.
-                                            </td>
-                                        </tr>
+                                            </TableCell>
+                                        </TableRow>
                                     ) : (
                                         evacuatedHouseholds.map(record => (
-                                            <tr
+                                            <TableRow
                                                 key={record.evacuation_id}
                                                 className="border-b last:border-b-0 hover:bg-slate-50"
                                             >
-                                                <td className="px-4 py-3">
+                                                <TableCell className="px-4 py-3">
                                                     <div>
                                                         <p className="font-semibold text-slate-800">
                                                             {record.household?.household_name || 'Unnamed Household'}
@@ -811,31 +813,31 @@ export default function EvacuationDetail() {
                                                             {record.household_id}
                                                         </p>
                                                     </div>
-                                                </td>
+                                                </TableCell>
 
-                                                <td className="px-4 py-3 text-slate-600">
+                                                <TableCell className="px-4 py-3 text-slate-600">
                                                     {record.household?.contact_number || '—'}
-                                                </td>
+                                                </TableCell>
 
-                                                <td className="px-4 py-3 text-slate-600">
+                                                <TableCell className="px-4 py-3 text-slate-600">
                                                     {record.evacuated_count || record.household?.member_count || 0}
-                                                </td>
+                                                </TableCell>
 
-                                                <td className="px-4 py-3 text-slate-600">
+                                                <TableCell className="px-4 py-3 text-slate-600">
                                                     {record.unit_allocations?.[0]?.unit?.name || (
                                                         <span className="text-amber-600 font-medium">Unassigned</span>
                                                     )}
-                                                </td>
+                                                </TableCell>
 
-                                                <td className="px-4 py-3 text-slate-600 capitalize">
+                                                <TableCell className="px-4 py-3 text-slate-600 capitalize">
                                                     {record.method || 'manual'}
-                                                </td>
+                                                </TableCell>
 
-                                                <td className="px-4 py-3 text-slate-600">
+                                                <TableCell className="px-4 py-3 text-slate-600">
                                                     {formatDateTime(record.verified_at)}
-                                                </td>
+                                                </TableCell>
 
-                                                <td className="px-4 py-3">
+                                                <TableCell className="px-4 py-3">
                                                     <div className="flex justify-end gap-2">
                                                         <button
                                                             onClick={() =>
@@ -861,12 +863,12 @@ export default function EvacuationDetail() {
                                                             </button>
                                                         )}
                                                     </div>
-                                                </td>
-                                            </tr>
+                                                </TableCell>
+                                            </TableRow>
                                         ))
                                     )}
                                 </tbody>
-                            </table>
+                            </Table>
                         </div>
                     </div>
                 </div>

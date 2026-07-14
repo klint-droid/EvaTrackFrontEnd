@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { TrendingUp, MapPin, DoorOpen, ArrowRight } from "lucide-react";
 import CapacityChart from "./CapacityChart";
+import { Table, TableHeader, TableRow, TableHead, TableCell } from "../../ui/Table";
 
 const MOCK_BARS = [
     { height1: "65%", height2: "25%" },
@@ -88,40 +89,40 @@ export default function DashboardCapacityArea({
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-slate-50/50">
-                                <th className="px-6 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Center Name</th>
-                                <th className="px-6 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Occupancy Load</th>
-                                <th className="px-6 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Households</th>
-                                <th className="px-6 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Operational Status</th>
-                            </tr>
-                        </thead>
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-slate-50/50">
+                                <TableHead className="px-6 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Center Name</TableHead>
+                                <TableHead className="px-6 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Occupancy Load</TableHead>
+                                <TableHead className="px-6 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Households</TableHead>
+                                <TableHead className="px-6 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Operational Status</TableHead>
+                            </TableRow>
+                        </TableHeader>
                         <tbody className="divide-y divide-slate-50">
                             {loading ? (
                                 [1, 2, 3].map((row) => (
-                                    <tr key={row} className="animate-pulse">
-                                        <td className="px-6 py-4.5">
+                                    <TableRow key={row} className="animate-pulse">
+                                        <TableCell className="px-6 py-4.5">
                                             <div className="w-36 h-3.5 bg-slate-200 rounded-md" />
                                             <div className="w-24 h-2 bg-slate-100 rounded-sm mt-1.5" />
-                                        </td>
-                                        <td className="px-6 py-4.5">
+                                        </TableCell>
+                                        <TableCell className="px-6 py-4.5">
                                             <div className="w-24 h-4 bg-slate-100 rounded-md mx-auto" />
-                                        </td>
-                                        <td className="px-6 py-4.5 text-center">
+                                        </TableCell>
+                                        <TableCell className="px-6 py-4.5 text-center">
                                             <div className="w-12 h-4 bg-slate-100 rounded-md mx-auto" />
-                                        </td>
-                                        <td className="px-6 py-4.5 text-right">
+                                        </TableCell>
+                                        <TableCell className="px-6 py-4.5 text-right">
                                             <div className="w-16 h-5 bg-slate-100 rounded-full ml-auto" />
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 ))
                             ) : chartData.length === 0 ? (
-                                <tr>
-                                    <td colSpan="4" className="py-12 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                <TableRow>
+                                    <TableCell colSpan="4" className="py-12 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">
                                         No center deployment records registered.
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ) : (
                                 chartData.map((c, index) => {
                                     const percent = c.max ? (c.current / c.max) * 100 : 0;
@@ -129,12 +130,12 @@ export default function DashboardCapacityArea({
                                     const isWarning = percent >= 60;
 
                                     return (
-                                        <tr key={index} className="hover:bg-slate-50/40 transition-colors">
-                                            <td className="px-6 py-4.5">
+                                        <TableRow key={index} className="hover:bg-slate-50/40 transition-colors">
+                                            <TableCell className="px-6 py-4.5">
                                                 <span className="text-xs font-bold text-slate-800 block truncate max-w-[200px]">{c.name}</span>
                                                 <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5">Limit: {c.max} Slots</span>
-                                            </td>
-                                            <td className="px-6 py-4.5">
+                                            </TableCell>
+                                            <TableCell className="px-6 py-4.5">
                                                 <div className="flex flex-col items-center gap-1.5 max-w-[140px] mx-auto">
                                                     <div className="flex justify-between w-full text-[9px] font-mono font-bold text-slate-400">
                                                         <span>{c.current} occupied</span>
@@ -149,14 +150,14 @@ export default function DashboardCapacityArea({
                                                         />
                                                     </div>
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4.5 text-center">
+                                            </TableCell>
+                                            <TableCell className="px-6 py-4.5 text-center">
                                                 <div className="flex items-center justify-center gap-1.5">
                                                     <DoorOpen size={13} className="text-purple-400" />
                                                     <span className="text-xs font-bold text-slate-700">{c.households}</span>
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4.5 text-right">
+                                            </TableCell>
+                                            <TableCell className="px-6 py-4.5 text-right">
                                                 <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
                                                     isCritical ? 'bg-red-50 text-red-600 border-red-100' : 
                                                     isWarning ? 'bg-amber-50 text-amber-600 border-amber-100' : 
@@ -164,13 +165,13 @@ export default function DashboardCapacityArea({
                                                 }`}>
                                                     {isCritical ? 'CRITICAL' : isWarning ? 'WARNING' : 'CAPABLE'}
                                                 </span>
-                                            </td>
-                                        </tr>
+                                            </TableCell>
+                                        </TableRow>
                                     );
                                 })
                             )}
                         </tbody>
-                    </table>
+                    </Table>
                 </div>
             </div>
         </div>

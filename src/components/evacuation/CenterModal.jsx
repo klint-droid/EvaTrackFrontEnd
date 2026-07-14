@@ -7,6 +7,7 @@ import {
 import LocationPicker from "../Location/LocationPicker";
 import { reverseGeocode } from "../../utils/reverseGeocode";
 import { useAlert } from "../../context/AlertContext";
+import { Input } from "../../ui/Input";
 
 export default function CenterModal({ isOpen, onClose, onSubmit, initialData }) {
   const isEdit = Boolean(initialData);
@@ -173,29 +174,23 @@ export default function CenterModal({ isOpen, onClose, onSubmit, initialData }) 
               
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-600">Center Name</label>
-                <div className="relative group">
-                  <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
-                  <input
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
-                    placeholder="e.g. City Central High"
-                  />
-                </div>
+                <Input
+                  icon={Building2}
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="e.g. City Central High"
+                />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-600">Maximum Capacity</label>
-                <div className="relative group">
-                  <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
-                  <input
-                    type="number"
-                    value={form.capacity}
-                    onChange={(e) => setForm({ ...form, capacity: e.target.value })}
-                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
-                    placeholder="e.g. 500"
-                  />
-                </div>
+                <Input
+                  icon={Users}
+                  type="number"
+                  value={form.capacity}
+                  onChange={(e) => setForm({ ...form, capacity: e.target.value })}
+                  placeholder="e.g. 500"
+                />
               </div>
             </div>
 
@@ -206,11 +201,10 @@ export default function CenterModal({ isOpen, onClose, onSubmit, initialData }) 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-600">Search Address</label>
                 <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                  <input
+                  <Input
+                    icon={Search}
                     value={searchQuery}
                     onChange={handleSearchInput}
-                    className="w-full pl-11 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
                     placeholder="Type an address or landmark..."
                   />
                   {searchLoading && (

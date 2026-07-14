@@ -1,5 +1,6 @@
 import React from "react";
 import { Activity, AlertTriangle } from "lucide-react";
+import { Table, TableHeader, TableRow, TableHead, TableCell } from '../../ui/Table';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList } from "recharts";
 
 const renderInsideLabel = (props) => {
@@ -116,25 +117,25 @@ export default function CenterPerformance({ analytics, isPersonnel }) {
 
                     {/* Centers detail utilization list */}
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left text-slate-600">
-                            <thead className="text-xs uppercase bg-slate-50 text-slate-500 border-b border-slate-100">
-                                <tr>
-                                    <th className="px-6 py-4 font-black">Evacuation Center</th>
-                                    <th className="px-6 py-4 font-black text-center">Households</th>
-                                    <th className="px-6 py-4 font-black text-center">Occupants</th>
-                                    <th className="px-6 py-4 font-black text-center">Total Capacity</th>
-                                    <th className="px-6 py-4 font-black">Capacity Index</th>
-                                    <th className="px-6 py-4 font-black text-right">Status</th>
-                                </tr>
-                            </thead>
+                        <Table>
+                            <TableHeader className="text-xs uppercase bg-slate-50 text-slate-500">
+                                <TableRow>
+                                    <TableHead className="px-6 py-4 font-black">Evacuation Center</TableHead>
+                                    <TableHead className="px-6 py-4 font-black text-center">Households</TableHead>
+                                    <TableHead className="px-6 py-4 font-black text-center">Occupants</TableHead>
+                                    <TableHead className="px-6 py-4 font-black text-center">Total Capacity</TableHead>
+                                    <TableHead className="px-6 py-4 font-black">Capacity Index</TableHead>
+                                    <TableHead className="px-6 py-4 font-black text-right">Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
                             <tbody className="divide-y divide-slate-100">
                                 {analytics.center_performance.map((center) => (
-                                    <tr key={center.center_id} className="hover:bg-slate-50/80 transition-colors">
-                                        <td className="px-6 py-4 font-black text-slate-800">{center.name}</td>
-                                        <td className="px-6 py-4 text-center font-bold text-slate-700">{center.households}</td>
-                                        <td className="px-6 py-4 text-center font-black text-slate-800">{center.occupancy}</td>
-                                        <td className="px-6 py-4 text-center font-bold text-slate-400">{center.capacity}</td>
-                                        <td className="px-6 py-4 min-w-[200px]">
+                                    <TableRow key={center.center_id} className="hover:bg-slate-50/80 transition-colors">
+                                        <TableCell className="px-6 py-4 font-black text-slate-800">{center.name}</TableCell>
+                                        <TableCell className="px-6 py-4 text-center font-bold text-slate-700">{center.households}</TableCell>
+                                        <TableCell className="px-6 py-4 text-center font-black text-slate-800">{center.occupancy}</TableCell>
+                                        <TableCell className="px-6 py-4 text-center font-bold text-slate-400">{center.capacity}</TableCell>
+                                        <TableCell className="px-6 py-4 min-w-[200px]">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
                                                     <div 
@@ -147,8 +148,8 @@ export default function CenterPerformance({ analytics, isPersonnel }) {
                                                 </div>
                                                 <span className="text-xs font-black text-slate-400 min-w-[35px]">{center.utilization_pct}%</span>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
+                                        </TableCell>
+                                        <TableCell className="px-6 py-4 text-right">
                                             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border
                                                 ${center.status === "critical" ? "bg-red-500/10 text-red-400 border-red-500/20"
                                                   : (center.status === "warning" ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
@@ -161,11 +162,11 @@ export default function CenterPerformance({ analytics, isPersonnel }) {
                                                 {center.status === "critical" ? "Overcapacity Alert" 
                                                   : (center.status === "warning" ? "Near Capacity" : "Optimal Load")}
                                             </span>
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 ))}
                             </tbody>
-                        </table>
+                        </Table>
                     </div>
 
                 </div>

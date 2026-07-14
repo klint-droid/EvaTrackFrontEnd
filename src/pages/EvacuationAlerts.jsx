@@ -12,6 +12,9 @@ import { isAdmin, isPersonnel } from '../utils/roles';
 import CreateAlertModal from '../components/alerts/CreateAlertModal';
 import AlertDetailModal from '../components/alerts/AlertDetailModal';
 import { useAlert } from '../context/AlertContext';
+import { Table, TableHeader, TableRow, TableHead, TableCell } from '../ui/Table';
+import { Input } from '../ui/Input';
+import { Select } from '../ui/Select';
 
 export default function EvacuationAlerts() {
     const [alerts, setAlerts] = useState([]);
@@ -160,31 +163,31 @@ export default function EvacuationAlerts() {
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mb-4">
                 <div className="px-6 py-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="flex items-center gap-4 w-full lg:w-auto">
-                        <div className="relative flex-1 sm:max-w-[280px]">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                            <input
-                                type="text"
+                        <div className="w-full sm:max-w-[280px]">
+                            <Input
+                                icon={Search}
                                 placeholder="Search alerts..."
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
                             />
                         </div>
                     </div>
 
                     <div className="flex gap-2 relative w-full lg:w-auto justify-end">
-                        <select
-                            value={statusFilter}
-                            onChange={e => setStatusFilter(e.target.value)}
-                            className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none cursor-pointer focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
-                        >
-                            <option value="">All Statuses</option>
-                            <option value="sent">Sent</option>
-                            <option value="failed">Failed</option>
-                            <option value="scheduled">Scheduled</option>
-                            <option value="pending">Pending</option>
-                            <option value="cancelled">Stopped</option>
-                        </select>
+                        <div className="w-40">
+                            <Select
+                                value={statusFilter}
+                                onChange={e => setStatusFilter(e.target.value)}
+                                options={[
+                                    { value: '', label: 'All Statuses' },
+                                    { value: 'sent', label: 'Sent' },
+                                    { value: 'failed', label: 'Failed' },
+                                    { value: 'scheduled', label: 'Scheduled' },
+                                    { value: 'pending', label: 'Pending' },
+                                    { value: 'cancelled', label: 'Stopped' },
+                                ]}
+                            />
+                        </div>
 
                         <button
                             onClick={() => setShowFilters(!showFilters)}
@@ -223,45 +226,44 @@ export default function EvacuationAlerts() {
                                 <div className="space-y-4">
                                     <div>
                                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Urgency</label>
-                                        <select
+                                        <Select
                                             value={urgencyFilter}
                                             onChange={e => setUrgencyFilter(e.target.value)}
-                                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
-                                        >
-                                            <option value="">All Levels</option>
-                                            <option value="critical">Critical</option>
-                                            <option value="high">High</option>
-                                            <option value="medium">Medium</option>
-                                            <option value="low">Low</option>
-                                        </select>
+                                            options={[
+                                                { value: '', label: 'All Levels' },
+                                                { value: 'critical', label: 'Critical' },
+                                                { value: 'high', label: 'High' },
+                                                { value: 'medium', label: 'Medium' },
+                                                { value: 'low', label: 'Low' },
+                                            ]}
+                                        />
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Event</label>
-                                        <select
+                                        <Select
                                             value={selectedEvent}
                                             onChange={e => setSelectedEvent(e.target.value)}
-                                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
-                                        >
-                                            <option value="">All Events</option>
-                                            {events.map(e => (
-                                                <option key={e.event_id} value={e.event_id}>
-                                                    {e.name}{e.ended_at ? ' (Ended)' : ''}
-                                                </option>
-                                            ))}
-                                        </select>
+                                            options={[
+                                                { value: '', label: 'All Events' },
+                                                ...events.map(e => ({
+                                                    value: e.event_id,
+                                                    label: `${e.name}${e.ended_at ? ' (Ended)' : ''}`
+                                                }))
+                                            ]}
+                                        />
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Channel</label>
-                                        <select
+                                        <Select
                                             value={channelFilter}
                                             onChange={e => setChannelFilter(e.target.value)}
-                                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
-                                        >
-                                            <option value="">All Channels</option>
-                                            <option value="sms">SMS</option>
-                                            <option value="push">Push</option>
-                                            <option value="both">Both</option>
-                                        </select>
+                                            options={[
+                                                { value: '', label: 'All Channels' },
+                                                { value: 'sms', label: 'SMS' },
+                                                { value: 'push', label: 'Push' },
+                                                { value: 'both', label: 'Both' },
+                                            ]}
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -269,44 +271,43 @@ export default function EvacuationAlerts() {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-slate-900">
-                                {['Broadcast Message', 'Event', 'Urgency', 'Target', 'Total Targets', 'Delivery Status', 'Timestamp', 'Command'].map(h => (
-                                    <th key={h} className="px-6 py-3.5 text-[10px] font-bold text-white uppercase tracking-wider">
-                                        {h}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
+                <Table>
+                    <TableHeader className="bg-slate-900 text-white">
+                        <tr className="border-none">
+                            {['Broadcast Message', 'Event', 'Urgency', 'Target', 'Total Targets', 'Delivery Status', 'Timestamp', 'Command'].map(h => (
+                                <TableHead key={h} className="text-[10px] font-bold text-white uppercase tracking-wider">
+                                    {h}
+                                </TableHead>
+                            ))}
+                        </tr>
+                    </TableHeader>
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
-                                <tr>
-                                    <td colSpan="8" className="py-24 text-center">
+                                <TableRow>
+                                    <TableCell colSpan="8" className="py-24 text-center">
                                         <div className="flex flex-col items-center gap-2">
                                             <Loader2 className="animate-spin text-slate-300" size={32} />
                                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">querying system registry...</span>
                                         </div>
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ) : filteredAlerts.length === 0 ? (
-                                <tr>
-                                    <td colSpan="8" className="py-24 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                <TableRow>
+                                    <TableCell colSpan="8" className="py-24 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">
                                         No matching dispatches found.
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ) : filteredAlerts.map(alert => (
-                                <tr key={alert.notif_id} className="hover:bg-slate-50/20 transition-colors group">
-                                    <td className="px-6 py-4.5 max-w-xs">
+                                <TableRow key={alert.notif_id} className="group">
+                                    <TableCell className="max-w-xs">
                                         <p className="text-xs font-bold text-slate-800 truncate leading-snug">
                                             {alert.message}
                                         </p>
                                         <p className="text-[9px] text-slate-400 font-mono mt-1 font-bold">
                                             UID: {alert.notif_id}
                                         </p>
-                                    </td>
-                                    <td className="px-6 py-4.5">
+                                    </TableCell>
+                                    <TableCell>
                                         {alert.event ? (
                                             <span className="px-2.5 py-1 text-[8px] font-black uppercase tracking-widest rounded-full border bg-sky-500/10 border-sky-500/25 text-sky-600">
                                                 {alert.event.name}
@@ -314,13 +315,13 @@ export default function EvacuationAlerts() {
                                         ) : (
                                             <span className="text-[9px] text-slate-400 font-bold">—</span>
                                         )}
-                                    </td>
-                                    <td className="px-6 py-4.5">
+                                    </TableCell>
+                                    <TableCell>
                                         <span className={`px-2.5 py-1 text-[8px] font-black uppercase tracking-widest rounded-full border ${getUrgencyStyle(alert.urgency_level?.urgency_key)}`}>
                                             {alert.urgency_level?.urgency_label}
                                         </span>
-                                    </td>
-                                    <td className="px-6 py-4.5">
+                                    </TableCell>
+                                    <TableCell>
                                         <span className="text-xs font-medium text-slate-700">
                                             {alert.center?.name || alert.evacuation_center?.name
                                                 ? (alert.center?.name || alert.evacuation_center?.name)
@@ -331,8 +332,8 @@ export default function EvacuationAlerts() {
                                                         : 'Public Broadcast'
                                             }
                                         </span>
-                                    </td>
-                                    <td className="px-6 py-4.5">
+                                    </TableCell>
+                                    <TableCell>
                                         <div className="flex items-center gap-1.5">
                                             <div className="w-5 h-5 bg-blue-50 rounded-md flex items-center justify-center">
                                                 <Bell size={10} className="text-blue-600" />
@@ -341,8 +342,8 @@ export default function EvacuationAlerts() {
                                                 {alert.recipients_count || 0}
                                             </span>
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4.5">
+                                    </TableCell>
+                                    <TableCell>
                                         <div>
                                             {alert.status === 'sent' && (
                                                 <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
@@ -394,13 +395,13 @@ export default function EvacuationAlerts() {
                                                 </p>
                                             )}
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4.5 text-[10px] font-semibold text-slate-500">
+                                    </TableCell>
+                                    <TableCell className="text-[10px] font-semibold text-slate-500">
                                         {alert.created_at
                                             ? new Date(alert.created_at).toLocaleString()
                                             : '—'}
-                                    </td>
-                                    <td className="px-6 py-4.5">
+                                    </TableCell>
+                                    <TableCell>
                                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
                                             <button
                                                 onClick={() => setDetailId(alert.notif_id)}
@@ -422,12 +423,11 @@ export default function EvacuationAlerts() {
                                         <div className="group-hover:hidden text-slate-300">
                                             <MoreHorizontal size={14} className="ml-auto" />
                                         </div>
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
                         </tbody>
-                    </table>
-                </div>
+                    </Table>
 
                 {/* Pagination */}
                 <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">

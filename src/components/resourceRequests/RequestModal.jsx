@@ -1,6 +1,8 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { X, Package, Users, AlertCircle, AlertTriangle, Minus, ArrowDown, MapPin, ChevronDown, Send, Loader2 } from 'lucide-react';
+import { Input } from '../../ui/Input';
+import { Select } from '../../ui/Select';
 
 export default function RequestModal({
   modalOpen, setModalOpen, form, setForm,
@@ -55,22 +57,20 @@ export default function RequestModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700">Resource Category</label>
-              <input
+              <Input
                 value={form.resource_type}
                 onChange={(e) => setForm({ ...form, resource_type: e.target.value })}
                 placeholder={form.request_type === 'resource' ? 'e.g. Food Packs' : 'e.g. Medical Team'}
-                className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 transition-all"
               />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700">Quantity / Units</label>
-              <input
+              <Input
                 type="number"
                 min="1"
                 value={form.quantity}
                 onChange={(e) => setForm({ ...form, quantity: e.target.value })}
                 placeholder="e.g. 500"
-                className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 transition-all"
               />
             </div>
           </div>
@@ -115,24 +115,18 @@ export default function RequestModal({
           {canUpdateStatus && (
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700">Delivery Destination</label>
-              <div className="relative">
-                <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <select
-                  value={form.evacuation_center_id}
-                  onChange={(e) => setForm({ ...form, evacuation_center_id: e.target.value })}
-                  className="w-full pl-9 pr-8 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 transition-all cursor-pointer appearance-none"
-                >
-                  <option value="">Select Active Evacuation Center</option>
-                  {centers.map(center => (
-                    <option key={center.evacuation_center_id} value={center.evacuation_center_id}>
-                      {center.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                  <ChevronDown size={16} />
-                </div>
-              </div>
+              <Select
+                icon={MapPin}
+                value={form.evacuation_center_id}
+                onChange={(e) => setForm({ ...form, evacuation_center_id: e.target.value })}
+                options={[
+                  { value: '', label: 'Select Active Evacuation Center' },
+                  ...centers.map(center => ({
+                    value: center.evacuation_center_id,
+                    label: center.name
+                  }))
+                ]}
+              />
             </div>
           )}
 

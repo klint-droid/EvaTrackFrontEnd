@@ -213,7 +213,7 @@ export default function HouseholdManagement() {
                     <div className="flex items-center gap-4 w-full lg:w-auto">
                         <div className="relative flex-1 sm:max-w-[280px]">
                             <Input
-                                Icon={Search}
+                                icon={Search}
                                 placeholder="Search households..."
                                 value={searchInput}
                                 onChange={e => setSearchInput(e.target.value)}

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { 
     User, Lock, Shield, Phone, Building, Save, Key, Loader2, Sparkles, MapPin, CheckCircle2, AlertCircle 
 } from "lucide-react";
+import { Input } from "../ui/Input";
 import { getUser } from "../api/auth/getUser";
 import { updateProfile } from "../api/auth/updateProfile";
 import { updatePassword } from "../api/auth/updatePassword";
@@ -318,38 +319,27 @@ export default function Profile() {
                         {activeTab === "info" && (
                             <form onSubmit={handleProfileSubmit} className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">First Name</label>
-                                        <input
+                                    <Input
+                                            label="First Name"
                                             value={profileData.first_name}
                                             onChange={e => setProfileData(prev => ({ ...prev, first_name: e.target.value }))}
-                                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
                                             placeholder="Enter first name"
                                         />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Last Name</label>
-                                        <input
+                                    <Input
+                                            label="Last Name"
                                             value={profileData.last_name}
                                             onChange={e => setProfileData(prev => ({ ...prev, last_name: e.target.value }))}
-                                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
                                             placeholder="Enter last name"
                                         />
-                                    </div>
                                 </div>
 
-                                <div className="space-y-1">
-                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Contact Number</label>
-                                    <div className="relative">
-                                        <Phone size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                                        <input
-                                            value={profileData.contact_number}
-                                            onChange={e => setProfileData(prev => ({ ...prev, contact_number: e.target.value }))}
-                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
-                                            placeholder="e.g. 09123456789"
-                                        />
-                                    </div>
-                                </div>
+                                <Input
+                                        label="Contact Number"
+                                        icon={Phone}
+                                        value={profileData.contact_number}
+                                        onChange={e => setProfileData(prev => ({ ...prev, contact_number: e.target.value }))}
+                                        placeholder="e.g. 09123456789"
+                                    />
 
                                 <div className="border-t border-slate-100 pt-5 flex justify-end">
                                     <button
@@ -366,47 +356,32 @@ export default function Profile() {
 
                         {activeTab === "security" && (
                             <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                                <div className="space-y-1">
-                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Current Password</label>
-                                    <div className="relative">
-                                        <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                                        <input
-                                            type="password"
-                                            value={passwordData.current_password}
-                                            onChange={e => setPasswordData(prev => ({ ...prev, current_password: e.target.value }))}
-                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
-                                            placeholder="••••••••"
-                                        />
-                                    </div>
-                                </div>
+                                <Input
+                                    label="Current Password"
+                                    type="password"
+                                    icon={Lock}
+                                    value={passwordData.current_password}
+                                    onChange={e => setPasswordData(prev => ({ ...prev, current_password: e.target.value }))}
+                                    placeholder="••••••••"
+                                />
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">New Password</label>
-                                        <div className="relative">
-                                            <Key size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                                            <input
-                                                type="password"
-                                                value={passwordData.new_password}
-                                                onChange={e => setPasswordData(prev => ({ ...prev, new_password: e.target.value }))}
-                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
-                                                placeholder="••••••••"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Confirm New Password</label>
-                                        <div className="relative">
-                                            <Key size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                                            <input
-                                                type="password"
-                                                value={passwordData.new_password_confirmation}
-                                                onChange={e => setPasswordData(prev => ({ ...prev, new_password_confirmation: e.target.value }))}
-                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
-                                                placeholder="••••••••"
-                                            />
-                                        </div>
-                                    </div>
+                                    <Input
+                                            label="New Password"
+                                            type="password"
+                                            icon={Key}
+                                            value={passwordData.new_password}
+                                            onChange={e => setPasswordData(prev => ({ ...prev, new_password: e.target.value }))}
+                                            placeholder="••••••••"
+                                        />
+                                    <Input
+                                            label="Confirm New Password"
+                                            type="password"
+                                            icon={Key}
+                                            value={passwordData.new_password_confirmation}
+                                            onChange={e => setPasswordData(prev => ({ ...prev, new_password_confirmation: e.target.value }))}
+                                            placeholder="••••••••"
+                                        />
                                 </div>
 
                                 <div className="border-t border-slate-100 pt-5 flex justify-end">
