@@ -24,7 +24,7 @@ export default function UserModal({
             title={
                 <div>
                     {isEditMode ? "Update Personnel" : "Register New Personnel"}
-                    <span className="block text-xs font-normal text-slate-500 mt-1">
+                    <span className="block text-xs font-normal text-slate-500 dark:text-slate-400 mt-1">
                         {isEditMode ? "Modify official credentials and operational roles." : "Assign official credentials and operational roles."}
                     </span>
                 </div>
@@ -34,7 +34,7 @@ export default function UserModal({
             <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2 pb-4">
                     {/* Personal Information */}
                     <div className="space-y-4">
-                        <h3 className="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2">Personal Information</h3>
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-2">Personal Information</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Input
                                 label="First Name"
@@ -67,14 +67,14 @@ export default function UserModal({
 
                     {/* Account Credentials */}
                     <div className="space-y-4">
-                        <h3 className="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2">Account Credentials</h3>
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-2">Account Credentials</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Input
                                 label={`User ID ${isEditMode ? "" : "(Auto-generated)"}`}
                                 disabled
                                 placeholder="Auto-generated"
                                 value={isEditMode ? `ID-${formData.user_id}` : ""}
-                                inputClassName="bg-slate-100 cursor-not-allowed"
+                                inputClassName="bg-slate-100 dark:bg-slate-800 cursor-not-allowed"
                             />
                             {!isEditMode && (
                                 <Input
@@ -90,10 +90,10 @@ export default function UserModal({
 
                     {/* Access Control */}
                     <div className="space-y-4">
-                        <h3 className="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2">Access Control</h3>
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-2">Access Control</h3>
                         
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-600">Role Selection</label>
+                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Role Selection</label>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 {roleOptions.filter(r => isSuperAdminUser || r.value !== "super_admin").map((role) => {
                                     const isSelected = formData.role === role.value;
@@ -103,19 +103,19 @@ export default function UserModal({
                                             onClick={() => setFormData({ ...formData, role: role.value })}
                                             className={`p-4 border rounded-xl cursor-pointer transition-all ${
                                                 isSelected
-                                                    ? "border-blue-500 bg-white shadow-[0_0_0_1px_rgba(59,130,246,1)]"
-                                                    : "border-slate-200 hover:border-slate-300 bg-white"
+                                                    ? "border-blue-500 bg-white dark:bg-slate-900 shadow-[0_0_0_1px_rgba(59,130,246,1)]"
+                                                    : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900"
                                             }`}
                                         >
                                             <div className="flex justify-between items-start mb-2">
-                                                <span className="text-sm font-bold text-slate-800">{role.label}</span>
+                                                <span className="text-sm font-bold text-slate-800 dark:text-slate-100">{role.label}</span>
                                                 {isSelected && (
                                                     <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
                                                         <Check size={12} strokeWidth={3} />
                                                     </div>
                                                 )}
                                             </div>
-                                            <p className="text-xs text-slate-500 leading-relaxed">{role.desc}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{role.desc}</p>
                                         </div>
                                     );
                                 })}
@@ -136,9 +136,9 @@ export default function UserModal({
                     </div>
                 </div>
                 
-                <div className="pt-5 border-t border-slate-100 flex justify-end gap-3">
-                    <button onClick={onClose} className="px-6 py-3 text-sm font-bold text-slate-600 hover:text-slate-900 bg-slate-200 hover:bg-slate-300 rounded-xl transition-all active:scale-95">Cancel</button>
-                    <button onClick={onConfirm} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-sm font-bold rounded-xl shadow-md shadow-blue-500/20 transition-all flex items-center gap-2">
+                <div className="pt-5 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+                    <button onClick={onClose} className="px-6 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:text-slate-50 bg-slate-200 hover:bg-slate-300 rounded-xl transition-all active:scale-95">Cancel</button>
+                    <button onClick={onConfirm} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-sm font-bold rounded-xl shadow-md dark:shadow-none shadow-blue-500/20 transition-all flex items-center gap-2">
                         <Check size={16} />
                         {isEditMode ? "Save Changes" : "Create User Account"}
                     </button>

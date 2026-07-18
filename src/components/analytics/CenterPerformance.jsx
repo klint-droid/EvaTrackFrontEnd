@@ -23,10 +23,10 @@ const renderInsideLabel = (props) => {
 
 export default function CenterPerformance({ analytics, isPersonnel }) {
     return (
-        <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm">
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-6 rounded-2xl shadow-sm dark:shadow-none">
             <div className="flex items-center gap-2 mb-6">
                 <Activity className="text-emerald-600" size={20} />
-                <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight">{isPersonnel ? 'Your Center Performance' : 'Evacuation Center Performance Dashboard'}</h3>
+                <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 tracking-tight">{isPersonnel ? 'Your Center Performance' : 'Evacuation Center Performance Dashboard'}</h3>
             </div>
 
             {analytics.center_performance.length > 0 ? (
@@ -51,21 +51,21 @@ export default function CenterPerformance({ analytics, isPersonnel }) {
                                 if (!active || !payload || !payload.length) return null;
                                 const entry = chartData.find((d) => d.name === label);
                                 return (
-                                    <div className="bg-white border border-slate-200 rounded-xl shadow-lg p-4 text-xs text-slate-700">
-                                        <p className="font-bold text-slate-800 mb-2">{label}</p>
+                                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg dark:shadow-none p-4 text-xs text-slate-700 dark:text-slate-200">
+                                        <p className="font-bold text-slate-800 dark:text-slate-100 mb-2">{label}</p>
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="w-2.5 h-2.5 rounded-sm bg-[#e2e8f0] inline-block" />
-                                            <span className="text-slate-500">Remaining Slots:</span>
-                                            <span className="font-bold text-slate-800">{entry?.remaining}</span>
+                                            <span className="text-slate-500 dark:text-slate-400">Remaining Slots:</span>
+                                            <span className="font-bold text-slate-800 dark:text-slate-100">{entry?.remaining}</span>
                                         </div>
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="w-2.5 h-2.5 rounded-sm bg-[#3b82f6] inline-block" />
-                                            <span className="text-slate-500">Active Occupancy:</span>
+                                            <span className="text-slate-500 dark:text-slate-400">Active Occupancy:</span>
                                             <span className="font-bold text-[#3b82f6]">{entry?.rawOccupancy}</span>
                                         </div>
-                                        <div className="border-t border-slate-100 mt-2 pt-2 flex items-center gap-2">
+                                        <div className="border-t border-slate-100 dark:border-slate-800 mt-2 pt-2 flex items-center gap-2">
                                             <span className="text-slate-400">Total Capacity:</span>
-                                            <span className="font-extrabold text-slate-800">{entry?.rawCapacity}</span>
+                                            <span className="font-extrabold text-slate-800 dark:text-slate-100">{entry?.rawCapacity}</span>
                                         </div>
                                     </div>
                                 );
@@ -84,7 +84,7 @@ export default function CenterPerformance({ analytics, isPersonnel }) {
                                             iconType="square" 
                                             iconSize={10}
                                             formatter={(value) => (
-                                                <span className="text-slate-500 text-xs font-semibold">
+                                                <span className="text-slate-500 dark:text-slate-400 text-xs font-semibold">
                                                     {value === "remaining" ? "Available Slots" : "Current Occupants"}
                                                 </span>
                                             )}
@@ -118,7 +118,7 @@ export default function CenterPerformance({ analytics, isPersonnel }) {
                     {/* Centers detail utilization list */}
                     <div className="overflow-x-auto">
                         <Table>
-                            <TableHeader className="text-xs uppercase bg-slate-50 text-slate-500">
+                            <TableHeader className="text-xs uppercase bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400">
                                 <TableRow>
                                     <TableHead className="px-6 py-4 font-black">Evacuation Center</TableHead>
                                     <TableHead className="px-6 py-4 font-black text-center">Households</TableHead>
@@ -130,14 +130,14 @@ export default function CenterPerformance({ analytics, isPersonnel }) {
                             </TableHeader>
                             <tbody className="divide-y divide-slate-100">
                                 {analytics.center_performance.map((center) => (
-                                    <TableRow key={center.center_id} className="hover:bg-slate-50/80 transition-colors">
-                                        <TableCell className="px-6 py-4 font-black text-slate-800">{center.name}</TableCell>
-                                        <TableCell className="px-6 py-4 text-center font-bold text-slate-700">{center.households}</TableCell>
-                                        <TableCell className="px-6 py-4 text-center font-black text-slate-800">{center.occupancy}</TableCell>
+                                    <TableRow key={center.center_id} className="hover:bg-slate-50 dark:bg-slate-800/50/80 transition-colors">
+                                        <TableCell className="px-6 py-4 font-black text-slate-800 dark:text-slate-100">{center.name}</TableCell>
+                                        <TableCell className="px-6 py-4 text-center font-bold text-slate-700 dark:text-slate-200">{center.households}</TableCell>
+                                        <TableCell className="px-6 py-4 text-center font-black text-slate-800 dark:text-slate-100">{center.occupancy}</TableCell>
                                         <TableCell className="px-6 py-4 text-center font-bold text-slate-400">{center.capacity}</TableCell>
                                         <TableCell className="px-6 py-4 min-w-[200px]">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
+                                                <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
                                                     <div 
                                                         style={{ width: `${Math.min(center.utilization_pct, 100)}%` }} 
                                                         className={`h-full rounded-full transition-all duration-500
@@ -171,8 +171,8 @@ export default function CenterPerformance({ analytics, isPersonnel }) {
 
                 </div>
             ) : (
-                <div className="flex flex-col items-center justify-center py-10 text-slate-500">
-                    <AlertTriangle size={36} className="text-slate-600 mb-2" />
+                <div className="flex flex-col items-center justify-center py-10 text-slate-500 dark:text-slate-400">
+                    <AlertTriangle size={36} className="text-slate-600 dark:text-slate-300 mb-2" />
                     No evacuation centers are linked to the selected scope.
                 </div>
             )}

@@ -39,7 +39,7 @@ export default function EventManagement() {
       />
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-slate-200/80">
+        <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/80">
           <div className="w-7 h-7 border-[2.5px] border-blue-600 border-t-transparent rounded-full animate-spin" />
           <p className="text-slate-400 text-sm mt-3 font-medium">Loading events...</p>
         </div>

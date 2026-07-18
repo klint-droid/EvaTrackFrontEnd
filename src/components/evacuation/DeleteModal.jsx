@@ -14,7 +14,7 @@ export function DeleteModal({ isOpen, onClose, onConfirm }) {
       />
 
       {/* 📦 ULTRA-COMPACT DELETE CARD */}
-      <div className="relative bg-white rounded-[1.5rem] shadow-2xl w-full max-w-[280px] overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
+      <div className="relative bg-white dark:bg-slate-900 rounded-[1.5rem] shadow-2xl w-full max-w-[280px] overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-700">
         
         {/* Tighter Padding for small look */}
         <div className="p-6 text-center">
@@ -23,8 +23,8 @@ export function DeleteModal({ isOpen, onClose, onConfirm }) {
             <AlertTriangle size={24} />
           </div>
           
-          <h2 className="text-lg font-black text-slate-800 mb-1.5 tracking-tight">Delete Center?</h2>
-          <p className="text-[11px] text-slate-500 leading-relaxed font-medium px-1">
+          <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 mb-1.5 tracking-tight">Delete Center?</h2>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium px-1">
             This facility and its records will be permanently removed.
           </p>
         </div>
@@ -33,14 +33,14 @@ export function DeleteModal({ isOpen, onClose, onConfirm }) {
         <div className="px-6 pb-6 flex flex-col gap-2">
           <button
             onClick={onConfirm}
-            className="w-full py-2.5 bg-red-600 text-white text-[10px] font-black rounded-xl shadow-lg shadow-red-600/20 hover:bg-red-700 active:scale-95 transition-all uppercase tracking-widest"
+            className="w-full py-2.5 bg-red-600 text-white text-[10px] font-black rounded-xl shadow-lg dark:shadow-none shadow-red-600/20 hover:bg-red-700 active:scale-95 transition-all uppercase tracking-widest"
           >
             Confirm Delete
           </button>
           
           <button 
             onClick={onClose} 
-            className="w-full py-1.5 text-[9px] font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-[0.2em]"
+            className="w-full py-1.5 text-[9px] font-bold text-slate-400 hover:text-slate-600 dark:text-slate-300 transition-colors uppercase tracking-[0.2em]"
           >
             Cancel
           </button>

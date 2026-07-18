@@ -273,13 +273,13 @@ export default function EvacuationDetail() {
                         <div className="w-48 h-8 bg-slate-200 rounded-lg" />
                         <div className="w-24 h-5 bg-slate-200 rounded-full ml-3" />
                     </div>
-                    <div className="w-64 h-4 bg-slate-100 rounded-md ml-10" />
+                    <div className="w-64 h-4 bg-slate-100 dark:bg-slate-800 rounded-md ml-10" />
                 </div>
 
                 {/* Stats Skeleton */}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {[1, 2, 3].map(i => (
-                        <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 space-y-2 shadow-sm">
+                        <div key={i} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-2 shadow-sm dark:shadow-none">
                             <div className="w-24 h-3 bg-slate-200 rounded uppercase" />
                             <div className="w-12 h-8 bg-slate-200 rounded-md" />
                         </div>
@@ -287,7 +287,7 @@ export default function EvacuationDetail() {
                 </div>
 
                 {/* Tabs Skeleton */}
-                <div className="border-b border-slate-200 flex space-x-8 pb-4">
+                <div className="border-b border-slate-200 dark:border-slate-700 flex space-x-8 pb-4">
                     <div className="w-40 h-6 bg-slate-200 rounded-md" />
                     <div className="w-48 h-6 bg-slate-200 rounded-md" />
                 </div>
@@ -297,13 +297,13 @@ export default function EvacuationDetail() {
                     <div className="flex justify-between items-center mb-2">
                         <div className="space-y-2">
                             <div className="w-48 h-6 bg-slate-200 rounded-md" />
-                            <div className="w-64 h-4 bg-slate-100 rounded-md" />
+                            <div className="w-64 h-4 bg-slate-100 dark:bg-slate-800 rounded-md" />
                         </div>
                         <div className="w-24 h-9 bg-slate-200 rounded-lg" />
                     </div>
                     
-                    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-                        <div className="bg-slate-50 border-b border-slate-200 p-4 flex gap-8">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm dark:shadow-none">
+                        <div className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 p-4 flex gap-8">
                             {[1, 2, 3, 4, 5].map(i => (
                                 <div key={i} className="w-24 h-4 bg-slate-200 rounded-md" />
                             ))}
@@ -333,54 +333,54 @@ export default function EvacuationDetail() {
                 <div className="flex items-center gap-1">
                     <button
                         onClick={() => navigate('/evacuation-centers')}
-                        className="p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer text-slate-600 hover:text-slate-900 flex-shrink-0"
+                        className="p-2 hover:bg-slate-100 dark:bg-slate-800 rounded-full transition-colors cursor-pointer text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:text-slate-50 flex-shrink-0"
                         title="Back to Evacuation Centers"
                     >
                         <ArrowLeft size={20} />
                     </button>
-                    <h1 className="text-2xl font-bold text-slate-900 leading-none">{center.name}</h1>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 leading-none">{center.name}</h1>
                     <span className={`ml-3 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border ${
                         center.current_event
                           ? "text-blue-600 bg-blue-50 border-blue-100"
-                          : "text-slate-500 bg-slate-50 border-slate-200"
+                          : "text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700"
                     }`}>
                         {center.current_event?.name || "No Event Assigned"}
                     </span>
                 </div>
-                <p className="text-sm text-slate-500 pl-10 text-left">
+                <p className="text-sm text-slate-500 dark:text-slate-400 pl-10 text-left">
                     {center.osm_address}
                 </p>
             </div>
 
             {/* Center Stats */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="bg-white rounded-xl border p-4">
-                    <p className="text-xs text-slate-500 uppercase font-bold mb-1">Total Capacity</p>
-                    <p className="text-2xl font-black text-slate-800">{center.capacity}</p>
+                <div className="bg-white dark:bg-slate-900 rounded-xl border p-4">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold mb-1">Total Capacity</p>
+                    <p className="text-2xl font-black text-slate-800 dark:text-slate-100">{center.capacity}</p>
                 </div>
 
-                <div className="bg-white rounded-xl border p-4">
-                    <p className="text-xs text-slate-500 uppercase font-bold mb-1">Total Units</p>
-                    <p className="text-2xl font-black text-slate-800">{units.length}</p>
+                <div className="bg-white dark:bg-slate-900 rounded-xl border p-4">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold mb-1">Total Units</p>
+                    <p className="text-2xl font-black text-slate-800 dark:text-slate-100">{units.length}</p>
                 </div>
 
-                <div className="bg-white rounded-xl border p-4">
-                    <p className="text-xs text-slate-500 uppercase font-bold mb-1">Occupied Slots</p>
-                    <p className="text-2xl font-black text-slate-800">
+                <div className="bg-white dark:bg-slate-900 rounded-xl border p-4">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold mb-1">Occupied Slots</p>
+                    <p className="text-2xl font-black text-slate-800 dark:text-slate-100">
                         {units.reduce((sum, u) => sum + (parseInt(u.current_occupancy) || 0), 0)}
                     </p>
                 </div>
             </div>
 
             {/* Tabs Navigation */}
-            <div className="border-b border-slate-200">
+            <div className="border-b border-slate-200 dark:border-slate-700">
                 <nav className="flex space-x-8" aria-label="Tabs">
                     <button
                         onClick={() => setActiveTab('units')}
                         className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-all whitespace-nowrap cursor-pointer ${
                             activeTab === 'units'
                                 ? 'border-blue-600 text-blue-600'
-                                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:border-slate-600'
                         }`}
                     >
                         <Home size={16} />
@@ -388,7 +388,7 @@ export default function EvacuationDetail() {
                         <span className={`ml-1.5 px-2 py-0.5 text-xs font-semibold rounded-full transition-all ${
                             activeTab === 'units'
                                 ? 'bg-blue-100 text-blue-800'
-                                : 'bg-slate-100 text-slate-600'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
                         }`}>
                             {units.length}
                         </span>
@@ -399,7 +399,7 @@ export default function EvacuationDetail() {
                         className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-all whitespace-nowrap cursor-pointer ${
                             activeTab === 'households'
                                 ? 'border-blue-600 text-blue-600'
-                                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:border-slate-600'
                         }`}
                     >
                         <Users size={16} />
@@ -407,7 +407,7 @@ export default function EvacuationDetail() {
                         <span className={`ml-1.5 px-2 py-0.5 text-xs font-semibold rounded-full transition-all ${
                             activeTab === 'households'
                                 ? 'bg-blue-100 text-blue-800'
-                                : 'bg-slate-100 text-slate-600'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
                         }`}>
                             {evacuatedHouseholds.length}
                         </span>
@@ -421,8 +421,8 @@ export default function EvacuationDetail() {
                     {/* Tab Header & Action */}
                     <div className="flex items-center justify-between mb-2">
                         <div>
-                            <h2 className="text-lg font-bold text-slate-800">Accommodation Units</h2>
-                            <p className="text-sm text-slate-500">Manage housing structures and unit allocations.</p>
+                            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Accommodation Units</h2>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Manage housing structures and unit allocations.</p>
                         </div>
 
                         {canEditUnits && (
@@ -441,20 +441,20 @@ export default function EvacuationDetail() {
 
                     {/* Units List */}
                     {units.length === 0 ? (
-                        <div className="bg-white rounded-xl border p-8 text-center text-slate-400">
+                        <div className="bg-white dark:bg-slate-900 rounded-xl border p-8 text-center text-slate-400">
                             No units yet. Add one to get started.
                         </div>
                     ) : (
-                        <div className="bg-white rounded-xl border overflow-hidden">
+                        <div className="bg-white dark:bg-slate-900 rounded-xl border overflow-hidden">
                             <div className="overflow-x-auto">
                                 <Table>
-                                    <TableHeader className="bg-slate-50">
+                                    <TableHeader className="bg-slate-50 dark:bg-slate-800/50">
                                         <TableRow>
-                                            <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs w-[250px]">Unit</TableHead>
-                                            <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">Type</TableHead>
-                                            <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">Capacity</TableHead>
-                                            <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">Occupancy Status</TableHead>
-                                            <TableHead className="px-4 py-3 text-right font-bold text-slate-500 uppercase text-xs w-[200px]">Actions</TableHead>
+                                            <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs w-[250px]">Unit</TableHead>
+                                            <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">Type</TableHead>
+                                            <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">Capacity</TableHead>
+                                            <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">Occupancy Status</TableHead>
+                                            <TableHead className="px-4 py-3 text-right font-bold text-slate-500 dark:text-slate-400 uppercase text-xs w-[200px]">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <tbody className="divide-y divide-slate-200">
@@ -466,30 +466,30 @@ export default function EvacuationDetail() {
 
                                             return (
                                                 <Fragment key={unit.unit_id}>
-                                                    <TableRow className="hover:bg-slate-50 transition-colors">
+                                                    <TableRow className="hover:bg-slate-50 dark:bg-slate-800/50 transition-colors">
                                                         <TableCell className="px-4 py-3">
                                                             <div className="flex items-center gap-3">
                                                                 <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 border border-blue-100">
                                                                     <Home size={14} />
                                                                 </div>
-                                                                <p className="font-bold text-slate-800">{unit.name}</p>
+                                                                <p className="font-bold text-slate-800 dark:text-slate-100">{unit.name}</p>
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="px-4 py-3">
-                                                            <span className="text-xs text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md font-semibold">
+                                                            <span className="text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-md font-semibold">
                                                                 {unit.type?.type_label || 'Unknown'}
                                                             </span>
                                                         </TableCell>
                                                         <TableCell className="px-4 py-3">
                                                             <div className="flex items-center gap-1.5 text-sm">
                                                                 <Users size={14} className="text-slate-400" />
-                                                                <span className="font-bold text-slate-700">{occupancy}</span>
+                                                                <span className="font-bold text-slate-700 dark:text-slate-200">{occupancy}</span>
                                                                 <span className="text-slate-400">/ {capacity}</span>
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="px-4 py-3">
                                                             <div className="flex items-center gap-2 max-w-[150px]">
-                                                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                                <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                                                     <div
                                                                         className={`h-full rounded-full transition-all ${
                                                                             percent >= 90 ? 'bg-red-500' : percent >= 70 ? 'bg-amber-500' : 'bg-emerald-500'
@@ -497,7 +497,7 @@ export default function EvacuationDetail() {
                                                                         style={{ width: `${percent}%` }}
                                                                     />
                                                                 </div>
-                                                                <span className="text-[11px] font-black text-slate-600 w-8">{percent}%</span>
+                                                                <span className="text-[11px] font-black text-slate-600 dark:text-slate-300 w-8">{percent}%</span>
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="px-4 py-3 text-right">
@@ -517,7 +517,7 @@ export default function EvacuationDetail() {
                                                                                 setEditingUnit(unit);
                                                                                 setUnitModal(true);
                                                                             }}
-                                                                            className="p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 rounded transition-colors"
+                                                                            className="p-1.5 text-slate-400 hover:bg-slate-100 dark:bg-slate-800 hover:text-slate-700 dark:text-slate-200 rounded transition-colors"
                                                                             title="Edit Unit"
                                                                         >
                                                                             <Edit2 size={15} />
@@ -538,7 +538,7 @@ export default function EvacuationDetail() {
                                                                 )}
                                                                 <button
                                                                     onClick={() => toggleUnit(unit.unit_id)}
-                                                                    className={`p-1.5 rounded transition-colors ${isExpanded ? 'bg-slate-200 text-slate-700' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'}`}
+                                                                    className={`p-1.5 rounded transition-colors ${isExpanded ? 'bg-slate-200 text-slate-700 dark:text-slate-200' : 'text-slate-400 hover:bg-slate-100 dark:bg-slate-800 hover:text-slate-700 dark:text-slate-200'}`}
                                                                     title={isExpanded ? "Hide allocations" : "Show allocations"}
                                                                 >
                                                                     {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
@@ -550,7 +550,7 @@ export default function EvacuationDetail() {
                                                     {isExpanded && (
                                                         <TableRow>
                                                             <TableCell colSpan="5" className="p-0 border-b-0">
-                                                                <div className="bg-slate-50 border-t border-slate-100 p-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]">
+                                                                <div className="bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 p-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]">
                                                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">
                                                                         Assigned Households
                                                                     </p>
@@ -564,7 +564,7 @@ export default function EvacuationDetail() {
                                                                             {allocations[unit.unit_id].map(alloc => (
                                                                                 <div
                                                                                     key={alloc.allocation_id}
-                                                                                    className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
+                                                                                    className="flex items-center justify-between bg-white dark:bg-slate-900 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-none hover:shadow-md dark:shadow-none transition-shadow"
                                                                                 >
                                                                                     <div className="flex items-center gap-3">
                                                                                         <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100">
@@ -572,11 +572,11 @@ export default function EvacuationDetail() {
                                                                                         </div>
 
                                                                                         <div>
-                                                                                            <p className="text-sm font-bold text-slate-800 leading-tight">
+                                                                                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">
                                                                                                 {alloc.evacuation_record?.household?.household_name}
                                                                                             </p>
 
-                                                                                            <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                                                                                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
                                                                                                 {alloc.evacuation_record?.evacuated_count} members
                                                                                             </p>
                                                                                         </div>
@@ -612,46 +612,46 @@ export default function EvacuationDetail() {
 
                             {/* Pagination Controls */}
                             {unitsMeta && unitsMeta.last_page > 1 && (
-                                <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-slate-200">
+                                <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700">
                                     <div className="flex flex-1 justify-between sm:hidden">
                                         <button 
                                             onClick={() => fetchUnits(unitsPage - 1)} 
                                             disabled={unitsPage === 1} 
-                                            className="relative inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                                            className="relative inline-flex items-center rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:bg-slate-800/50 disabled:opacity-50"
                                         >
                                             Previous
                                         </button>
                                         <button 
                                             onClick={() => fetchUnits(unitsPage + 1)} 
                                             disabled={unitsPage === unitsMeta.last_page} 
-                                            className="relative ml-3 inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                                            className="relative ml-3 inline-flex items-center rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:bg-slate-800/50 disabled:opacity-50"
                                         >
                                             Next
                                         </button>
                                     </div>
                                     <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                                         <div>
-                                            <p className="text-sm text-slate-700">
+                                            <p className="text-sm text-slate-700 dark:text-slate-200">
                                                 Showing <span className="font-bold">{unitsMeta.from || 0}</span> to <span className="font-bold">{unitsMeta.to || 0}</span> of <span className="font-bold">{unitsMeta.total || 0}</span> units
                                             </p>
                                         </div>
                                         <div>
-                                            <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                            <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm dark:shadow-none" aria-label="Pagination">
                                                 <button
                                                     onClick={() => fetchUnits(unitsPage - 1)}
                                                     disabled={unitsPage === 1}
-                                                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 transition-colors"
+                                                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-800/50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 transition-colors"
                                                 >
                                                     <span className="sr-only">Previous</span>
                                                     <ChevronLeft size={16} aria-hidden="true" />
                                                 </button>
-                                                <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:outline-offset-0">
+                                                <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-slate-900 dark:text-slate-50 ring-1 ring-inset ring-slate-300 focus:outline-offset-0">
                                                     Page {unitsPage} of {unitsMeta.last_page}
                                                 </span>
                                                 <button
                                                     onClick={() => fetchUnits(unitsPage + 1)}
                                                     disabled={unitsPage === unitsMeta.last_page}
-                                                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 transition-colors"
+                                                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-800/50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 transition-colors"
                                                 >
                                                     <span className="sr-only">Next</span>
                                                     <ChevronRight size={16} aria-hidden="true" />
@@ -671,8 +671,8 @@ export default function EvacuationDetail() {
                     {/* Tab Header & Actions */}
                     <div className="flex items-center justify-between mb-2">
                         <div>
-                            <h2 className="text-lg font-bold text-slate-800">Evacuated Households</h2>
-                            <p className="text-sm text-slate-500">
+                            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Evacuated Households</h2>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
                                 Households currently evacuated and verified in this center.
                             </p>
                         </div>
@@ -693,7 +693,7 @@ export default function EvacuationDetail() {
 
                             <button
                                 onClick={() => fetchEvacuatedHouseholds(selectedEventId)}
-                                className="flex items-center gap-2 px-3 py-2.5 text-xs font-bold border rounded-xl hover:bg-slate-50 cursor-pointer"
+                                className="flex items-center gap-2 px-3 py-2.5 text-xs font-bold border rounded-xl hover:bg-slate-50 dark:bg-slate-800/50 cursor-pointer"
                             >
                                 <RefreshCw size={15} />
                                 Refresh
@@ -704,7 +704,7 @@ export default function EvacuationDetail() {
                                 <button
                                     onClick={() => setExportDropdown(prev => !prev)}
                                     disabled={exporting || evacuatedHouseholds.length === 0}
-                                    className="flex items-center gap-2 px-3 py-2 text-sm border rounded-lg hover:bg-slate-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex items-center gap-2 px-3 py-2 text-sm border rounded-lg hover:bg-slate-50 dark:bg-slate-800/50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {exporting ? (
                                         <RefreshCw size={15} className="animate-spin" />
@@ -716,27 +716,27 @@ export default function EvacuationDetail() {
                                 </button>
 
                                 {exportDropdown && (
-                                    <div className="absolute right-0 top-full mt-1 w-64 bg-white rounded-xl border shadow-lg z-50 overflow-hidden">
-                                        <div className="px-3 py-2 bg-slate-50 border-b">
-                                            <p className="text-xs font-bold text-slate-500 uppercase">Export Type</p>
+                                    <div className="absolute right-0 top-full mt-1 w-64 bg-white dark:bg-slate-900 rounded-xl border shadow-lg dark:shadow-none z-50 overflow-hidden">
+                                        <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border-b">
+                                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Export Type</p>
                                         </div>
                                         <button
                                             onClick={() => handleExport('household')}
-                                            className="w-full flex items-start gap-3 px-3 py-3 hover:bg-slate-50 transition-colors cursor-pointer text-left"
+                                            className="w-full flex items-start gap-3 px-3 py-3 hover:bg-slate-50 dark:bg-slate-800/50 transition-colors cursor-pointer text-left"
                                         >
                                             <FileSpreadsheet size={18} className="text-blue-500 mt-0.5 flex-shrink-0" />
                                             <div>
-                                                <p className="text-sm font-semibold text-slate-800">Household Summary</p>
+                                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Household Summary</p>
                                                 <p className="text-xs text-slate-400">1 row per household — overview with unit and contact info</p>
                                             </div>
                                         </button>
                                         <button
                                             onClick={() => handleExport('member')}
-                                            className="w-full flex items-start gap-3 px-3 py-3 hover:bg-slate-50 transition-colors cursor-pointer text-left border-t"
+                                            className="w-full flex items-start gap-3 px-3 py-3 hover:bg-slate-50 dark:bg-slate-800/50 transition-colors cursor-pointer text-left border-t"
                                         >
                                             <Users size={18} className="text-emerald-500 mt-0.5 flex-shrink-0" />
                                             <div>
-                                                <p className="text-sm font-semibold text-slate-800">Member Detail</p>
+                                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Member Detail</p>
                                                 <p className="text-xs text-slate-400">1 row per member — includes age, gender, vulnerabilities</p>
                                             </div>
                                         </button>
@@ -756,30 +756,30 @@ export default function EvacuationDetail() {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-xl border overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border overflow-hidden">
                         <div className="overflow-x-auto">
                             <Table>
-                                <TableHeader className="bg-slate-50">
+                                <TableHeader className="bg-slate-50 dark:bg-slate-800/50">
                                     <TableRow>
-                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">
+                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">
                                             Household
                                         </TableHead>
-                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">
+                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">
                                             Contact
                                         </TableHead>
-                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">
+                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">
                                             Members
                                         </TableHead>
-                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">
+                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">
                                             Unit
                                         </TableHead>
-                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">
+                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">
                                             Method
                                         </TableHead>
-                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 uppercase text-xs">
+                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">
                                             Verified At
                                         </TableHead>
-                                        <TableHead className="px-4 py-3 text-right font-bold text-slate-500 uppercase text-xs">
+                                        <TableHead className="px-4 py-3 text-right font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">
                                             Actions
                                         </TableHead>
                                     </TableRow>
@@ -802,11 +802,11 @@ export default function EvacuationDetail() {
                                         evacuatedHouseholds.map(record => (
                                             <TableRow
                                                 key={record.evacuation_id}
-                                                className="border-b last:border-b-0 hover:bg-slate-50"
+                                                className="border-b last:border-b-0 hover:bg-slate-50 dark:bg-slate-800/50"
                                             >
                                                 <TableCell className="px-4 py-3">
                                                     <div>
-                                                        <p className="font-semibold text-slate-800">
+                                                        <p className="font-semibold text-slate-800 dark:text-slate-100">
                                                             {record.household?.household_name || 'Unnamed Household'}
                                                         </p>
                                                         <p className="text-xs text-slate-400">
@@ -815,25 +815,25 @@ export default function EvacuationDetail() {
                                                     </div>
                                                 </TableCell>
 
-                                                <TableCell className="px-4 py-3 text-slate-600">
+                                                <TableCell className="px-4 py-3 text-slate-600 dark:text-slate-300">
                                                     {record.household?.contact_number || '—'}
                                                 </TableCell>
 
-                                                <TableCell className="px-4 py-3 text-slate-600">
+                                                <TableCell className="px-4 py-3 text-slate-600 dark:text-slate-300">
                                                     {record.evacuated_count || record.household?.member_count || 0}
                                                 </TableCell>
 
-                                                <TableCell className="px-4 py-3 text-slate-600">
+                                                <TableCell className="px-4 py-3 text-slate-600 dark:text-slate-300">
                                                     {record.unit_allocations?.[0]?.unit?.name || (
                                                         <span className="text-amber-600 font-medium">Unassigned</span>
                                                     )}
                                                 </TableCell>
 
-                                                <TableCell className="px-4 py-3 text-slate-600 capitalize">
+                                                <TableCell className="px-4 py-3 text-slate-600 dark:text-slate-300 capitalize">
                                                     {record.method || 'manual'}
                                                 </TableCell>
 
-                                                <TableCell className="px-4 py-3 text-slate-600">
+                                                <TableCell className="px-4 py-3 text-slate-600 dark:text-slate-300">
                                                     {formatDateTime(record.verified_at)}
                                                 </TableCell>
 
@@ -845,7 +845,7 @@ export default function EvacuationDetail() {
                                                                     `/households/${record.household_id}?evacuation_id=${record.evacuation_id}&center_id=${id}`
                                                                 )
                                                             }
-                                                            className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border hover:bg-slate-50 cursor-pointer"
+                                                            className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border hover:bg-slate-50 dark:bg-slate-800/50 cursor-pointer"
                                                         >
                                                             <Eye size={13} />
                                                             View/Edit

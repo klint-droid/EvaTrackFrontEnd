@@ -55,7 +55,7 @@ export default function DashboardMetrics({
             {metrics.map((item, i) => {
                 const Icon = item.icon;
                 return (
-                    <div key={i} className={`bg-white/80 backdrop-blur-xl p-4 sm:p-6 rounded-2xl border border-slate-200/60 ${item.border} shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 group flex flex-col justify-between h-28 sm:h-32`}>
+                    <div key={i} className={`bg-white dark:bg-slate-900/80 backdrop-blur-xl p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700/60 ${item.border} shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 group flex flex-col justify-between h-28 sm:h-32`}>
                         <div className="flex justify-between items-start">
                             <span className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
                             <Icon size={18} className={item.color} />
@@ -64,12 +64,12 @@ export default function DashboardMetrics({
                             {loading ? (
                                 <div className="w-16 h-7 bg-slate-200/50 rounded-md animate-pulse animate-duration-1000" />
                             ) : (
-                                <h2 className="text-lg sm:text-2xl font-black text-slate-800 tracking-tight">{item.val.toLocaleString()}</h2>
+                                <h2 className="text-lg sm:text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{item.val.toLocaleString()}</h2>
                             )}
                             {loading ? (
-                                <div className="w-28 h-3 bg-slate-100 rounded-sm animate-pulse mt-2.5" />
+                                <div className="w-28 h-3 bg-slate-100 dark:bg-slate-800 rounded-sm animate-pulse mt-2.5" />
                             ) : (
-                                <p className="text-[10px] text-slate-500 font-bold mt-1 tracking-tight truncate">{item.sub}</p>
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold mt-1 tracking-tight truncate">{item.sub}</p>
                             )}
                         </div>
                     </div>

@@ -7,10 +7,10 @@ export default function HistoricalEventsLog({
   disasterTypes, historyLoading, historicalEvents, fetchHistory, setViewingEvent
 }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mb-4">
-      <div className="px-6 py-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden mb-4">
+      <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h2 className="text-sm font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
+          <h2 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 flex items-center gap-2">
             <Archive size={17} className="text-slate-400" />
             Historical Operations Log
           </h2>
@@ -25,7 +25,7 @@ export default function HistoricalEventsLog({
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all ${
               (filters.type_id || filters.start_date || filters.end_date) || showFilters
                 ? 'bg-blue-50 border-blue-200 text-blue-700'
-                : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:bg-slate-800/50'
             }`}
           >
             <Filter size={16} />
@@ -38,9 +38,9 @@ export default function HistoricalEventsLog({
           </button>
 
           {showFilters && (
-            <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-200 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-200 dark:border-slate-700 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-slate-800">Advanced Filters</h3>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Advanced Filters</h3>
                 {(filters.type_id || filters.start_date || filters.end_date) && (
                   <button 
                     onClick={() => setFilters({type_id: '', start_date: '', end_date: ''})}
@@ -56,7 +56,7 @@ export default function HistoricalEventsLog({
                   <select
                     value={filters.type_id}
                     onChange={e => setFilters(prev => ({...prev, type_id: e.target.value}))}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
                   >
                     <option value="">All Types</option>
                     {disasterTypes.map(type => (
@@ -71,7 +71,7 @@ export default function HistoricalEventsLog({
                     value={filters.start_date}
                     onChange={e => setFilters(prev => ({...prev, start_date: e.target.value}))}
                     onClick={e => e.target.showPicker && e.target.showPicker()}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
                   />
                 </div>
                 <div>
@@ -81,7 +81,7 @@ export default function HistoricalEventsLog({
                     value={filters.end_date}
                     onChange={e => setFilters(prev => ({...prev, end_date: e.target.value}))}
                     onClick={e => e.target.showPicker && e.target.showPicker()}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
                   />
                 </div>
               </div>
@@ -91,7 +91,7 @@ export default function HistoricalEventsLog({
       </div>
 
       {historyLoading ? (
-        <div className="px-6 py-12 text-center text-sm text-slate-500">
+        <div className="px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-400">
           Loading historical operations...
         </div>
       ) : historicalEvents.length === 0 ? (
@@ -103,9 +103,9 @@ export default function HistoricalEventsLog({
         <div className="overflow-x-auto">
           <table className="min-w-full text-left">
             <thead>
-              <tr className="bg-slate-900">
+              <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
                 {['Event ID', 'Name', 'Type', 'Severity', 'Duration', 'Status', 'Command'].map(h => (
-                  <th key={h} className="px-6 py-3.5 text-[10px] font-bold text-white uppercase tracking-wider">
+                  <th key={h} className="px-6 py-3.5 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     {h}
                   </th>
                 ))}
@@ -127,14 +127,14 @@ export default function HistoricalEventsLog({
                 }
 
                 return (
-                  <tr key={event.event_id} className="hover:bg-slate-50/20 transition-colors group">
+                  <tr key={event.event_id} className="hover:bg-slate-50 dark:bg-slate-800/50/20 transition-colors group">
                     <td className="px-6 py-4.5 font-mono text-xs text-slate-400">{event.event_id}</td>
-                    <td className="px-6 py-4.5 font-bold text-slate-800">{event.name}</td>
-                    <td className="px-6 py-4.5 text-xs text-slate-500">{event.primary_type?.type_name || '—'}</td>
+                    <td className="px-6 py-4.5 font-bold text-slate-800 dark:text-slate-100">{event.name}</td>
+                    <td className="px-6 py-4.5 text-xs text-slate-500 dark:text-slate-400">{event.primary_type?.type_name || '—'}</td>
                     <td className="px-6 py-4.5">
                       <SeverityBadge severity={event.severity} />
                     </td>
-                    <td className="px-6 py-4.5 text-xs text-slate-500">{durationStr}</td>
+                    <td className="px-6 py-4.5 text-xs text-slate-500 dark:text-slate-400">{durationStr}</td>
                     <td className="px-6 py-4.5">
                       <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
                         <CheckCircle2 size={14} />
@@ -145,7 +145,7 @@ export default function HistoricalEventsLog({
                       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
                         <button
                           onClick={() => setViewingEvent(event)}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all shadow-sm hover:shadow"
+                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all  hover:shadow"
                           title="View Details & Logs"
                         >
                           <Eye size={14} />
@@ -161,8 +161,8 @@ export default function HistoricalEventsLog({
             </tbody>
           </table>
           
-          <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-            <p className="text-xs font-medium text-slate-500">
+          <div className="px-6 py-3.5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
               Page {historyPagination.current_page || 1} of {historyPagination.last_page || 1}
               {' · '}
               {historyPagination.total || 0} total records
@@ -171,14 +171,14 @@ export default function HistoricalEventsLog({
               <button
                 disabled={!historyPagination.prev_page_url}
                 onClick={() => fetchHistory(historyPagination.current_page - 1)}
-                className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+                className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg disabled:opacity-30 hover:bg-slate-50 dark:bg-slate-800/50 transition-all  active:scale-95"
               >
                 <ChevronLeft size={14} />
               </button>
               <button
                 disabled={!historyPagination.next_page_url}
                 onClick={() => fetchHistory(historyPagination.current_page + 1)}
-                className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+                className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg disabled:opacity-30 hover:bg-slate-50 dark:bg-slate-800/50 transition-all  active:scale-95"
               >
                 <ChevronRight size={14} />
               </button>

@@ -34,17 +34,17 @@ const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || !payload.length) return null;
     const entry = payload[0].payload;
     return (
-        <div className="bg-white border border-slate-200 rounded-xl shadow-lg p-4 text-sm">
-            <p className="font-bold text-slate-800 mb-2">{label}</p>
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg dark:shadow-none p-4 text-sm">
+            <p className="font-bold text-slate-800 dark:text-slate-100 mb-2">{label}</p>
             <div className="flex items-center gap-2 mb-1">
                 <span className="w-3 h-3 rounded-sm bg-[#4472C4] inline-block" />
-                <span className="text-slate-600">Capacity:</span>
-                <span className="font-bold text-slate-800">{entry?.rawCapacity}</span>
+                <span className="text-slate-600 dark:text-slate-300">Capacity:</span>
+                <span className="font-bold text-slate-800 dark:text-slate-100">{entry?.rawCapacity}</span>
             </div>
             <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-sm bg-[#ED7D31] inline-block" />
-                <span className="text-slate-600">Occupancy:</span>
-                <span className="font-bold text-slate-800">{entry?.rawCount}</span>
+                <span className="text-slate-600 dark:text-slate-300">Occupancy:</span>
+                <span className="font-bold text-slate-800 dark:text-slate-100">{entry?.rawCount}</span>
             </div>
         </div>
     );

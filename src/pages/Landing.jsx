@@ -62,7 +62,7 @@ const createCustomIcon = (colorKey) => {
     className: 'bg-transparent border-none', // Override leaflet defaults
     html: `
       <div class="relative group" style="width: 12px; height: 12px;">
-        <span class="block h-3 w-3 rounded-full ${config.dot} shadow-lg ${config.glow}"></span>
+        <span class="block h-3 w-3 rounded-full ${config.dot} shadow-lg dark:shadow-none ${config.glow}"></span>
         <span class="absolute inset-0 h-3 w-3 rounded-full ${config.dot} animate-ping opacity-60"></span>
       </div>
     `,
@@ -158,7 +158,7 @@ const Landing = () => {
           <div className="max-w-7xl mx-auto px-5 sm:px-8 py-2.5 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 relative">
             {activeEvents.map((evt) => (
               <div key={evt.event_id} className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 animate-pulse">
+                <div className="w-5 h-5 rounded-full bg-white dark:bg-slate-900/20 flex items-center justify-center flex-shrink-0 animate-pulse">
                   <AlertTriangle size={12} className="text-white" />
                 </div>
                 <span className="text-[13px] font-semibold text-white/95 tracking-wide uppercase">
@@ -173,7 +173,7 @@ const Landing = () => {
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiBmaWxsPSJ0cmFuc3BhcmVudCIvPjxjaXJjbGUgY3g9IjEwIiBjeT0iMTAiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNikiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IGZpbGw9InVybCgjZykiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiLz48L3N2Zz4=')] opacity-30" />
           <div className="max-w-7xl mx-auto px-5 sm:px-8 py-2 flex items-center justify-center gap-3 relative">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+              <div className="w-4 h-4 rounded-full bg-white dark:bg-slate-900/20 flex items-center justify-center flex-shrink-0">
                 <Shield size={10} className="text-white" />
               </div>
               <span className="text-[11.5px] font-semibold text-white/90 tracking-wider uppercase">
@@ -220,7 +220,7 @@ const Landing = () => {
               <div className="flex flex-wrap gap-3 pt-1">
                 <Link
                   to="/portal"
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500 transition-all duration-200 shadow-lg shadow-blue-600/25 hover:shadow-blue-500/30 group"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500 transition-all duration-200 shadow-lg dark:shadow-none shadow-blue-600/25 hover:shadow-blue-500/30 group"
                 >
                   <Search size={16} />
                   Find Center
@@ -228,7 +228,7 @@ const Landing = () => {
                 </Link>
                 <Link
                   to="/login"
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-white/[0.06] text-slate-300 text-sm font-semibold border border-white/[0.08] hover:bg-white/[0.1] hover:text-white hover:border-white/[0.15] transition-all duration-200"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-white dark:bg-slate-900/[0.06] text-slate-300 text-sm font-semibold border border-white/[0.08] hover:bg-white dark:bg-slate-900/[0.1] hover:text-white hover:border-white/[0.15] transition-all duration-200"
                 >
                   <LogIn size={16} />
                   Responder Login
@@ -279,7 +279,7 @@ const Landing = () => {
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] font-semibold text-slate-400 tracking-wider uppercase">Live Feed</span>
                         <span className="text-[11px] font-mono font-bold text-slate-300">{formattedTime}</span>
-                        <span className="text-[10px] font-semibold text-slate-500">PHT</span>
+                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">PHT</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span className="relative flex h-2 w-2">
@@ -311,7 +311,7 @@ const Landing = () => {
       </section>
 
       {/* ━━━ STATISTICS STRIP ━━━ */}
-      <section className="border-b border-slate-200/80 bg-white">
+      <section className="border-b border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-900">
         <div className="max-w-7xl mx-auto px-5 sm:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-slate-100">
             {[
@@ -319,14 +319,14 @@ const Landing = () => {
                 value: stats.total_centers,
                 label: "Active Centers",
                 icon: Building2,
-                color: "text-slate-800",
+                color: "text-slate-800 dark:text-slate-100",
                 iconBg: "bg-blue-50 text-blue-600",
               },
               {
                 value: stats.total_evacuees.toLocaleString(),
                 label: "Total Evacuees",
                 icon: Users,
-                color: "text-slate-800",
+                color: "text-slate-800 dark:text-slate-100",
                 iconBg: "bg-indigo-50 text-indigo-600",
               },
               {
@@ -340,8 +340,8 @@ const Landing = () => {
                 value: stats.full_centers,
                 label: "Full Centers",
                 icon: Activity,
-                color: stats.full_centers > 0 ? "text-rose-600" : "text-slate-800",
-                iconBg: stats.full_centers > 0 ? "bg-rose-50 text-rose-600" : "bg-slate-50 text-slate-500",
+                color: stats.full_centers > 0 ? "text-rose-600" : "text-slate-800 dark:text-slate-100",
+                iconBg: stats.full_centers > 0 ? "bg-rose-50 text-rose-600" : "bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400",
               },
             ].map((stat) => {
               const Icon = stat.icon;
@@ -355,7 +355,7 @@ const Landing = () => {
                       {stat.label}
                     </div>
                     {isLoading ? (
-                      <div className="h-8 w-14 bg-slate-100 rounded animate-pulse" />
+                      <div className="h-8 w-14 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
                     ) : (
                       <div className={`text-2xl font-extrabold leading-none ${stat.color}`}>
                         {stat.value}
@@ -373,14 +373,14 @@ const Landing = () => {
       {activeEvents.length > 0 && (
         <section className="max-w-7xl mx-auto px-5 sm:px-8 pt-10 pb-2">
           <div className="mb-6">
-            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
               <span className="flex h-2.5 w-2.5 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600"></span>
               </span>
               Active Disaster Alerts
             </h2>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Ongoing emergency declarations requiring response and preparedness.
             </p>
           </div>
@@ -389,7 +389,7 @@ const Landing = () => {
             {activeEvents.map((event) => (
               <div 
                 key={event.event_id} 
-                className="bg-white rounded-xl border-2 border-rose-100/80 p-5 shadow-sm relative overflow-hidden text-left"
+                className="bg-white dark:bg-slate-900 rounded-xl border-2 border-rose-100/80 p-5 shadow-sm dark:shadow-none relative overflow-hidden text-left"
               >
                 {/* Decorative left accent line */}
                 <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-rose-600" />
@@ -400,7 +400,7 @@ const Landing = () => {
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
                         {event.primary_type?.type_name || "Emergency"}
                       </span>
-                      <h3 className="text-[17px] font-bold text-slate-800 mt-2">
+                      <h3 className="text-[17px] font-bold text-slate-800 dark:text-slate-100 mt-2">
                         {event.name}
                       </h3>
                     </div>
@@ -409,10 +409,10 @@ const Landing = () => {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mt-5 pt-4 border-t border-slate-100">
+                  <div className="grid grid-cols-2 gap-4 mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
                     <div>
                       <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Started On</span>
-                      <span className="text-xs font-semibold text-slate-700 mt-0.5 block">
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 mt-0.5 block">
                         {new Date(event.started_at).toLocaleDateString("en-PH", {
                           month: "short",
                           day: "numeric",
@@ -424,7 +424,7 @@ const Landing = () => {
                     </div>
                     <div>
                       <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Assigned Centers</span>
-                      <span className="text-xs font-semibold text-slate-700 mt-0.5 block">
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 mt-0.5 block">
                         {event.evacuation_centers?.length || 0} Evacuation Center{event.evacuation_centers?.length !== 1 ? "s" : ""}
                       </span>
                     </div>
@@ -441,10 +441,10 @@ const Landing = () => {
         {/* Section header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
           <div>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight">
               Active Evacuation Centers
             </h2>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Real-time occupancy and status reports.
             </p>
           </div>
@@ -461,27 +461,27 @@ const Landing = () => {
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-xl border border-slate-200/80 p-5 animate-pulse">
+              <div key={i} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/80 p-5 animate-pulse">
                 <div className="flex justify-between items-start mb-4">
                   <div className="space-y-2">
-                    <div className="h-5 w-36 bg-slate-100 rounded" />
-                    <div className="h-3.5 w-24 bg-slate-50 rounded" />
+                    <div className="h-5 w-36 bg-slate-100 dark:bg-slate-800 rounded" />
+                    <div className="h-3.5 w-24 bg-slate-50 dark:bg-slate-800/50 rounded" />
                   </div>
-                  <div className="h-6 w-20 bg-slate-100 rounded-full" />
+                  <div className="h-6 w-20 bg-slate-100 dark:bg-slate-800 rounded-full" />
                 </div>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <div className="h-3 w-16 bg-slate-50 rounded" />
-                    <div className="h-3 w-28 bg-slate-50 rounded" />
+                    <div className="h-3 w-16 bg-slate-50 dark:bg-slate-800/50 rounded" />
+                    <div className="h-3 w-28 bg-slate-50 dark:bg-slate-800/50 rounded" />
                   </div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full" />
+                  <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full" />
                 </div>
-                <div className="h-3 w-20 bg-slate-50 rounded mt-4" />
+                <div className="h-3 w-20 bg-slate-50 dark:bg-slate-800/50 rounded mt-4" />
               </div>
             ))}
           </div>
         ) : centers.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-slate-200/80">
+          <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/80">
             <Building2 size={32} className="mx-auto text-slate-300 mb-3" />
             <p className="text-sm font-medium text-slate-400">No active evacuation centers found.</p>
           </div>
@@ -493,17 +493,17 @@ const Landing = () => {
               return (
                 <article
                   key={center.evacuation_center_id}
-                  className="bg-white rounded-xl border border-slate-200/80 hover:border-slate-300/80 p-5 transition-all duration-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] group"
+                  className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/80 hover:border-slate-300/80 p-5 transition-all duration-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] group"
                 >
                   {/* Header */}
                   <div className="flex items-start justify-between gap-3 mb-4">
                     <div className="min-w-0">
-                      <h3 className="text-[15px] font-bold text-slate-800 leading-snug truncate group-hover:text-blue-700 transition-colors">
+                      <h3 className="text-[15px] font-bold text-slate-800 dark:text-slate-100 leading-snug truncate group-hover:text-blue-700 transition-colors">
                         {center.name}
                       </h3>
                       <div className="flex items-center gap-1.5 mt-1.5">
                         <MapPin size={12} className="text-slate-400 flex-shrink-0" />
-                        <span className="text-xs text-slate-500 truncate">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
                           {center.osm_address
                             ? center.osm_address.split(",").slice(0, 2).join(",").trim()
                             : "Location not specified"}
@@ -518,12 +518,12 @@ const Landing = () => {
                   {/* Capacity bar */}
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-500">Occupancy</span>
-                      <span className="text-xs font-bold text-slate-700">
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Occupancy</span>
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
                         {Math.round(percent)}% ({center.current_occupancy || 0}/{center.capacity})
                       </span>
                     </div>
-                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-700 ease-out ${config.bar}`}
                         style={{ width: `${percent}%` }}
@@ -532,7 +532,7 @@ const Landing = () => {
                   </div>
 
                   {/* Footer */}
-                  <div className="flex items-center justify-between mt-4 pt-3.5 border-t border-slate-100/80">
+                  <div className="flex items-center justify-between mt-4 pt-3.5 border-t border-slate-100 dark:border-slate-800/80">
                     <div className="flex items-center gap-1.5 text-slate-400">
                       <Clock size={12} />
                       <span className="text-[11px] font-medium">
@@ -569,18 +569,18 @@ const Landing = () => {
                   <span className="text-sm font-extrabold text-blue-400">Track</span>
                 </div>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Philippine Disaster Management Authority
               </p>
             </div>
 
             {/* Right: Links */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8">
-              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 <Shield size={12} className="text-amber-500/70" />
                 Official Government System
               </div>
-              <div className="flex flex-wrap gap-5 text-xs text-slate-500">
+              <div className="flex flex-wrap gap-5 text-xs text-slate-500 dark:text-slate-400">
                 <a href="#" className="hover:text-slate-300 transition-colors">Privacy Policy</a>
                 <a href="#" className="hover:text-slate-300 transition-colors">Terms of Service</a>
                 <a href="#" className="hover:text-slate-300 transition-colors">Contact Support</a>
@@ -590,7 +590,7 @@ const Landing = () => {
 
           {/* Copyright */}
           <div className="mt-6 pt-5 border-t border-white/[0.04] text-center">
-            <p className="text-[11px] text-slate-600">
+            <p className="text-[11px] text-slate-600 dark:text-slate-300">
               © {new Date().getFullYear()} EvaTrack Philippine Disaster Management Authority. All rights reserved.
             </p>
           </div>

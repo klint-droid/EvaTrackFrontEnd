@@ -19,15 +19,15 @@ const URGENCY_COLORS = {
 
 export default function ResourceRequestsAnalytics({ analytics }) {
     return (
-        <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm space-y-6">
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-6 rounded-2xl shadow-sm dark:shadow-none space-y-6">
             <div className="flex items-center gap-2">
                 <Package className="text-emerald-600" size={20} />
-                <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight">Logistics & Resource Demands</h3>
+                <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 tracking-tight">Logistics & Resource Demands</h3>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Request Status Donut Chart */}
-                <div className="bg-slate-50 border border-slate-100/60 p-5 rounded-2xl flex flex-col justify-between">
+                <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/60 p-5 rounded-2xl flex flex-col justify-between">
                     <div>
                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
                             Request Status Breakdown
@@ -59,19 +59,19 @@ export default function ResourceRequestsAnalytics({ analytics }) {
                     </div>
                     <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
                         {analytics.resource_requests?.status_distribution?.map((item) => (
-                            <div key={item.status_key} className="flex items-center justify-between bg-white border border-slate-100 p-2 rounded-lg">
+                            <div key={item.status_key} className="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-2 rounded-lg">
                                 <div className="flex items-center gap-1.5 min-w-0">
                                     <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: REQ_STATUS_COLORS[item.status_key] }} />
-                                    <span className="text-slate-500 font-bold truncate capitalize">{item.status_label}</span>
+                                    <span className="text-slate-500 dark:text-slate-400 font-bold truncate capitalize">{item.status_label}</span>
                                 </div>
-                                <span className="font-extrabold text-slate-800 shrink-0 ml-1">{item.count}</span>
+                                <span className="font-extrabold text-slate-800 dark:text-slate-100 shrink-0 ml-1">{item.count}</span>
                             </div>
                         ))}
                     </div>
                 </div>
 
                 {/* Urgency Distribution Bar Chart */}
-                <div className="bg-slate-50 border border-slate-100/60 p-5 rounded-2xl flex flex-col justify-between">
+                <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/60 p-5 rounded-2xl flex flex-col justify-between">
                     <div>
                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
                             Demands by Urgency Index
@@ -98,19 +98,19 @@ export default function ResourceRequestsAnalytics({ analytics }) {
                     </div>
                     <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
                         {analytics.resource_requests?.urgency_distribution?.map((item) => (
-                            <div key={item.urgency_key} className="flex items-center justify-between bg-white border border-slate-100 p-2 rounded-lg">
+                            <div key={item.urgency_key} className="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-2 rounded-lg">
                                 <div className="flex items-center gap-1.5 min-w-0">
                                     <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: URGENCY_COLORS[item.urgency_key] }} />
-                                    <span className="text-slate-500 font-bold truncate capitalize">{item.urgency_label}</span>
+                                    <span className="text-slate-500 dark:text-slate-400 font-bold truncate capitalize">{item.urgency_label}</span>
                                 </div>
-                                <span className="font-extrabold text-slate-800 shrink-0 ml-1">{item.count}</span>
+                                <span className="font-extrabold text-slate-800 dark:text-slate-100 shrink-0 ml-1">{item.count}</span>
                             </div>
                         ))}
                     </div>
                 </div>
 
                 {/* Top Requested Items (Horizontal Bar Chart) */}
-                <div className="bg-slate-50 border border-slate-100/60 p-5 rounded-2xl flex flex-col justify-between">
+                <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/60 p-5 rounded-2xl flex flex-col justify-between">
                     <div>
                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
                             Top Requested Resource Types
@@ -140,7 +140,7 @@ export default function ResourceRequestsAnalytics({ analytics }) {
                             )}
                         </div>
                     </div>
-                    <div className="mt-4 border-t border-slate-200/60 pt-3">
+                    <div className="mt-4 border-t border-slate-200 dark:border-slate-700/60 pt-3">
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">
                             Total Request Types: {analytics.resource_requests?.top_types?.length || 0}
                         </p>

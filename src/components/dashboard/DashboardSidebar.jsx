@@ -10,8 +10,8 @@ export default function DashboardSidebar({
 }) {
     const getAlertUrgencyStyle = (key) => {
         switch (key) {
-            case 'critical': return 'bg-red-500 shadow-lg shadow-red-500/40 animate-pulse';
-            case 'high':     return 'bg-orange-500 shadow-md shadow-orange-500/30';
+            case 'critical': return 'bg-red-500 shadow-lg dark:shadow-none shadow-red-500/40 animate-pulse';
+            case 'high':     return 'bg-orange-500 shadow-md dark:shadow-none shadow-orange-500/30';
             case 'medium':   return 'bg-yellow-400';
             case 'low':      return 'bg-green-500';
             default:         return 'bg-slate-300';
@@ -31,7 +31,7 @@ export default function DashboardSidebar({
     return (
         <div className="lg:col-span-1 space-y-6">
             {/* Quick Shortcuts Grid */}
-            <div className="bg-white/80 backdrop-blur-xl p-4 sm:p-5 rounded-2xl sm:rounded-[2rem] border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            <div className="bg-white dark:bg-slate-900/80 backdrop-blur-xl p-4 sm:p-5 rounded-2xl sm:rounded-[2rem] border border-slate-200 dark:border-slate-700/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                 <h3 className="text-[10px] font-black text-slate-400 tracking-wider uppercase mb-4 flex items-center gap-2">
                     <Activity size={14} className="text-indigo-500" />
                     Shortcuts Portal
@@ -61,7 +61,7 @@ export default function DashboardSidebar({
             </div>
 
             {/* Emergency Broadcast alerts logs */}
-            <div className="bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-2xl sm:rounded-[2rem] p-4 sm:p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
+            <div className="bg-white dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-700/60 rounded-2xl sm:rounded-[2rem] p-4 sm:p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-4">
                 <div className="flex items-center justify-between">
                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                         <Bell size={14} className="text-rose-500" />
@@ -81,26 +81,26 @@ export default function DashboardSidebar({
                                 <div className="flex-1 space-y-2">
                                     <div className="w-full h-3.5 bg-slate-200 rounded-md" />
                                     <div className="flex gap-2">
-                                        <div className="w-12 h-3 bg-slate-100 rounded-sm" />
-                                        <div className="w-16 h-3 bg-slate-100 rounded-sm" />
+                                        <div className="w-12 h-3 bg-slate-100 dark:bg-slate-800 rounded-sm" />
+                                        <div className="w-16 h-3 bg-slate-100 dark:bg-slate-800 rounded-sm" />
                                     </div>
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : recentAlerts.length === 0 ? (
-                    <p className="text-xs text-slate-400 py-6 text-center border border-dashed border-slate-100 rounded-xl">No active transmissions logged.</p>
+                    <p className="text-xs text-slate-400 py-6 text-center border border-dashed border-slate-100 dark:border-slate-800 rounded-xl">No active transmissions logged.</p>
                 ) : (
                     <div className="space-y-3.5">
                         {recentAlerts.map((alert, i) => (
                             <div key={alert.notif_id || i} className="flex items-start gap-3 border-b border-slate-50 pb-3 last:border-0 last:pb-0">
                                 <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${getAlertUrgencyStyle(alert.urgency_level?.urgency_key)}`} />
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-slate-700 font-semibold leading-normal truncate" title={alert.message}>
+                                    <p className="text-xs text-slate-700 dark:text-slate-200 font-semibold leading-normal truncate" title={alert.message}>
                                         {alert.message}
                                     </p>
                                     <div className="flex items-center gap-2 mt-1">
-                                        <span className="text-[8px] font-bold font-mono text-slate-400 uppercase bg-slate-100 px-1 rounded">
+                                        <span className="text-[8px] font-bold font-mono text-slate-400 uppercase bg-slate-100 dark:bg-slate-800 px-1 rounded">
                                             {alert.channel || 'Broadcast'}
                                         </span>
                                         <span className="text-[8px] font-medium text-slate-400 flex items-center gap-0.5">
@@ -116,7 +116,7 @@ export default function DashboardSidebar({
             </div>
 
             {/* Incidents and Urgent requests */}
-            <div className="bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-2xl sm:rounded-[2rem] p-4 sm:p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-5">
+            <div className="bg-white dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-700/60 rounded-2xl sm:rounded-[2rem] p-4 sm:p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-5">
                 <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                     <ShieldAlert size={14} className="text-orange-500" />
                     Active Concerns
@@ -125,18 +125,18 @@ export default function DashboardSidebar({
                 {/* Active Incident Concerns (Issues) */}
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Incidents ({displayIssues.length})</span>
+                        <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Incidents ({displayIssues.length})</span>
                         <Link to="/center-issue-reports" className="text-[8px] font-black text-indigo-500 hover:underline uppercase">View All</Link>
                     </div>
 
                     {loading ? (
                         <div className="space-y-2.5 animate-pulse">
                             {[1, 2].map((item) => (
-                                <div key={item} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-start gap-2.5">
+                                <div key={item} className="p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-xl flex items-start gap-2.5">
                                     <div className="w-6 h-6 bg-slate-200 rounded-lg flex-shrink-0" />
                                     <div className="flex-1 space-y-2">
                                         <div className="w-32 h-3 bg-slate-200 rounded-sm" />
-                                        <div className="w-20 h-2 bg-slate-100 rounded-sm" />
+                                        <div className="w-20 h-2 bg-slate-100 dark:bg-slate-800 rounded-sm" />
                                     </div>
                                     <div className="w-12 h-4 bg-slate-200 rounded-full" />
                                 </div>
@@ -152,12 +152,12 @@ export default function DashboardSidebar({
                             {displayIssues.map((issue, idx) => {
                                 const CategoryIcon = getCategoryIcon(issue.category);
                                 return (
-                                    <div key={issue.report_id || idx} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-start gap-2.5 hover:bg-slate-100/50 transition-colors">
-                                        <div className="w-6 h-6 bg-slate-200 text-slate-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <div key={issue.report_id || idx} className="p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-xl flex items-start gap-2.5 hover:bg-slate-100/50 transition-colors">
+                                        <div className="w-6 h-6 bg-slate-200 text-slate-600 dark:text-slate-300 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                                             <CategoryIcon size={12} />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-[11px] font-black text-slate-800 leading-snug truncate">{issue.title}</p>
+                                            <p className="text-[11px] font-black text-slate-800 dark:text-slate-100 leading-snug truncate">{issue.title}</p>
                                             <p className="text-[9px] text-slate-400 font-medium truncate mt-0.5">{issue.center?.name || 'Assigned Center'}</p>
                                         </div>
                                         <span className="text-[8px] font-black uppercase text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">
@@ -173,18 +173,18 @@ export default function DashboardSidebar({
                 {/* Logistics Needs (Requests) */}
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Logistics Needs ({displayRequests.length})</span>
+                        <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Logistics Needs ({displayRequests.length})</span>
                         <Link to="/resource-requests" className="text-[8px] font-black text-indigo-500 hover:underline uppercase">View All</Link>
                     </div>
 
                     {loading ? (
                         <div className="space-y-2.5 animate-pulse">
                             {[1, 2].map((item) => (
-                                <div key={item} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-start gap-2.5">
+                                <div key={item} className="p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-xl flex items-start gap-2.5">
                                     <div className="w-6 h-6 bg-slate-200 rounded-lg flex-shrink-0" />
                                     <div className="flex-1 space-y-2">
                                         <div className="w-32 h-3 bg-slate-200 rounded-sm" />
-                                        <div className="w-20 h-2 bg-slate-100 rounded-sm" />
+                                        <div className="w-20 h-2 bg-slate-100 dark:bg-slate-800 rounded-sm" />
                                     </div>
                                     <div className="w-12 h-4 bg-slate-200 rounded-full" />
                                 </div>
@@ -198,12 +198,12 @@ export default function DashboardSidebar({
                     ) : (
                         <div className="space-y-2.5">
                             {displayRequests.map((req, idx) => (
-                                <div key={req.request_id || idx} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-start gap-2.5 hover:bg-slate-100/50 transition-colors">
-                                    <div className="w-6 h-6 bg-slate-200 text-slate-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <div key={req.request_id || idx} className="p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-xl flex items-start gap-2.5 hover:bg-slate-100/50 transition-colors">
+                                    <div className="w-6 h-6 bg-slate-200 text-slate-600 dark:text-slate-300 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                                         <Package size={12} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[11px] font-black text-slate-800 leading-snug truncate">{req.resource_type}</p>
+                                        <p className="text-[11px] font-black text-slate-800 dark:text-slate-100 leading-snug truncate">{req.resource_type}</p>
                                         <p className="text-[9px] text-slate-400 font-medium truncate mt-0.5">Qty: {req.quantity} · {req.center?.name || 'Assigned Center'}</p>
                                     </div>
                                     <span className="text-[8px] font-black uppercase text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">

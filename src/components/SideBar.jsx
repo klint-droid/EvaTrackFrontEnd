@@ -20,9 +20,12 @@ import {
     X,
 } from "lucide-react";
 
+import { useUserStore } from "../store/useUserStore";
+
 const Sidebar = ({ isOpen, onClose }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const user = useUserStore(state => state.user) || {};
+    const setUser = useUserStore(state => state.setUser);
     const navigate = useNavigate();
 
     const handleLogout = async () => {
@@ -32,7 +35,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             console.error("Logout failed:", error);
         }
         localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        setUser(null);
         navigate("/login");
     };
 
@@ -102,7 +105,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                         <img 
                             src={logo} 
                             alt="EvaTrack Logo" 
-                            className="h-12 object-contain drop-shadow-md"
+                            className="h-12 object-contain drop-shadow-md dark:shadow-none"
                         />
                     ) : (
                         <div className="w-12 h-12 overflow-hidden flex items-center justify-start">

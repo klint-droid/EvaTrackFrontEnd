@@ -10,7 +10,7 @@ export const Input = ({ label, id, error, icon: Icon, rightAction, className = "
                 {Icon && <Icon className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 pointer-events-none" />}
                 <input
                     id={id}
-                    className={`block h-12 w-full rounded-xl border border-slate-200 bg-white ${Icon ? 'pl-11' : 'pl-4'} ${rightAction ? 'pr-12' : 'pr-4'} text-sm font-semibold text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-100 text-left ${error ? "border-red-500 focus:border-red-500 focus:ring-red-100" : ""} ${inputClassName}`}
+                    className={`block h-12 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 ${Icon ? 'pl-11' : 'pl-4'} ${rightAction ? 'pr-12' : 'pr-4'} text-sm font-semibold text-slate-800 dark:text-slate-100 outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-100 text-left ${error ? "border-red-500 focus:border-red-500 focus:ring-red-100" : ""} ${inputClassName}`}
                     {...props}
                 />
                 {rightAction && (

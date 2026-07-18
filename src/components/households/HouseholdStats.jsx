@@ -5,7 +5,7 @@ export default function HouseholdStats({ household, isEvacuated, isScattered, al
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Basic Info */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none p-5 space-y-4">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                     Basic Information
                 </p>
@@ -20,14 +20,14 @@ export default function HouseholdStats({ household, isEvacuated, isScattered, al
                         </div>
                         <div>
                             <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest">{label}</p>
-                            <p className="text-sm font-bold text-slate-800">{value}</p>
+                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{value}</p>
                         </div>
                     </div>
                 ))}
             </div>
 
             {/* Evacuation Status */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none p-5 space-y-4">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                     Evacuation Status
                 </p>
@@ -56,7 +56,7 @@ export default function HouseholdStats({ household, isEvacuated, isScattered, al
                                 </div>
                                 <div>
                                     <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest">{label}</p>
-                                    <p className="text-sm font-bold text-slate-800">{value}</p>
+                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{value}</p>
                                 </div>
                             </div>
                         ))}

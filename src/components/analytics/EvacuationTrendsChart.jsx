@@ -4,10 +4,10 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tool
 
 export default function EvacuationTrendsChart({ analytics }) {
     return (
-        <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm">
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-6 rounded-2xl shadow-sm dark:shadow-none">
             <div className="flex items-center gap-2 mb-6">
                 <BarChart3 className="text-indigo-600" size={20} />
-                <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight">Daily Evacuation Intake Curves</h3>
+                <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 tracking-tight">Daily Evacuation Intake Curves</h3>
             </div>
 
             <div className="h-80 w-full">
@@ -37,8 +37,8 @@ export default function EvacuationTrendsChart({ analytics }) {
                         </AreaChart>
                     </ResponsiveContainer>
                 ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-slate-500 text-sm">
-                        <AlertCircle size={32} className="mb-2 text-slate-600" />
+                    <div className="h-full flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 text-sm">
+                        <AlertCircle size={32} className="mb-2 text-slate-600 dark:text-slate-300" />
                         No evacuation intake records found for this scope.
                     </div>
                 )}

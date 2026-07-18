@@ -1,30 +1,23 @@
 import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import API from "../api";
+import { useUserStore } from "../store/useUserStore";
 
 const ProtectedRoute = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("user"));
-    } catch {
-      return null;
-    }
-  });
-
-  const [loading, setLoading] = useState(() => {
-    const token = localStorage.getItem("token");
-    const cachedUser = localStorage.getItem("user");
-    return !(token && cachedUser);
-  });
+  const user = useUserStore(state => state.user);
+  const setUser = useUserStore(state => state.setUser);
+  const [loading, setLoading] = useState(!user);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        await API.get("/api/user");
+        const res = await API.get("/api/user");
+        const body = res.data?.data || res.data || res;
+        const freshUser = body.data || body;
+        setUser(freshUser);
       } catch {
         setUser(null);
         localStorage.removeItem("token");
-        localStorage.removeItem("user");
       } finally {
         setLoading(false);
       }
@@ -36,7 +29,6 @@ const ProtectedRoute = ({ children }) => {
   if (loading) return null;
 
   if (!user) return <Navigate to="/" />;
-
   return children;
 };
 

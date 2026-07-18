@@ -16,9 +16,9 @@ export default function DemographicPanel({ analytics }) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* AGE & VULNERABILITIES */}
-            <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm flex flex-col justify-between">
+            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-6 rounded-2xl shadow-sm dark:shadow-none flex flex-col justify-between">
                 <div>
-                    <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight mb-6 flex items-center gap-2">
+                    <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 tracking-tight mb-6 flex items-center gap-2">
                         <Users size={18} className="text-purple-600" />
                         Age Distribution & Vulnerability
                     </h3>
@@ -54,9 +54,9 @@ export default function DemographicPanel({ analytics }) {
                                 <div key={item.group} className="flex items-center justify-between text-sm">
                                     <div className="flex items-center gap-2">
                                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: AGE_COLORS[idx] }} />
-                                        <span className="text-slate-500 font-medium">{item.group}</span>
+                                        <span className="text-slate-500 dark:text-slate-400 font-medium">{item.group}</span>
                                     </div>
-                                    <span className="font-bold text-slate-800">{item.count}</span>
+                                    <span className="font-bold text-slate-800 dark:text-slate-100">{item.count}</span>
                                 </div>
                             ))}
                         </div>
@@ -64,17 +64,17 @@ export default function DemographicPanel({ analytics }) {
                 </div>
 
                 {/* Vulnerable groups segment */}
-                <div className="mt-8 border-t border-slate-100 pt-6">
+                <div className="mt-8 border-t border-slate-100 dark:border-slate-800 pt-6">
                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
                         Vulnerable Profiles & Care Lists
                     </h4>
                     {analytics.demographics.vulnerable_groups.length > 0 ? (
                         <div className="grid grid-cols-2 gap-4">
                             {analytics.demographics.vulnerable_groups.map((group) => (
-                                <div key={group.key} className="bg-slate-50 border border-slate-100 p-3.5 rounded-xl flex items-center justify-between">
+                                <div key={group.key} className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 p-3.5 rounded-xl flex items-center justify-between">
                                     <div>
-                                        <span className="text-xs text-slate-500 font-bold">{group.label}</span>
-                                        <h5 className="text-lg font-black text-slate-800 mt-0.5">{group.count}</h5>
+                                        <span className="text-xs text-slate-500 dark:text-slate-400 font-bold">{group.label}</span>
+                                        <h5 className="text-lg font-black text-slate-800 dark:text-slate-100 mt-0.5">{group.count}</h5>
                                     </div>
                                     <div className="text-[10px] text-indigo-600 font-bold px-2 py-0.5 bg-indigo-50 rounded-full border border-indigo-100">
                                         Care List
@@ -83,15 +83,15 @@ export default function DemographicPanel({ analytics }) {
                             ))}
                         </div>
                     ) : (
-                        <p className="text-xs text-slate-500 italic">No vulnerable individuals registered.</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 italic">No vulnerable individuals registered.</p>
                     )}
                 </div>
             </div>
 
             {/* GENDER & HOUSEHOLD STATUS DISTRIBUTION */}
-            <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm space-y-6">
+            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-6 rounded-2xl shadow-sm dark:shadow-none space-y-6">
                 <div>
-                    <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight mb-6 flex items-center gap-2">
+                    <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 tracking-tight mb-6 flex items-center gap-2">
                         <TrendingUp size={18} className="text-emerald-600" />
                         Gender & Household Status Profile
                     </h3>
@@ -102,7 +102,7 @@ export default function DemographicPanel({ analytics }) {
                             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
                                 Gender Balance Ratio
                             </h4>
-                            <div className="flex items-center justify-between text-xs text-slate-500 font-bold mb-1.5">
+                            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-bold mb-1.5">
                                 <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Male ({analytics.demographics.gender[0]?.count || 0})</span>
                                 <span className="flex items-center gap-1.5">Female ({analytics.demographics.gender[1]?.count || 0}) <span className="w-2.5 h-2.5 rounded-full bg-pink-500" /></span>
                             </div>
@@ -115,7 +115,7 @@ export default function DemographicPanel({ analytics }) {
                                 const mPct = tot > 0 ? (m / tot) * 100 : 50;
                                 const fPct = tot > 0 ? (f / tot) * 100 : 50;
                                 return (
-                                    <div className="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden flex border border-slate-200">
+                                    <div className="w-full h-3.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex border border-slate-200 dark:border-slate-700">
                                         <div style={{ width: `${mPct}%` }} className="bg-blue-500 h-full transition-all duration-500" title="Male" />
                                         <div style={{ width: `${fPct}%` }} className="bg-pink-500 h-full transition-all duration-500" title="Female" />
                                     </div>
@@ -124,7 +124,7 @@ export default function DemographicPanel({ analytics }) {
                         </div>
 
                         {/* Household Status Distribution Graph */}
-                        <div className="pt-4 border-t border-slate-100">
+                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
                             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
                                 Household Evacuation Lifecycle Statuses
                             </h4>
@@ -146,7 +146,7 @@ export default function DemographicPanel({ analytics }) {
                                         </BarChart>
                                     </ResponsiveContainer>
                                 ) : (
-                                    <p className="text-xs text-slate-500 italic">No lifecycle status data found.</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 italic">No lifecycle status data found.</p>
                                 )}
                             </div>
                         </div>

@@ -4,10 +4,10 @@ import { Flame, Building2, CheckCircle2 } from 'lucide-react';
 export default function EventStatsCards({ activeCount, totalAssignedCenters, uniqueRegions, historyTotal }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-      <div className="bg-white rounded-xl border border-slate-200/80 p-5 flex items-start justify-between group hover:border-slate-300 transition-colors">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/80 p-5 flex items-start justify-between group hover:border-slate-300 dark:border-slate-600 transition-colors">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-500 font-medium">Active Emergencies</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">Active Emergencies</span>
             {activeCount > 0 && (
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
@@ -15,7 +15,7 @@ export default function EventStatsCards({ activeCount, totalAssignedCenters, uni
               </span>
             )}
           </div>
-          <p className="text-3xl font-bold text-slate-900 tracking-tight">{activeCount}</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-slate-50 tracking-tight">{activeCount}</p>
           <p className="text-xs text-slate-400 font-medium">
             {activeCount > 0 ? 'Response operations ongoing' : 'No active emergencies'}
           </p>
@@ -25,10 +25,10 @@ export default function EventStatsCards({ activeCount, totalAssignedCenters, uni
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200/80 p-5 flex items-start justify-between group hover:border-slate-300 transition-colors">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/80 p-5 flex items-start justify-between group hover:border-slate-300 dark:border-slate-600 transition-colors">
         <div className="space-y-1">
-          <span className="text-sm text-slate-500 font-medium">Shelters Assigned</span>
-          <p className="text-3xl font-bold text-slate-900 tracking-tight">{totalAssignedCenters}</p>
+          <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">Shelters Assigned</span>
+          <p className="text-3xl font-bold text-slate-900 dark:text-slate-50 tracking-tight">{totalAssignedCenters}</p>
           <p className="text-xs text-slate-400 font-medium">
             {uniqueRegions.size > 0 ? `Across ${uniqueRegions.size} region${uniqueRegions.size > 1 ? 's' : ''}` : 'Centers actively hosting evacuees'}
           </p>
@@ -38,10 +38,10 @@ export default function EventStatsCards({ activeCount, totalAssignedCenters, uni
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200/80 p-5 flex items-start justify-between group hover:border-slate-300 transition-colors">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/80 p-5 flex items-start justify-between group hover:border-slate-300 dark:border-slate-600 transition-colors">
         <div className="space-y-1">
-          <span className="text-sm text-slate-500 font-medium">Closed Incidents</span>
-          <p className="text-3xl font-bold text-slate-900 tracking-tight">{historyTotal || 0}</p>
+          <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">Closed Incidents</span>
+          <p className="text-3xl font-bold text-slate-900 dark:text-slate-50 tracking-tight">{historyTotal || 0}</p>
           <p className="text-xs text-slate-400 font-medium">
             Archived operations
           </p>

@@ -6,13 +6,13 @@ export default function HouseholdHeader({ household, isEvacuationContext, isEvac
         <div className="flex items-center gap-4">
             <button
                 onClick={handleBack}
-                className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
+                className="p-2 hover:bg-slate-100 dark:bg-slate-800 rounded-xl transition-colors"
             >
-                <ArrowLeft size={20} className="text-slate-600" />
+                <ArrowLeft size={20} className="text-slate-600 dark:text-slate-300" />
             </button>
 
             <div>
-                <h1 className="text-2xl font-black text-slate-900">
+                <h1 className="text-2xl font-black text-slate-900 dark:text-slate-50">
                     {household.household_name}
                 </h1>
                 <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
@@ -29,7 +29,7 @@ export default function HouseholdHeader({ household, isEvacuationContext, isEvac
                 <span className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-full border ${
                     isEvacuated
                         ? 'bg-green-50 text-green-600 border-green-100'
-                        : 'bg-slate-50 text-slate-500 border-slate-100'
+                        : 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-800'
                 }`}>
                     {isEvacuated ? 'Evacuated' : 'Not Evacuated'}
                 </span>

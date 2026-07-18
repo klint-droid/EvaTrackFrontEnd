@@ -346,7 +346,7 @@ const PublicPortal = () => {
   );
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-64px)] bg-gray-50">
+    <div className="flex flex-col min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-slate-800/50">
       
       {/* 🔍 Search & Geolocation Request Section */}
       <section className="bg-[#0f1c2d] py-8 px-4 shadow-inner">
@@ -360,12 +360,12 @@ const PublicPortal = () => {
               placeholder="Search by barangay, school, or center name..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 px-6 py-4 rounded-xl shadow-lg text-lg outline-none focus:ring-4 focus:ring-blue-500/50 border-0 transition-all text-slate-900"
+              className="flex-1 px-6 py-4 rounded-xl shadow-lg dark:shadow-none text-lg outline-none focus:ring-4 focus:ring-blue-500/50 border-0 transition-all text-slate-900 dark:text-slate-50"
             />
             <button
               onClick={requestUserLocation}
               disabled={isLocating}
-              className="px-5 py-4 rounded-xl bg-sky-500 hover:bg-sky-600 disabled:bg-sky-700 text-white font-bold shadow-lg transition flex items-center gap-2 whitespace-nowrap"
+              className="px-5 py-4 rounded-xl bg-sky-500 hover:bg-sky-600 disabled:bg-sky-700 text-white font-bold shadow-lg dark:shadow-none transition flex items-center gap-2 whitespace-nowrap"
             >
               <span>{isLocating ? "Locating..." : "📍 Locate Me"}</span>
             </button>
@@ -378,20 +378,20 @@ const PublicPortal = () => {
         
         {/* Left Column: Center List */}
         <div className="lg:col-span-1 flex flex-col gap-4 h-[600px] overflow-y-auto pr-2 pb-4">
-          <div className="flex justify-between items-center mb-2 sticky top-0 bg-gray-50 z-10 py-2">
-            <h3 className="font-semibold text-gray-700 text-left">Centers ({filteredCenters.length})</h3>
-            <span className="flex items-center text-xs font-medium text-green-700 bg-green-100 border border-green-200 px-3 py-1.5 rounded-full shadow-sm">
+          <div className="flex justify-between items-center mb-2 sticky top-0 bg-gray-50 dark:bg-slate-800/50 z-10 py-2">
+            <h3 className="font-semibold text-gray-700 dark:text-gray-200 text-left">Centers ({filteredCenters.length})</h3>
+            <span className="flex items-center text-xs font-medium text-green-700 bg-green-100 border border-green-200 px-3 py-1.5 rounded-full shadow-sm dark:shadow-none">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse mr-2"></span>
               Live Status
             </span>
           </div>
 
           {isLoading ? (
-            <div className="flex justify-center items-center h-32 text-gray-500">
+            <div className="flex justify-center items-center h-32 text-gray-500 dark:text-gray-400">
               <span className="animate-pulse">Loading centers...</span>
             </div>
           ) : filteredCenters.length === 0 ? (
-            <div className="text-center py-10 bg-white rounded-xl border border-gray-200 text-gray-500">
+            <div className="text-center py-10 bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400">
               No centers found matching your search.
             </div>
           ) : (
@@ -405,20 +405,20 @@ const PublicPortal = () => {
                 <div 
                   key={center.id} 
                   onClick={() => setSelectedCenter(center)}
-                  className={`bg-white rounded-xl border p-5 cursor-pointer text-left transition-all duration-200 relative overflow-hidden ${
+                  className={`bg-white dark:bg-slate-900 rounded-xl border p-5 cursor-pointer text-left transition-all duration-200 relative overflow-hidden ${
                     isSelected 
-                      ? 'border-blue-500 ring-2 ring-blue-500/20 shadow-md transform scale-[1.02]' 
-                      : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                      ? 'border-blue-500 ring-2 ring-blue-500/20 shadow-md dark:shadow-none transform scale-[1.02]' 
+                      : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 hover:shadow-sm dark:shadow-none'
                   }`}
                 >
                   {isAlternative && (
-                    <div className="absolute top-0 right-0 bg-green-600 text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-bl-lg animate-pulse shadow-sm">
+                    <div className="absolute top-0 right-0 bg-green-600 text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-bl-lg animate-pulse shadow-sm dark:shadow-none">
                       Recommended Route
                     </div>
                   )}
 
-                  <h4 className="font-bold text-gray-900 text-lg leading-tight mb-1 pr-16">{center.name}</h4>
-                  <p className="text-sm text-gray-500 mb-4 flex items-start gap-1">
+                  <h4 className="font-bold text-gray-900 dark:text-gray-50 text-lg leading-tight mb-1 pr-16">{center.name}</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 flex items-start gap-1">
                     <span className="mt-0.5">📍</span> <span className="flex-1">{center.address}</span>
                   </p>
                   
@@ -426,9 +426,9 @@ const PublicPortal = () => {
                   <div className="space-y-1.5 mb-4">
                     <div className="flex justify-between text-xs font-bold tracking-wide">
                       <span className={status.textCol}>{status.text}</span>
-                      <span className="text-gray-600">{center.occupied} / {center.capacity} ({Math.round(percent)}%)</span>
+                      <span className="text-gray-600 dark:text-gray-300">{center.occupied} / {center.capacity} ({Math.round(percent)}%)</span>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden border border-gray-200">
+                    <div className="w-full bg-gray-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden border border-gray-200 dark:border-gray-700">
                       <div 
                         className={`h-full rounded-full transition-all duration-700 ease-out ${status.color}`} 
                         style={{ width: `${percent}%` }}
@@ -439,7 +439,7 @@ const PublicPortal = () => {
                   {/* Amenities Tags */}
                   <div className="flex flex-wrap gap-2 mt-3">
                     {center.services.map((service) => (
-                      <span key={service} className="text-[10px] uppercase tracking-wider font-bold bg-gray-50 border border-gray-200 text-gray-600 px-2 py-1 rounded-md">
+                      <span key={service} className="text-[10px] uppercase tracking-wider font-bold bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-md">
                         {service}
                       </span>
                     ))}
@@ -451,7 +451,7 @@ const PublicPortal = () => {
         </div>
 
         {/* Right Column: React-Leaflet Map Area */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-200 h-[600px] relative overflow-hidden z-0">
+        <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-none border border-gray-200 dark:border-gray-700 h-[600px] relative overflow-hidden z-0">
           
           {/* Smart Floating Re-Routing Notification Banner */}
           {isOverloaded && alternativeCenter && (
@@ -464,7 +464,7 @@ const PublicPortal = () => {
                 </p>
                 {altRouteInfo && (
                   <div className="mt-2.5 flex gap-2">
-                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded shadow-sm">
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded shadow-sm dark:shadow-none">
                       {travelMode === "walking" ? "🚶" : "🚗"} Safest Road Route: {formatDistance(altRouteInfo.distance)} ({formatDuration(altRouteInfo.duration)})
                     </span>
                   </div>
@@ -483,20 +483,20 @@ const PublicPortal = () => {
                   <p className="text-[10px] text-blue-600 mt-0.5">Route following active roads to {selectedCenter.name}</p>
                 </div>
               </div>
-              <span className="text-xs bg-blue-600 text-white font-extrabold px-2.5 py-1 rounded shadow-sm whitespace-nowrap">
+              <span className="text-xs bg-blue-600 text-white font-extrabold px-2.5 py-1 rounded shadow-sm dark:shadow-none whitespace-nowrap">
                 {formatDistance(routeInfo.distance)} ({formatDuration(routeInfo.duration)})
               </span>
             </div>
           )}
 
           {/* 🚗🚶 Mode of Transport Floating Selector */}
-          <div className="absolute top-4 right-4 z-[1000] bg-white border border-gray-200 rounded-xl shadow-lg p-1 flex gap-1">
+          <div className="absolute top-4 right-4 z-[1000] bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg dark:shadow-none p-1 flex gap-1">
             <button
               onClick={() => setTravelMode("driving")}
               className={`px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center gap-1 ${
                 travelMode === "driving"
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-gray-600 hover:bg-gray-100"
+                  ? "bg-blue-600 text-white shadow-sm dark:shadow-none"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:bg-slate-800"
               }`}
             >
               <span>🚗</span> <span>Drive</span>
@@ -505,8 +505,8 @@ const PublicPortal = () => {
               onClick={() => setTravelMode("walking")}
               className={`px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center gap-1 ${
                 travelMode === "walking"
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-gray-600 hover:bg-gray-100"
+                  ? "bg-blue-600 text-white shadow-sm dark:shadow-none"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:bg-slate-800"
               }`}
             >
               <span>🚶</span> <span>Walk</span>
@@ -557,8 +557,8 @@ const PublicPortal = () => {
                 >
                   <Popup>
                     <div className="text-center p-1 text-left">
-                      <strong className="block text-gray-900 font-black text-sm mb-1">{center.name}</strong>
-                      <span className="block text-[11px] text-gray-500 mb-2">📍 {center.address}</span>
+                      <strong className="block text-gray-900 dark:text-gray-50 font-black text-sm mb-1">{center.name}</strong>
+                      <span className="block text-[11px] text-gray-500 dark:text-gray-400 mb-2">📍 {center.address}</span>
                       <span className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-black text-white ${status.color}`}>
                         {status.text} ({center.occupied}/{center.capacity})
                       </span>

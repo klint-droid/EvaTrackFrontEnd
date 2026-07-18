@@ -1,12 +1,20 @@
+import React, { useState } from "react";
 import { UserPlus } from "lucide-react";
+import AnimatedFAB from "../components/ui/AnimatedFAB";
 import AlertConfirmModal from "../components/AlertConfirmModal";
 import UserStats from "../components/userManagement/UserStats";
 import UserFilters from "../components/userManagement/UserFilters";
 import UserTable from "../components/userManagement/UserTable";
 import UserModal from "../components/userManagement/UserModal";
 import { useUserManagement } from "../hooks/useUserManagement";
+import { TableLayout } from "../components/ui/TableLayout";
+import { TableTabs } from "../components/ui/TableTabs";
+import { BulkActionBar } from "../components/ui/BulkActionBar";
+import { Pagination } from "../components/ui/Pagination";
 
 const UserManagement = () => {
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  
   const {
     users, centers, pagination,
     editingUser, setEditingUser,
@@ -39,44 +47,74 @@ const UserManagement = () => {
     totalUsers, personnelCount, adminCount, assignedCount
   } = useUserManagement();
 
+
+  const stats = (
+    <UserStats 
+      totalUsers={totalUsers}
+      adminCount={adminCount}
+      personnelCount={personnelCount}
+      assignedCount={assignedCount}
+    />
+  );
+
+  const tabs = (
+    <TableTabs
+      tabs={[
+        { key: "all", label: "All" },
+        { key: "evac_admin", label: "Admin" },
+        { key: "super_admin", label: "Super Admin" },
+        { key: "evac_personnel", label: "Evac Personnel" },
+      ]}
+      activeTab={roleFilter || "all"}
+      onChange={(key) => {
+        setRoleFilter(key === "all" ? "" : key);
+        setSelectedUsers([]);
+      }}
+    />
+  );
+
+  const perPage = pagination.per_page || 10;
+  const currentPage = pagination.current_page || 1;
+  const totalPages = pagination.last_page || Math.ceil(users.length / perPage) || 1;
+  const totalEntries = pagination.total || users.length;
+
+  const paginationComponent = (
+    <Pagination 
+        currentPage={currentPage} 
+        totalPages={totalPages} 
+        totalEntries={totalEntries}
+        perPage={perPage}
+        onPageChange={(page) => fetchUsers(page, search, roleFilter)} 
+    />
+  );
+
   return (
-    <div className="min-h-screen font-sans text-left">
+    <div className="min-h-screen font-sans text-left pb-24 relative">
       
-      {/* ─── Page Header ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 text-left">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">User Management</h1>
-          <p className="text-sm text-slate-500 font-medium">Manage system access and station assignments</p>
-        </div>
+      {selectedUsers.length > 0 && (
+        <BulkActionBar 
+          selectedCount={selectedUsers.length} 
+          onClear={() => setSelectedUsers([])} 
+          onDelete={() => {
+            selectedUsers.forEach(id => triggerDeleteUser(id));
+            setSelectedUsers([]);
+          }}
+        />
+      )}
 
-        {(isSuperAdminUser || isAdminUser) && (
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-medium rounded-lg shadow-sm shadow-blue-600/20 hover:shadow-blue-600/30 transition-all duration-200"
-          >
-            <UserPlus size={16} />
-            <span>Add Personnel</span>
-          </button>
-        )}
-      </div>
+      <TableLayout
+        title="User Management"
+        stats={stats}
+        tabs={tabs}
+        pagination={paginationComponent}
+      >
 
-      <UserStats 
-        totalUsers={totalUsers}
-        adminCount={adminCount}
-        personnelCount={personnelCount}
-        assignedCount={assignedCount}
-      />
-
-      {/* ─── Table Container ─── */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-        
+        {/* ─── Search Filter ─── */}
         <UserFilters 
           search={search}
           setSearch={setSearch}
-          roleFilter={roleFilter}
-          setRoleFilter={setRoleFilter}
           fetchUsers={fetchUsers}
-          isSuperAdminUser={isSuperAdminUser}
+          roleFilter={roleFilter}
         />
 
         <UserTable 
@@ -95,8 +133,10 @@ const UserManagement = () => {
           formatPhone={formatPhone}
           getRoleBadge={getRoleBadge}
           getRoleLabel={getRoleLabel}
+          selectedUsers={selectedUsers}
+          setSelectedUsers={setSelectedUsers}
         />
-      </div>
+      </TableLayout>
 
       <UserModal 
         isOpen={showCreateModal}
@@ -173,6 +213,15 @@ const UserManagement = () => {
         onConfirm={handleAssignCenter}
         onClose={() => setAssignConfirmState({ isOpen: false, userId: null, centerId: null, isLoading: false })}
       />
+
+      {/* ─── Floating Action Button ─── */}
+      {(isSuperAdminUser || isAdminUser) && (
+        <AnimatedFAB 
+          icon={UserPlus}
+          label="Add Personnel"
+          onClick={() => setShowCreateModal(true)}
+        />
+      )}
     </div>
   );
 };

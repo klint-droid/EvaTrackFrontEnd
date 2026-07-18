@@ -16,14 +16,15 @@ import { Input } from "../../ui/Input";
 import { Select } from "../../ui/Select";
 import AlertConfirmModal from "../../components/AlertConfirmModal";
 import { useAlert } from "../../context/AlertContext";
+import AnimatedFAB from "../../components/ui/AnimatedFAB";
 
 const CenterSkeleton = () => (
-  <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-4 animate-pulse flex flex-col justify-between h-[308px]">
+  <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 space-y-4 animate-pulse flex flex-col justify-between h-[308px]">
     <div className="space-y-4 flex-1">
       {/* TOP ROW */}
       <div className="flex justify-between items-start">
-        <div className="w-10 h-10 bg-slate-100 rounded-xl" />
-        <div className="w-24 h-6 bg-slate-50 rounded-full border border-slate-100/50" />
+        <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+        <div className="w-24 h-6 bg-slate-50 dark:bg-slate-800/50 rounded-full border border-slate-100 dark:border-slate-800/50" />
       </div>
 
       {/* NAME */}
@@ -31,27 +32,27 @@ const CenterSkeleton = () => (
 
       {/* ADDRESS */}
       <div className="space-y-1.5 mt-2">
-        <div className="h-3 bg-slate-100 rounded w-5/6" />
-        <div className="h-3 bg-slate-100 rounded w-1/2" />
+        <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-5/6" />
+        <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-1/2" />
       </div>
 
       {/* OCCUPANCY BAR */}
       <div className="space-y-2 mt-4">
         <div className="flex justify-between">
-          <div className="h-3 bg-slate-100 rounded w-1/4" />
-          <div className="h-3 bg-slate-100 rounded w-1/12" />
+          <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-1/4" />
+          <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-1/12" />
         </div>
-        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden" />
+        <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden" />
       </div>
 
       {/* STAT TILES */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-100 space-y-2">
-          <div className="h-2.5 bg-slate-100 rounded w-1/2" />
+        <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50/50 rounded-xl border border-slate-100 dark:border-slate-800 space-y-2">
+          <div className="h-2.5 bg-slate-100 dark:bg-slate-800 rounded w-1/2" />
           <div className="h-3.5 bg-slate-200 rounded w-2/3" />
         </div>
-        <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-100 space-y-2">
-          <div className="h-2.5 bg-slate-100 rounded w-1/2" />
+        <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50/50 rounded-xl border border-slate-100 dark:border-slate-800 space-y-2">
+          <div className="h-2.5 bg-slate-100 dark:bg-slate-800 rounded w-1/2" />
           <div className="h-3.5 bg-slate-200 rounded w-2/3" />
         </div>
       </div>
@@ -173,16 +174,15 @@ export default function EvacuationList() {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Evacuation Centers</h1>
-          <p className="text-sm text-slate-500 font-medium">Real-time shelter monitoring</p>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-slate-50 tracking-tight">Evacuation Centers</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Real-time shelter monitoring</p>
         </div>
         {canCreate && (
-          <button
+          <button 
             onClick={() => { setSelected(null); setModalOpen(true); }}
-            className="flex items-center space-x-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 py-2 bg-slate-900 dark:bg-slate-50 dark:bg-slate-800/50 text-white dark:text-slate-900 dark:text-slate-50 rounded-lg hover:bg-slate-800 dark:hover:bg-slate-200 transition-all font-medium text-sm"
           >
-            <Plus size={16} strokeWidth={3} />
-            <span>Add Center</span>
+            <Plus size={16} /> Add Center
           </button>
         )}
       </div>
@@ -215,17 +215,17 @@ export default function EvacuationList() {
       {assignedCenterId && isPersonnel() && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-blue-50 border border-blue-200 rounded-2xl animate-in slide-in-from-top-4 duration-300">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-md shadow-blue-500/10">
+            <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-md dark:shadow-none shadow-blue-500/10">
               <UserCheck size={20} />
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-800">Active Duty Station Assigned</p>
-              <p className="text-xs text-slate-500">You are currently assigned to manage evacuation records for this center.</p>
+              <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Active Duty Station Assigned</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">You are currently assigned to manage evacuation records for this center.</p>
             </div>
           </div>
           <Link
             to={`/evacuation-centers/${assignedCenterId}`}
-            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all active:scale-95 self-start sm:self-auto"
+            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl shadow-lg dark:shadow-none shadow-blue-600/20 hover:bg-blue-700 transition-all active:scale-95 self-start sm:self-auto"
           >
             Launch Workstation <ChevronRight size={14} />
           </Link>
@@ -234,7 +234,7 @@ export default function EvacuationList() {
 
       {/* PERSONNEL TABS */}
       {personnelWithCenter && (
-        <div className="flex bg-slate-100/80 p-1 rounded-2xl border border-slate-200/60 gap-1 w-full sm:w-auto sm:max-w-md">
+        <div className="flex bg-slate-100/80 p-1 rounded-2xl border border-slate-200 dark:border-slate-700/60 gap-1 w-full sm:w-auto sm:max-w-md">
           {[
             { key: "assigned", label: "My Assigned Center", icon: <UserCheck size={13} strokeWidth={2.5} /> },
             { key: "others",   label: "Other Centers",      icon: <Eye size={13} strokeWidth={2.5} /> },
@@ -244,8 +244,8 @@ export default function EvacuationList() {
               onClick={() => setActiveTab(tab.key)}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold rounded-xl transition-all duration-200 ${
                 activeTab === tab.key
-                  ? "bg-white text-slate-900 shadow-sm border border-slate-200/80 font-black"
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50 shadow-sm dark:shadow-none border border-slate-200 dark:border-slate-700/80 font-black"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200"
               }`}
             >
               {tab.icon}
@@ -270,10 +270,10 @@ export default function EvacuationList() {
             return (
               <div
                 key={c.evacuation_center_id}
-                className={`group bg-white rounded-2xl border transition-all duration-300 flex flex-col overflow-hidden animate-in fade-in-50 duration-300 ${
+                className={`group bg-white dark:bg-slate-900 rounded-2xl border transition-all duration-300 flex flex-col overflow-hidden animate-in fade-in-50 duration-300 ${
                   isAssigned
-                    ? "border-blue-500 ring-4 ring-blue-500/10 shadow-lg shadow-blue-500/5 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/10"
-                    : "border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1"
+                    ? "border-blue-500 ring-4 ring-blue-500/10 shadow-lg dark:shadow-none shadow-blue-500/5 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/10"
+                    : "border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none hover:shadow-xl hover:-translate-y-1"
                 }`}
               >
                 <div className="p-5 flex-1">
@@ -297,7 +297,7 @@ export default function EvacuationList() {
                       <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border animate-pulse ${
                         c.current_event
                           ? "text-red-600 bg-red-50 border-red-100"
-                          : "text-slate-500 bg-slate-100 border-slate-200"
+                          : "text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
                       }`}>
                         {c.current_event?.name || <span className="text-slate-400">No Active Event</span>}
                       </span>
@@ -305,7 +305,7 @@ export default function EvacuationList() {
                   </div>
 
                   {/* NAME */}
-                  <h3 className="text-lg font-bold text-slate-800 leading-tight mb-1">{c.name}</h3>
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 leading-tight mb-1">{c.name}</h3>
 
                   {/* ADDRESS */}
                   <div className="flex items-start text-xs font-medium mb-1 gap-1">
@@ -315,11 +315,11 @@ export default function EvacuationList() {
 
                   {/* OCCUPANCY BAR */}
                   <div className="space-y-2 mb-5 mt-3">
-                    <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
+                    <div className="flex justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tighter">
                       <span>Occupancy</span>
-                      <span className="text-slate-800">{Math.round(percent)}%</span>
+                      <span className="text-slate-800 dark:text-slate-100">{Math.round(percent)}%</span>
                     </div>
-                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-1000 ${
                           percent >= 90 ? "bg-red-500" : percent >= 70 ? "bg-amber-500" : "bg-emerald-500"
@@ -331,25 +331,25 @@ export default function EvacuationList() {
 
                   {/* STAT TILES */}
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-100">
+                    <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50/50 rounded-xl border border-slate-100 dark:border-slate-800">
                       <p className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1.5">Evacuees</p>
                       <div className="flex items-center gap-2">
                         <Users size={14} className="text-blue-500" />
-                        <span className="text-xs font-bold text-slate-700">{current} / {max}</span>
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{current} / {max}</span>
                       </div>
                     </div>
-                    <div className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-100">
+                    <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50/50 rounded-xl border border-slate-100 dark:border-slate-800">
                       <p className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1.5">Households</p>
                       <div className="flex items-center gap-2">
                         <DoorOpen size={14} className="text-indigo-500" />
-                        <span className="text-xs font-bold text-slate-700">{c.household_count ?? 0}</span>
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{c.household_count ?? 0}</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* FOOTER */}
-                <div className="px-5 py-3.5 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center group-hover:bg-white transition-colors">
+                <div className="px-5 py-3.5 bg-slate-50 dark:bg-slate-800/50/50 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center group-hover:bg-white dark:bg-slate-900 transition-colors">
                   <div className="flex gap-3">
                     {canEdit && (
                       <button
@@ -377,7 +377,7 @@ export default function EvacuationList() {
                   ) : (
                     <Link
                       to={`/evacuation-centers/${c.evacuation_center_id}`}
-                      className="flex items-center gap-1 text-[11px] font-black text-slate-600 uppercase tracking-tighter hover:text-blue-600"
+                      className="flex items-center gap-1 text-[11px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-tighter hover:text-blue-600"
                     >
                       Manage <ChevronRight size={14} />
                     </Link>
@@ -387,9 +387,9 @@ export default function EvacuationList() {
             );
           })
         ) : (
-          <div className="col-span-full py-16 text-center bg-white border border-slate-200 rounded-3xl p-8 space-y-3">
+          <div className="col-span-full py-16 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl p-8 space-y-3">
             <AlertCircle className="mx-auto text-slate-300" size={32} />
-            <h4 className="text-sm font-bold text-slate-700">No evacuation centers found</h4>
+            <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">No evacuation centers found</h4>
             <p className="text-xs text-slate-400">Try adjusting your filters or search terms.</p>
           </div>
         )}

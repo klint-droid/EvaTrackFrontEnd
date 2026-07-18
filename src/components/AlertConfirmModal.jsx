@@ -65,13 +65,13 @@ function AlertConfirmModal({
       />
 
       {/* ── MODAL BODY CONTAINER ── */}
-      <div className="relative w-full max-w-[440px] bg-white rounded-3xl border border-slate-100 shadow-2xl p-6 md:p-8 flex flex-col items-center text-center transform scale-100 transition-all duration-300 animate-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-[440px] bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-2xl p-6 md:p-8 flex flex-col items-center text-center transform scale-100 transition-all duration-300 animate-in zoom-in-95 duration-200">
         
         {/* Close Button top right */}
         {!isLoading && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+            className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:bg-slate-800/50 transition-colors"
             aria-label="Close modal"
           >
             <X size={18} />
@@ -84,12 +84,12 @@ function AlertConfirmModal({
         </div>
 
         {/* Header Title */}
-        <h3 className="text-lg font-black text-slate-800 tracking-tight leading-snug px-2">
+        <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight leading-snug px-2">
           {title}
         </h3>
 
         {/* Informational Message */}
-        <p className="text-xs text-slate-500 font-bold leading-relaxed mt-2.5 px-2">
+        <p className="text-xs text-slate-500 dark:text-slate-400 font-bold leading-relaxed mt-2.5 px-2">
           {message}
         </p>
 
@@ -101,7 +101,7 @@ function AlertConfirmModal({
               type="button"
               disabled={isLoading}
               onClick={onClose}
-              className="flex-1 h-12 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 font-bold text-xs transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
+              className="flex-1 h-12 rounded-xl text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 font-bold text-xs transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
             >
               {cancelText}
             </button>
@@ -112,7 +112,7 @@ function AlertConfirmModal({
             type="button"
             disabled={isLoading}
             onClick={onConfirm}
-            className={`flex-1 h-12 rounded-xl text-white font-bold text-xs transition active:scale-[0.98] shadow-md flex items-center justify-center gap-2 ${activeStyle.buttonConfirm} disabled:opacity-75 disabled:pointer-events-none`}
+            className={`flex-1 h-12 rounded-xl text-white font-bold text-xs transition active:scale-[0.98] shadow-md dark:shadow-none flex items-center justify-center gap-2 ${activeStyle.buttonConfirm} disabled:opacity-75 disabled:pointer-events-none`}
           >
             {isLoading ? (
               <span className="flex items-center gap-2">

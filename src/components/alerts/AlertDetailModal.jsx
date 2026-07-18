@@ -91,11 +91,11 @@ export default function AlertDetailModal({ notifId, onClose }) {
                             </div>
 
                             {/* Message */}
-                            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
                                     Message
                                 </p>
-                                <p className="text-sm text-slate-700 leading-relaxed">{alert.message}</p>
+                                <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">{alert.message}</p>
                             </div>
 
                             {/* Meta grid */}
@@ -152,7 +152,7 @@ export default function AlertDetailModal({ notifId, onClose }) {
                                     </div>
 
                                     {/* Delivery progress */}
-                                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                         <div
                                             className={`h-full rounded-full transition-all duration-700 ${
                                                 logStats.failed > 0 ? 'bg-orange-400' : 'bg-green-500'
@@ -166,7 +166,7 @@ export default function AlertDetailModal({ notifId, onClose }) {
                                         {alert.logs.map(log => (
                                             <div
                                                 key={log.log_id}
-                                                className="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-xl px-3.5 py-2.5"
+                                                className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-xl px-3.5 py-2.5"
                                             >
                                                 <div className="flex items-center gap-2.5">
                                                     {log.status === 'sent'
@@ -175,7 +175,7 @@ export default function AlertDetailModal({ notifId, onClose }) {
                                                     }
                                                     <div className="flex items-center gap-1.5">
                                                         <Hash size={10} className="text-slate-300" />
-                                                        <span className="text-xs font-medium text-slate-600">
+                                                        <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
                                                             {log.household_id}
                                                         </span>
                                                     </div>
@@ -208,7 +208,7 @@ function MetaField({ icon, label, value }) {
                 {icon}
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
             </div>
-            <p className="text-sm font-semibold text-slate-700">{value}</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{value}</p>
         </div>
     );
 }

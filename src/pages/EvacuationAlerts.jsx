@@ -15,6 +15,9 @@ import { useAlert } from '../context/AlertContext';
 import { Table, TableHeader, TableRow, TableHead, TableCell } from '../ui/Table';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
+import AnimatedFAB from "../components/ui/AnimatedFAB";
+import { Megaphone } from "lucide-react";
+
 
 export default function EvacuationAlerts() {
     const [alerts, setAlerts] = useState([]);
@@ -110,29 +113,23 @@ export default function EvacuationAlerts() {
             {/* ── Header ── */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight">Evacuation Alerts</h1>
-                    <p className="text-sm text-slate-500 font-medium">
+                    <h1 className="text-3xl font-black text-slate-900 dark:text-slate-50 tracking-tight">Evacuation Alerts</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
                         Broadcast command, status monitor, and log dispatch control
                     </p>
                 </div>
                 {canCreate && (
-                    <button
-                        onClick={() => setCreateModal(true)}
-                        className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-blue-500/25 hover:bg-blue-700 transition-all active:scale-95 duration-200"
-                    >
-                        <Plus size={14} strokeWidth={3.5} />
-                        <span>Create Broadcast Alert</span>
-                    </button>
+                    <AnimatedFAB onClick={() => setCreateModal(true)} icon={Megaphone} label="Create Broadcast Alert" />
                 )}
             </div>
 
             {/* ── Stats Cards Row ── */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 {/* Alerts Sent (24h) */}
-                <div className="bg-white border border-slate-200 rounded-2xl px-6 py-5 flex flex-col gap-1 shadow-sm">
-                    <p className="text-xs font-bold text-slate-500">Alerts Sent (24h)</p>
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-5 flex flex-col gap-1 ">
+                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Alerts Sent (24h)</p>
                     <div className="flex items-baseline gap-3">
-                        <p className="text-4xl font-black text-slate-900 tracking-tight leading-none">{stats.total.toLocaleString()}</p>
+                        <p className="text-4xl font-black text-slate-900 dark:text-slate-50 tracking-tight leading-none">{stats.total.toLocaleString()}</p>
                         <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
                             <TrendingUp size={12} />
                             {stats.rate > 0 ? `${stats.rate}%` : '—'}
@@ -141,27 +138,27 @@ export default function EvacuationAlerts() {
                 </div>
 
                 {/* Delivery Rate */}
-                <div className="bg-white border border-slate-200 rounded-2xl px-6 py-5 flex flex-col gap-1 shadow-sm">
-                    <p className="text-xs font-bold text-slate-500">Delivery Rate</p>
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-5 flex flex-col gap-1 ">
+                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Delivery Rate</p>
                     <div className="flex items-baseline gap-3">
-                        <p className="text-4xl font-black text-slate-900 tracking-tight leading-none">{stats.rate}%</p>
+                        <p className="text-4xl font-black text-slate-900 dark:text-slate-50 tracking-tight leading-none">{stats.rate}%</p>
                         <span className="text-xs font-medium text-slate-400">Network avg</span>
                     </div>
                 </div>
 
                 {/* Active Broadcasts */}
-                <div className="bg-white border border-slate-200 rounded-2xl px-6 py-5 flex flex-col gap-1 shadow-sm border-l-4 border-l-red-500">
-                    <p className="text-xs font-bold text-slate-500">Active Broadcasts</p>
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-5 flex flex-col gap-1  border-l-4 border-l-red-500">
+                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Active Broadcasts</p>
                     <div className="flex items-baseline gap-3">
-                        <p className="text-4xl font-black text-slate-900 tracking-tight leading-none">{alerts.filter(a => a.status === 'sent').length}</p>
+                        <p className="text-4xl font-black text-slate-900 dark:text-slate-50 tracking-tight leading-none">{alerts.filter(a => a.status === 'sent').length}</p>
                         <span className="text-xs font-medium text-slate-400">Ongoing scenarios</span>
                     </div>
                 </div>
             </div>
 
             {/* ── Filter Toolbar & Table Container ── */}
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mb-4">
-                <div className="px-6 py-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden mb-4">
+                <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="flex items-center gap-4 w-full lg:w-auto">
                         <div className="w-full sm:max-w-[280px]">
                             <Input
@@ -194,7 +191,7 @@ export default function EvacuationAlerts() {
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all ${
                                 (urgencyFilter || selectedEvent || channelFilter) || showFilters
                                     ? 'bg-blue-50 border-blue-200 text-blue-700'
-                                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:bg-slate-800/50'
                             }`}
                         >
                             <Filter size={16} />
@@ -207,9 +204,9 @@ export default function EvacuationAlerts() {
                         </button>
 
                         {showFilters && (
-                            <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-200 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-200 dark:border-slate-700 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-sm font-bold text-slate-800">Advanced Filters</h3>
+                                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Advanced Filters</h3>
                                     {(urgencyFilter || selectedEvent || channelFilter) && (
                                         <button 
                                             onClick={() => {
@@ -272,10 +269,10 @@ export default function EvacuationAlerts() {
                 </div>
 
                 <Table>
-                    <TableHeader className="bg-slate-900 text-white">
+                    <TableHeader className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
                         <tr className="border-none">
                             {['Broadcast Message', 'Event', 'Urgency', 'Target', 'Total Targets', 'Delivery Status', 'Timestamp', 'Command'].map(h => (
-                                <TableHead key={h} className="text-[10px] font-bold text-white uppercase tracking-wider">
+                                <TableHead key={h} className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     {h}
                                 </TableHead>
                             ))}
@@ -300,7 +297,7 @@ export default function EvacuationAlerts() {
                             ) : filteredAlerts.map(alert => (
                                 <TableRow key={alert.notif_id} className="group">
                                     <TableCell className="max-w-xs">
-                                        <p className="text-xs font-bold text-slate-800 truncate leading-snug">
+                                        <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate leading-snug">
                                             {alert.message}
                                         </p>
                                         <p className="text-[9px] text-slate-400 font-mono mt-1 font-bold">
@@ -322,7 +319,7 @@ export default function EvacuationAlerts() {
                                         </span>
                                     </TableCell>
                                     <TableCell>
-                                        <span className="text-xs font-medium text-slate-700">
+                                        <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
                                             {alert.center?.name || alert.evacuation_center?.name
                                                 ? (alert.center?.name || alert.evacuation_center?.name)
                                                 : alert.target_filter === 'evacuated'
@@ -338,7 +335,7 @@ export default function EvacuationAlerts() {
                                             <div className="w-5 h-5 bg-blue-50 rounded-md flex items-center justify-center">
                                                 <Bell size={10} className="text-blue-600" />
                                             </div>
-                                            <span className="text-xs font-black text-slate-800 font-mono">
+                                            <span className="text-xs font-black text-slate-800 dark:text-slate-100 font-mono">
                                                 {alert.recipients_count || 0}
                                             </span>
                                         </div>
@@ -352,7 +349,7 @@ export default function EvacuationAlerts() {
                                                 </span>
                                             )}
                                             {alert.status === 'scheduled' && (
-                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
                                                     <Clock size={14} />
                                                     Scheduled
                                                 </span>
@@ -396,7 +393,7 @@ export default function EvacuationAlerts() {
                                             )}
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-[10px] font-semibold text-slate-500">
+                                    <TableCell className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                                         {alert.created_at
                                             ? new Date(alert.created_at).toLocaleString()
                                             : '—'}
@@ -405,7 +402,7 @@ export default function EvacuationAlerts() {
                                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
                                             <button
                                                 onClick={() => setDetailId(alert.notif_id)}
-                                                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all shadow-sm hover:shadow"
+                                                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all  hover:shadow"
                                                 title="View Details & Logs"
                                             >
                                                 <Eye size={14} />
@@ -413,7 +410,7 @@ export default function EvacuationAlerts() {
                                             {alert.status === 'scheduled' && canCreate && (
                                                 <button
                                                     onClick={() => handleCancel(alert.notif_id)}
-                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all shadow-sm hover:shadow"
+                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all  hover:shadow"
                                                     title="Cancel Dispatch"
                                                 >
                                                     <Trash2 size={14} />
@@ -430,8 +427,8 @@ export default function EvacuationAlerts() {
                     </Table>
 
                 {/* Pagination */}
-                <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-                    <p className="text-xs font-medium text-slate-500">
+                <div className="px-6 py-3.5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         Page {pagination.current_page || 1} of {pagination.last_page || 1}
                         {' · '}
                         {pagination.total || 0} total records
@@ -440,14 +437,14 @@ export default function EvacuationAlerts() {
                         <button
                             disabled={!pagination.prev_page_url}
                             onClick={() => fetchAlerts(pagination.current_page - 1)}
-                            className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+                            className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg disabled:opacity-30 hover:bg-slate-50 dark:bg-slate-800/50 transition-all  active:scale-95"
                         >
                             <ChevronLeft size={14} />
                         </button>
                         <button
                             disabled={!pagination.next_page_url}
                             onClick={() => fetchAlerts(pagination.current_page + 1)}
-                            className="p-2 bg-white border border-slate-200 rounded-lg disabled:opacity-30 hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+                            className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg disabled:opacity-30 hover:bg-slate-50 dark:bg-slate-800/50 transition-all  active:scale-95"
                         >
                             <ChevronRight size={14} />
                         </button>

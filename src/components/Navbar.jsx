@@ -33,8 +33,8 @@ const Navbar = () => {
                   to={link.to}
                   className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 ${
                     isActive
-                      ? "bg-white/[0.08] text-white"
-                      : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+                      ? "bg-white dark:bg-slate-900/[0.08] text-white"
+                      : "text-slate-400 hover:text-white hover:bg-white dark:bg-slate-900/[0.04]"
                   }`}
                 >
                   <Icon size={14} strokeWidth={2} />

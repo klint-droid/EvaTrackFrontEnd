@@ -1,10 +1,14 @@
-import { AlertTriangle, CheckCircle2, Wrench, HeartPulse, Shield, FileWarning } from 'lucide-react';
-import ReportsHeader from '../components/centerIssueReports/ReportsHeader';
+import { AlertTriangle, CheckCircle2, Wrench, HeartPulse, Shield, FileWarning, Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import ReportsSummaryCards from '../components/centerIssueReports/ReportsSummaryCards';
 import ReportsTable from '../components/centerIssueReports/ReportsTable';
 import ReportModal from '../components/centerIssueReports/ReportModal';
 import ViewDetailsModal from '../components/centerIssueReports/ViewDetailsModal';
 import { useCenterIssueReports } from '../hooks/useCenterIssueReports';
+import { TableLayout } from '../components/ui/TableLayout';
+import { TableTabs } from '../components/ui/TableTabs';
+import { Pagination } from '../components/ui/Pagination';
+import AnimatedFAB from '../components/ui/AnimatedFAB';
 
 const CATEGORY_OPTIONS = [
   { value: 'incident', label: 'Incident' },
@@ -38,6 +42,17 @@ export default function CenterIssueReports() {
     viewingReport, setViewingReport
   } = useCenterIssueReports();
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const perPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [categoryFilter, severityFilter, statusFilter, search, selectedEventId]);
+
+  const totalEntries = displayedReports.length;
+  const totalPages = Math.ceil(totalEntries / perPage) || 1;
+  const paginatedReports = displayedReports.slice((currentPage - 1) * perPage, currentPage * perPage);
+
   const getCategoryLabel = (value) => {
     return CATEGORY_OPTIONS.find(item => item.value === value)?.label || value;
   };
@@ -57,8 +72,8 @@ export default function CenterIssueReports() {
       case 'critical': return 'bg-red-50 text-red-700 border-red-100';
       case 'high': return 'bg-orange-50 text-orange-700 border-orange-100';
       case 'medium': return 'bg-amber-50 text-amber-700 border-amber-100';
-      case 'low': return 'bg-slate-50 text-slate-600 border-slate-100';
-      default: return 'bg-slate-50 text-slate-600 border-slate-100';
+      case 'low': return 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-100 dark:border-slate-800';
+      default: return 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-100 dark:border-slate-800';
     }
   };
 
@@ -67,8 +82,8 @@ export default function CenterIssueReports() {
       case 'open': return 'bg-red-50 text-red-700 border-red-100';
       case 'in_progress': return 'bg-blue-50 text-blue-700 border-blue-100';
       case 'resolved': return 'bg-green-50 text-green-700 border-green-100';
-      case 'closed': return 'bg-slate-50 text-slate-600 border-slate-100';
-      default: return 'bg-slate-50 text-slate-600 border-slate-100';
+      case 'closed': return 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-100 dark:border-slate-800';
+      default: return 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-100 dark:border-slate-800';
     }
   };
 
@@ -77,13 +92,39 @@ export default function CenterIssueReports() {
     return new Date(value).toLocaleString();
   };
 
-  return (
-    <div className="space-y-6 animate-in fade-in duration-500 text-left">
-      <ReportsHeader canCreate={canCreate} openCreateModal={openCreateModal} />
+  const closedCount = displayedReports.filter(r => r.status === 'closed').length;
 
+  const stats = (
+    <ReportsSummaryCards
+      openCount={openCount}
+      inProgressCount={inProgressCount}
+      resolvedCount={resolvedCount}
+      closedCount={closedCount}
+      criticalCount={criticalCount}
+    />
+  );
+
+  const tabs = (
+    <TableTabs
+      tabs={[
+        { key: "all", label: "All" },
+        { key: "open", label: "Open" },
+        { key: "in_progress", label: "In Progress" },
+        { key: "resolved", label: "Resolved" },
+        { key: "closed", label: "Closed" },
+      ]}
+      activeTab={statusFilter || "all"}
+      onChange={(key) => {
+        setStatusFilter(key === "all" ? "" : key);
+      }}
+    />
+  );
+
+  return (
+    <div className="min-h-screen font-sans text-left pb-24 relative">
       {message && (
         <div
-          className={`flex items-center gap-3 p-4 rounded-2xl border ${
+          className={`flex items-center gap-3 p-4 rounded-2xl border mb-4 ${
             message.type === 'error'
               ? 'bg-red-50 border-red-100 text-red-700'
               : 'bg-green-50 border-green-100 text-green-700'
@@ -96,42 +137,50 @@ export default function CenterIssueReports() {
         </div>
       )}
 
-      <ReportsSummaryCards
-        openCount={openCount}
-        inProgressCount={inProgressCount}
-        resolvedCount={resolvedCount}
-        criticalCount={criticalCount}
-      />
-
-      <ReportsTable
-        search={search}
-        setSearch={setSearch}
-        fetchReports={fetchReports}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        showFilters={showFilters}
-        setShowFilters={setShowFilters}
-        categoryFilter={categoryFilter}
-        setCategoryFilter={setCategoryFilter}
-        severityFilter={severityFilter}
-        setSeverityFilter={setSeverityFilter}
-        selectedEventId={selectedEventId}
-        setSelectedEventId={setSelectedEventId}
-        activeEvents={activeEvents}
-        loading={loading}
-        displayedReports={displayedReports}
-        getCategoryIcon={getCategoryIcon}
-        getCategoryLabel={getCategoryLabel}
-        getSeverityClass={getSeverityClass}
-        getStatusClass={getStatusClass}
-        canUpdateStatus={canUpdateStatus}
-        handleStatusChange={handleStatusChange}
-        formatDateTime={formatDateTime}
-        canModifyReport={canModifyReport}
-        openEditModal={openEditModal}
-        handleDelete={handleDelete}
-        setViewingReport={setViewingReport}
-      />
+      <TableLayout
+        title="Evacuation Center Issues"
+        stats={stats}
+        tabs={tabs}
+        pagination={
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalEntries={totalEntries}
+            perPage={perPage}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
+        }
+      >
+        <ReportsTable
+          search={search}
+          setSearch={setSearch}
+          fetchReports={fetchReports}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          showFilters={showFilters}
+          setShowFilters={setShowFilters}
+          categoryFilter={categoryFilter}
+          setCategoryFilter={setCategoryFilter}
+          severityFilter={severityFilter}
+          setSeverityFilter={setSeverityFilter}
+          selectedEventId={selectedEventId}
+          setSelectedEventId={setSelectedEventId}
+          activeEvents={activeEvents}
+          loading={loading}
+          displayedReports={paginatedReports}
+          getCategoryIcon={getCategoryIcon}
+          getCategoryLabel={getCategoryLabel}
+          getSeverityClass={getSeverityClass}
+          getStatusClass={getStatusClass}
+          canUpdateStatus={canUpdateStatus}
+          handleStatusChange={handleStatusChange}
+          formatDateTime={formatDateTime}
+          canModifyReport={canModifyReport}
+          openEditModal={openEditModal}
+          handleDelete={handleDelete}
+          setViewingReport={setViewingReport}
+        />
+      </TableLayout>
 
       <ReportModal
         modalOpen={modalOpen}
@@ -153,6 +202,11 @@ export default function CenterIssueReports() {
         getSeverityClass={getSeverityClass}
         getStatusClass={getStatusClass}
       />
+
+      {/* ─── Floating Action Button ─── */}
+      {canCreate && (
+        <AnimatedFAB onClick={openCreateModal} icon={Plus} label="Report Issue" />
+      )}
     </div>
   );
 }

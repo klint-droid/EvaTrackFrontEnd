@@ -1,22 +1,18 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../components/SideBar";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { Bell, User, LogOut, Settings, Home, ChevronRight, Menu } from "lucide-react";
+import { Bell, User, LogOut, Settings, Home, ChevronRight, Menu, Moon, Sun } from "lucide-react";
 import { logout } from "../api/auth/logout";
+import { useUserStore } from "../store/useUserStore";
+import { useTheme } from "../context/ThemeContext";
 
 const DashboardLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("user") || "{}"));
+    const user = useUserStore(state => state.user) || {};
+    const setUser = useUserStore(state => state.setUser);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-    useEffect(() => {
-        const handleStorageChange = () => {
-            setUser(JSON.parse(localStorage.getItem("user") || "{}"));
-        };
-        window.addEventListener("storage", handleStorageChange);
-        return () => window.removeEventListener("storage", handleStorageChange);
-    }, []);
+    const { isDarkMode, toggleTheme } = useTheme();
 
     // Format the path for the breadcrumb (e.g., /resource-monitoring -> Resource Monitoring)
     const getPageTitle = (pathname) => {
@@ -40,26 +36,26 @@ const DashboardLayout = () => {
             console.error("Logout failed:", error);
         }
         localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        setUser(null);
         navigate("/login");
     };
 
     return (
-        <div className="flex h-screen bg-[#f8fafc] font-sans text-slate-900">
+        <div className="flex h-screen bg-[#f8fafc] dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300">
             {/* SIDEBAR */}
             <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 
                 {/* ⚡️ REFINED TOP BAR */}
-                <header className="h-14 sm:h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-40">
+                <header className="h-14 sm:h-16 bg-white dark:bg-slate-900/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-40 transition-colors duration-300">
                     
                     {/* LEFT: Hamburger + Dynamic Breadcrumbs */}
                     <div className="flex items-center gap-2 sm:gap-3">
                         {/* MOBILE HAMBURGER TOGGLE — visible only below lg */}
                         <button
                             onClick={() => setIsSidebarOpen(true)}
-                            className="p-2 -ml-1 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors lg:hidden"
+                            className="p-2 -ml-1 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 rounded-xl transition-colors lg:hidden"
                             aria-label="Open navigation menu"
                         >
                             <Menu size={22} />
@@ -76,7 +72,7 @@ const DashboardLayout = () => {
                             <ChevronRight size={14} className="text-slate-300" />
                             
                             <div className="flex items-center">
-                                <span className="font-bold text-slate-800 tracking-tight capitalize text-xs sm:text-sm truncate max-w-[140px] sm:max-w-none">
+                                <span className="font-bold text-slate-800 dark:text-slate-100 tracking-tight capitalize text-xs sm:text-sm truncate max-w-[140px] sm:max-w-none">
                                     {currentPath}
                                 </span>
                             </div>
@@ -86,19 +82,28 @@ const DashboardLayout = () => {
                     {/* RIGHT: Actions & Profile */}
                     <div className="flex items-center space-x-1 sm:space-x-2">
 
+                        {/* Dark Mode Toggle */}
+                        <button
+                            onClick={toggleTheme}
+                            className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
+                            aria-label="Toggle Dark Mode"
+                        >
+                            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                        </button>
+
                         {/* Profile Dropdown Area */}
-                        <div className="flex items-center pl-2 sm:pl-4 ml-1 sm:ml-2 border-l border-slate-200 gap-2 sm:gap-3">
+                        <div className="flex items-center pl-2 sm:pl-4 ml-1 sm:ml-2 border-l border-slate-200 dark:border-slate-800 gap-2 sm:gap-3">
                             <div className="text-right hidden md:block leading-none">
-                                <p className="text-sm font-bold text-slate-800">
+                                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
                                     {user?.name || "Command Center"}
                                 </p>
-                                <p className="text-[10px] text-blue-600 font-bold mt-1 uppercase tracking-tighter">
+                                <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold mt-1 uppercase tracking-tighter">
                                     {user?.role?.replace('_', ' ') || "Operator"}
                                 </p>
                             </div>
 
                             <div className="relative group cursor-pointer">
-                                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-tr from-slate-100 to-slate-200 rounded-xl flex items-center justify-center text-slate-600 border border-slate-200 shadow-sm overflow-hidden group-hover:border-blue-300 transition-all font-bold text-sm">
+                                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-tr from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-none overflow-hidden group-hover:border-blue-300 dark:group-hover:border-blue-500 transition-all font-bold text-sm">
                                     {user?.profile_photo_url ? (
                                         <img src={user.profile_photo_url} alt="Profile" className="w-full h-full object-cover" />
                                     ) : (
@@ -107,21 +112,21 @@ const DashboardLayout = () => {
                                 </div>
                                 
                                 {/* Logout Dropdown */}
-                                 <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 p-1 z-50">
-                                    <div className="px-4 py-2 border-b border-slate-50">
-                                        <p className="text-xs font-bold text-slate-800 truncate">{user?.name || "Command Center"}</p>
-                                        <p className="text-[10px] text-slate-500 uppercase truncate">{user?.role?.replace('_', ' ') || "Operator"}</p>
+                                 <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 p-1 z-50">
+                                    <div className="px-4 py-2 border-b border-slate-50 dark:border-slate-800">
+                                        <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">{user?.name || "Command Center"}</p>
+                                        <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase truncate">{user?.role?.replace('_', ' ') || "Operator"}</p>
                                     </div>
                                     <button 
                                         onClick={() => navigate("/profile")}
-                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors mt-1"
+                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 rounded-lg transition-colors mt-1"
                                     >
-                                        <User size={16} className="text-slate-400" />
+                                        <User size={16} className="text-slate-400 dark:text-slate-500 dark:text-slate-400" />
                                         <span className="font-semibold">My Profile</span>
                                     </button>
                                     <button 
                                         onClick={handleLogout}
-                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors border-t border-slate-50 mt-1"
+                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors border-t border-slate-50 dark:border-slate-800 mt-1"
                                     >
                                         <LogOut size={16} />
                                         <span className="font-semibold">Secure Logout</span>
@@ -133,7 +138,7 @@ const DashboardLayout = () => {
                 </header>
 
                 {/* 🧊 MAIN CONTENT AREA */}
-                <main className="flex-1 overflow-y-auto bg-[#f8fafc] text-left">
+                <main className="flex-1 overflow-y-auto bg-[#f8fafc] dark:bg-slate-950 transition-colors duration-300 text-left">
                     <div className="max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8">
                         <Outlet />
                     </div>

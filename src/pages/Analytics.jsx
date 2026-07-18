@@ -12,11 +12,12 @@ import DemographicPanel from "../components/analytics/DemographicPanel";
 import CenterPerformance from "../components/analytics/CenterPerformance";
 import ResourceRequestsAnalytics from "../components/analytics/ResourceRequestsAnalytics";
 import CenterIssuesAnalytics from "../components/analytics/CenterIssuesAnalytics";
+import { useUserStore } from "../store/useUserStore";
 import { useAlert } from "../context/AlertContext";
 
 export default function Analytics() {
-    // Derive role context from localStorage for UI branching
-    const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+    // Derive role context from Zustand for UI branching
+    const storedUser = useUserStore(state => state.user) || {};
     const isPersonnel = storedUser?.role === "evac_personnel";
     const assignedCenter = storedUser?.assigned_center; // { id, name } or null
 
@@ -176,7 +177,7 @@ export default function Analytics() {
             />
 
             {error && (
-                <div className="p-4 bg-red-50 border border-red-100 text-red-700 rounded-2xl flex items-center gap-3 shadow-sm">
+                <div className="p-4 bg-red-50 border border-red-100 text-red-700 rounded-2xl flex items-center gap-3 shadow-sm dark:shadow-none">
                     <AlertCircle size={20} className="flex-shrink-0" />
                     <span className="text-xs font-black uppercase tracking-wide">{error}</span>
                 </div>
@@ -187,13 +188,13 @@ export default function Analytics() {
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="h-28 bg-slate-100 border border-slate-200 rounded-2xl animate-pulse" />
+                            <div key={i} className="h-28 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl animate-pulse" />
                         ))}
                     </div>
-                    <div className="h-96 bg-slate-100 border border-slate-200 rounded-2xl animate-pulse" />
+                    <div className="h-96 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl animate-pulse" />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="h-80 bg-slate-100 border border-slate-200 rounded-2xl animate-pulse" />
-                        <div className="h-80 bg-slate-100 border border-slate-200 rounded-2xl animate-pulse" />
+                        <div className="h-80 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl animate-pulse" />
+                        <div className="h-80 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl animate-pulse" />
                     </div>
                 </div>
             ) : analytics ? (
@@ -205,11 +206,11 @@ export default function Analytics() {
                             <span className="flex items-center gap-1.5 text-blue-600 font-semibold">
                                 <Calendar size={16} /> Selected Disaster Event Status:
                             </span>
-                            <span className="text-slate-700 font-medium">Type: {selectedEvent.type}</span>
+                            <span className="text-slate-700 dark:text-slate-200 font-medium">Type: {selectedEvent.type}</span>
                             <span className="text-slate-300">|</span>
-                            <span className="text-slate-700 font-medium">Started: {selectedEvent.started_at ? new Date(selectedEvent.started_at).toLocaleString() : "N/A"}</span>
+                            <span className="text-slate-700 dark:text-slate-200 font-medium">Started: {selectedEvent.started_at ? new Date(selectedEvent.started_at).toLocaleString() : "N/A"}</span>
                             <span className="text-slate-300">|</span>
-                            <span className="text-slate-700 font-medium">Ended: {selectedEvent.ended_at ? new Date(selectedEvent.ended_at).toLocaleString() : <span className="text-emerald-600 font-bold animate-pulse">● Active & Ongoing</span>}</span>
+                            <span className="text-slate-700 dark:text-slate-200 font-medium">Ended: {selectedEvent.ended_at ? new Date(selectedEvent.ended_at).toLocaleString() : <span className="text-emerald-600 font-bold animate-pulse">● Active & Ongoing</span>}</span>
                         </div>
                     )}
 
@@ -233,9 +234,9 @@ export default function Analytics() {
 
                 </div>
             ) : (
-                 <div className="h-[60vh] flex flex-col items-center justify-center text-slate-400 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                 <div className="h-[60vh] flex flex-col items-center justify-center text-slate-400 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm dark:shadow-none">
                     <AlertTriangle size={48} className="text-amber-500 mb-2" />
-                    <h3 className="text-lg font-black text-slate-800">Terminal Offline</h3>
+                    <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">Terminal Offline</h3>
                     <p className="text-sm font-bold text-slate-400 mt-1">Unable to construct metrics due to missing database response.</p>
                 </div>
             )}

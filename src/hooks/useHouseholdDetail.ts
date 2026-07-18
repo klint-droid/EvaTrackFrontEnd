@@ -6,7 +6,7 @@ import { updateMember } from '../api/households/updateMember';
 import { deleteMember } from '../api/households/deleteMember';
 import { getEvacuationRecord } from '../api/evacuationRecords/getEvacuationRecord';
 import { updateMemberEvacuationStatus } from '../api/evacuationRecords/updateMemberEvacuationStatus';
-import { isAdmin, isSuperAdmin, isPersonnel } from '../utils/roles';
+import { getUser as fetchUserApi } from '../api/auth/getUser';
 import { useAlert } from '../context/AlertContext';
 
 export const useHouseholdDetail = () => {
@@ -30,11 +30,35 @@ export const useHouseholdDetail = () => {
 
     const storedUser = localStorage.getItem("user");
     const currentUser = storedUser ? JSON.parse(storedUser) : null;
-    const isSuperAdminUser: boolean = isSuperAdmin();
-    const isAdminUser: boolean = isAdmin();
-    const isPersonnelUser: boolean = isPersonnel();
+    const [user, setUser] = useState<any>(currentUser);
 
-    const assignedCenterId = currentUser?.assigned_center?.id || currentUser?.assigned_center_id;
+    const isSuperAdminUser: boolean = user?.role === 'super_admin';
+    const isAdminUser: boolean = user?.role === 'evac_admin';
+    const isPersonnelUser: boolean = user?.role === 'evac_personnel';
+
+    const assignedCenterId = user?.assigned_center?.id || user?.assigned_center_id;
+
+    useEffect(() => {
+        fetchUserApi()
+            .then((res: any) => {
+                const body = res.data?.data || res.data || res;
+                const freshUser = body.data || body;
+                if (freshUser) {
+                    const normalizedUser = {
+                        ...freshUser,
+                        role: freshUser.role?.role_key || freshUser.role,
+                        role_label: freshUser.role?.role_name || freshUser.role_label,
+                        assigned_center: freshUser.assigned_center ? {
+                            id: freshUser.assigned_center.evacuation_center_id || freshUser.assigned_center.id,
+                            name: freshUser.assigned_center.name,
+                        } : (freshUser.assigned_center_id ? { id: freshUser.assigned_center_id } : null),
+                    };
+                    setUser(normalizedUser);
+                    localStorage.setItem("user", JSON.stringify(normalizedUser));
+                }
+            })
+            .catch(console.error);
+    }, []);
 
     const targetCenterId = centerIdFromUrl ||
                            evacuationContext?.center_id ||
@@ -186,7 +210,11 @@ export const useHouseholdDetail = () => {
         const ids = new Set<string | number>();
         allActiveEvacuations.forEach(evac => {
             const members = evac.evacuated_members || evac.evacuatedMembers || [];
-            members.forEach((em: any) => ids.add(em.member_id));
+            members.forEach((em: any) => {
+                if (em.member_id) {
+                    ids.add(em.member_id);
+                }
+            });
         });
         return ids;
     }, [allActiveEvacuations]);
@@ -199,13 +227,15 @@ export const useHouseholdDetail = () => {
             const evacuationId = evac.evacuation_id;
             const members = evac.evacuated_members || evac.evacuatedMembers || [];
             members.forEach((em: any) => {
-                map[em.member_id] = {
-                    center_id: centerId,
-                    center_name: centerName,
-                    evacuation_id: evacuationId,
-                    verified_at: em.verified_at,
-                    verified_by: evac.verifier?.name || evac.verified_by,
-                };
+                if (em.member_id) {
+                    map[em.member_id] = {
+                        center_id: centerId,
+                        center_name: centerName,
+                        evacuation_id: evacuationId,
+                        verified_at: em.verified_at,
+                        verified_by: evac.verifier?.name || evac.verified_by,
+                    };
+                }
             });
         });
         return map;

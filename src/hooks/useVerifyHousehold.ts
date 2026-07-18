@@ -3,14 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { scanQR } from "../api/evacuationRecords/scanQR";
 import { searchHousehold } from "../api/evacuationRecords/searchHousehold";
 import { createHousehold } from "../api/evacuationRecords/createHousehold";
-import { getUser } from "../api/auth/getUser";
 import { getCenter } from "../api/evacuation/getCenter";
 import { getCenters } from "../api/evacuation/getCenters";
-import { isAdmin, isSuperAdmin } from "../utils/roles";
 import { admitHousehold } from "../api/evacuationRecords/admitHousehold";
 import { getUnitsByCenter } from "../api/units/getUnitsByCenter";
 import { assignHousehold } from "../api/allocations/assignHousehold";
 import { useAlert } from "../context/AlertContext";
+import { useUserStore } from "../store/useUserStore";
 
 export const useVerifyHousehold = () => {
   const navigate = useNavigate();
@@ -23,10 +22,13 @@ export const useVerifyHousehold = () => {
   const [message, setMessage] = useState<{ text: string; type: string } | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const [user, setUser] = useState<any>(null);
+  const user = useUserStore((state) => state.user);
+  const fetchFreshUser = useUserStore((state) => state.fetchFreshUser);
+  const setUser = useUserStore((state) => state.setUser);
   const [centerName, setCenterName] = useState<string | null>(null);
   const [centers, setCenters] = useState<any[]>([]);
   const [activeCenterId, setActiveCenterId] = useState<string | null>(null);
+  const [activeCenter, setActiveCenter] = useState<any>(null);
 
   const [assignmentModal, setAssignmentModal] = useState<boolean>(false);
   const [qrModalOpen, setQrModalOpen] = useState<boolean>(false);
@@ -97,22 +99,18 @@ export const useVerifyHousehold = () => {
     }
 
     navigate(
-      `/households/${household.household_id}?evacuation_id=${evacuation.evacuation_id}&center_id=${evacuation.center_id || activeCenterId || user?.assigned_center_id}`
+      `/households/${household.household_id}?evacuation_id=${evacuation.evacuation_id}&center_id=${evacuation.center_id || activeCenterId || user?.assigned_center?.id || user?.assigned_center_id}`
     );
   };
 
   useEffect(() => {
-    getUser()
-      .then((res) => {
-        const body = getApiBody(res);
-        setUser(body?.data || body);
-      })
-      .catch(console.error);
+    fetchFreshUser();
   }, []);
 
   useEffect(() => {
     if (!user) return;
-    const isUserAdmin = isAdmin() || isSuperAdmin();
+    const isUserAdmin = user.role === "evac_admin" || user.role === "super_admin";
+    const assignedId = user.assigned_center?.id || user.assigned_center_id;
 
     if (isUserAdmin) {
       getCenters()
@@ -121,28 +119,33 @@ export const useVerifyHousehold = () => {
           setCenters(list);
           // Only set activeCenterId if the admin has a specifically assigned center, 
           // otherwise leave it null so they are forced to choose in the Admission Modal.
-          if (user.assigned_center_id && !activeCenterId) {
-            setActiveCenterId(user.assigned_center_id);
+          if (assignedId && !activeCenterId) {
+            setActiveCenterId(assignedId);
           }
         })
         .catch(console.error);
-    } else if (user.assigned_center_id && !activeCenterId) {
-      setActiveCenterId(user.assigned_center_id);
+    } else if (assignedId && !activeCenterId) {
+      setActiveCenterId(assignedId);
     }
   }, [user]);
 
   useEffect(() => {
-    if (!activeCenterId) return;
+    if (!activeCenterId) {
+      setActiveCenter(null);
+      return;
+    }
 
     getCenter(activeCenterId)
       .then((res) => {
         const body = getApiBody(res);
         const center = body?.data || body;
+        setActiveCenter(center);
         setCenterName(
           center?.name || center?.center_name || activeCenterId
         );
       })
       .catch(() => {
+        setActiveCenter(null);
         setCenterName(activeCenterId);
       });
 
@@ -292,6 +295,11 @@ export const useVerifyHousehold = () => {
     }
     if (!activeCenterId) {
       setModalError("You must select an active evacuation center.");
+      return;
+    }
+    const centerObj = activeCenter || centers.find(c => (c.evacuation_center_id || c.center_id) === activeCenterId);
+    if (centerObj && !centerObj.current_event_id) {
+      setModalError("This evacuation center has no active event assigned. Please contact your admin.");
       return;
     }
     if (!scannedData?.household?.household_id) {

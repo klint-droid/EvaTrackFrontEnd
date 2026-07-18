@@ -22,18 +22,18 @@ export default function DashboardCapacityArea({
     return (
         <div className="lg:col-span-2 space-y-8">
             {/* Capacity Utilization Chart */}
-            <div className="bg-white/80 backdrop-blur-xl p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-shadow duration-300">
+            <div className="bg-white dark:bg-slate-900/80 backdrop-blur-xl p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-slate-200 dark:border-slate-700/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-shadow duration-300">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-3">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-slate-100 rounded-lg text-slate-600">
+                        <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300">
                             <TrendingUp size={18} />
                         </div>
                         <div>
-                            <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight">{isPersonnel ? 'Center Capacity' : 'Capacity Utilization'}</h3>
+                            <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 tracking-tight">{isPersonnel ? 'Center Capacity' : 'Capacity Utilization'}</h3>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{isPersonnel && assignedCenter ? `${assignedCenter.name} occupancy` : 'Active shelter occupancy ratios'}</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4 text-[10px] sm:text-xs font-bold text-slate-500">
+                    <div className="flex items-center gap-4 text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400">
                         <div className="flex items-center gap-1.5">
                             <span className="w-2.5 h-2.5 rounded bg-[#4472C4]" />
                             <span>Max Capacity</span>
@@ -50,15 +50,15 @@ export default function DashboardCapacityArea({
                         {MOCK_BARS.map((bar, idx) => (
                             <div key={idx} className="w-14 flex flex-col items-center gap-3">
                                 <div className="w-full flex items-end gap-1.5 h-44">
-                                    <div className="w-1/2 bg-slate-100 rounded-t-md" style={{ height: bar.height1 }} />
+                                    <div className="w-1/2 bg-slate-100 dark:bg-slate-800 rounded-t-md" style={{ height: bar.height1 }} />
                                     <div className="w-1/2 bg-slate-200 rounded-t-md" style={{ height: bar.height2 }} />
                                 </div>
-                                <div className="w-10 h-3 bg-slate-100 rounded-sm" />
+                                <div className="w-10 h-3 bg-slate-100 dark:bg-slate-800 rounded-sm" />
                             </div>
                         ))}
                     </div>
                 ) : chartData.length === 0 ? (
-                    <div className="h-[280px] flex items-center justify-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+                    <div className="h-[280px] flex items-center justify-center border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800/50/50">
                         <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">No center capacity telemetry registered.</p>
                     </div>
                 ) : (
@@ -69,14 +69,14 @@ export default function DashboardCapacityArea({
             </div>
 
             {/* Shelters Breakdown list table */}
-            <div className="bg-white/80 backdrop-blur-xl border border-slate-200/60 rounded-2xl sm:rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
-                <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100/50 flex items-center justify-between gap-2">
+            <div className="bg-white dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-700/60 rounded-2xl sm:rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
+                <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 dark:border-slate-800/50 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                             <MapPin size={18} />
                         </div>
                         <div>
-                            <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight">{isPersonnel ? 'Your Center Status' : 'Center Breakdown'}</h3>
+                            <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 tracking-tight">{isPersonnel ? 'Your Center Status' : 'Center Breakdown'}</h3>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">{isPersonnel && assignedCenter ? `${assignedCenter.name} deployment status` : 'Current deployment status by location'}</p>
                         </div>
                     </div>
@@ -91,7 +91,7 @@ export default function DashboardCapacityArea({
                 <div className="overflow-x-auto">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-slate-50/50">
+                            <TableRow className="bg-slate-50 dark:bg-slate-800/50/50">
                                 <TableHead className="px-6 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Center Name</TableHead>
                                 <TableHead className="px-6 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Occupancy Load</TableHead>
                                 <TableHead className="px-6 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Households</TableHead>
@@ -104,16 +104,16 @@ export default function DashboardCapacityArea({
                                     <TableRow key={row} className="animate-pulse">
                                         <TableCell className="px-6 py-4.5">
                                             <div className="w-36 h-3.5 bg-slate-200 rounded-md" />
-                                            <div className="w-24 h-2 bg-slate-100 rounded-sm mt-1.5" />
+                                            <div className="w-24 h-2 bg-slate-100 dark:bg-slate-800 rounded-sm mt-1.5" />
                                         </TableCell>
                                         <TableCell className="px-6 py-4.5">
-                                            <div className="w-24 h-4 bg-slate-100 rounded-md mx-auto" />
+                                            <div className="w-24 h-4 bg-slate-100 dark:bg-slate-800 rounded-md mx-auto" />
                                         </TableCell>
                                         <TableCell className="px-6 py-4.5 text-center">
-                                            <div className="w-12 h-4 bg-slate-100 rounded-md mx-auto" />
+                                            <div className="w-12 h-4 bg-slate-100 dark:bg-slate-800 rounded-md mx-auto" />
                                         </TableCell>
                                         <TableCell className="px-6 py-4.5 text-right">
-                                            <div className="w-16 h-5 bg-slate-100 rounded-full ml-auto" />
+                                            <div className="w-16 h-5 bg-slate-100 dark:bg-slate-800 rounded-full ml-auto" />
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -130,9 +130,9 @@ export default function DashboardCapacityArea({
                                     const isWarning = percent >= 60;
 
                                     return (
-                                        <TableRow key={index} className="hover:bg-slate-50/40 transition-colors">
+                                        <TableRow key={index} className="hover:bg-slate-50 dark:bg-slate-800/50/40 transition-colors">
                                             <TableCell className="px-6 py-4.5">
-                                                <span className="text-xs font-bold text-slate-800 block truncate max-w-[200px]">{c.name}</span>
+                                                <span className="text-xs font-bold text-slate-800 dark:text-slate-100 block truncate max-w-[200px]">{c.name}</span>
                                                 <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5">Limit: {c.max} Slots</span>
                                             </TableCell>
                                             <TableCell className="px-6 py-4.5">
@@ -141,7 +141,7 @@ export default function DashboardCapacityArea({
                                                         <span>{c.current} occupied</span>
                                                         <span>{Math.round(percent)}%</span>
                                                     </div>
-                                                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                                    <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                                         <div 
                                                             className={`h-full rounded-full transition-all duration-1000 ${
                                                                 isCritical ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-emerald-500'
@@ -154,7 +154,7 @@ export default function DashboardCapacityArea({
                                             <TableCell className="px-6 py-4.5 text-center">
                                                 <div className="flex items-center justify-center gap-1.5">
                                                     <DoorOpen size={13} className="text-purple-400" />
-                                                    <span className="text-xs font-bold text-slate-700">{c.households}</span>
+                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{c.households}</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="px-6 py-4.5 text-right">

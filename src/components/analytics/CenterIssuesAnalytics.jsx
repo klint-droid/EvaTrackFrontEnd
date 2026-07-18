@@ -26,15 +26,15 @@ const CATEGORY_COLORS = {
 
 export default function CenterIssuesAnalytics({ analytics }) {
     return (
-        <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm space-y-6">
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-6 rounded-2xl shadow-sm dark:shadow-none space-y-6">
             <div className="flex items-center gap-2">
                 <ShieldAlert className="text-emerald-600" size={20} />
-                <h3 className="text-sm sm:text-base font-black text-slate-800 tracking-tight">Facility Health & Active Issues</h3>
+                <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 tracking-tight">Facility Health & Active Issues</h3>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Issues Status Donut Chart */}
-                <div className="bg-slate-50 border border-slate-100/60 p-5 rounded-2xl flex flex-col justify-between">
+                <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/60 p-5 rounded-2xl flex flex-col justify-between">
                     <div>
                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
                             Issue Resolution Rate
@@ -66,19 +66,19 @@ export default function CenterIssuesAnalytics({ analytics }) {
                     </div>
                     <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
                         {analytics.center_issues?.status_distribution?.map((item) => (
-                            <div key={item.status_key} className="flex items-center justify-between bg-white border border-slate-100 p-2 rounded-lg">
+                            <div key={item.status_key} className="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-2 rounded-lg">
                                 <div className="flex items-center gap-1.5 min-w-0">
                                     <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ISSUE_STATUS_COLORS[item.status_key] }} />
-                                    <span className="text-slate-500 font-bold truncate capitalize">{item.status_label}</span>
+                                    <span className="text-slate-500 dark:text-slate-400 font-bold truncate capitalize">{item.status_label}</span>
                                 </div>
-                                <span className="font-extrabold text-slate-800 shrink-0 ml-1">{item.count}</span>
+                                <span className="font-extrabold text-slate-800 dark:text-slate-100 shrink-0 ml-1">{item.count}</span>
                             </div>
                         ))}
                     </div>
                 </div>
 
                 {/* Severity Level Bar Chart */}
-                <div className="bg-slate-50 border border-slate-100/60 p-5 rounded-2xl flex flex-col justify-between">
+                <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/60 p-5 rounded-2xl flex flex-col justify-between">
                     <div>
                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
                             Unresolved Issues by Severity
@@ -105,19 +105,19 @@ export default function CenterIssuesAnalytics({ analytics }) {
                     </div>
                     <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
                         {analytics.center_issues?.severity_distribution?.map((item) => (
-                            <div key={item.severity_key} className="flex items-center justify-between bg-white border border-slate-100 p-2 rounded-lg">
+                            <div key={item.severity_key} className="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-2 rounded-lg">
                                 <div className="flex items-center gap-1.5 min-w-0">
                                     <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: SEVERITY_COLORS[item.severity_key] }} />
-                                    <span className="text-slate-500 font-bold truncate capitalize">{item.severity_label}</span>
+                                    <span className="text-slate-500 dark:text-slate-400 font-bold truncate capitalize">{item.severity_label}</span>
                                 </div>
-                                <span className="font-extrabold text-slate-800 shrink-0 ml-1">{item.count}</span>
+                                <span className="font-extrabold text-slate-800 dark:text-slate-100 shrink-0 ml-1">{item.count}</span>
                             </div>
                         ))}
                     </div>
                 </div>
 
                 {/* Category Distribution Bar Chart */}
-                <div className="bg-slate-50 border border-slate-100/60 p-5 rounded-2xl flex flex-col justify-between">
+                <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/60 p-5 rounded-2xl flex flex-col justify-between">
                     <div>
                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
                             Common Categories
@@ -144,12 +144,12 @@ export default function CenterIssuesAnalytics({ analytics }) {
                     </div>
                     <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
                         {analytics.center_issues?.category_distribution?.map((item) => (
-                            <div key={item.category_key} className="flex items-center justify-between bg-white border border-slate-100 p-2 rounded-lg">
+                            <div key={item.category_key} className="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-2 rounded-lg">
                                 <div className="flex items-center gap-1.5 min-w-0">
                                     <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: CATEGORY_COLORS[item.category_key] }} />
-                                    <span className="text-slate-500 font-bold truncate capitalize">{item.category_label}</span>
+                                    <span className="text-slate-500 dark:text-slate-400 font-bold truncate capitalize">{item.category_label}</span>
                                 </div>
-                                <span className="font-extrabold text-slate-800 shrink-0 ml-1">{item.count}</span>
+                                <span className="font-extrabold text-slate-800 dark:text-slate-100 shrink-0 ml-1">{item.count}</span>
                             </div>
                         ))}
                     </div>

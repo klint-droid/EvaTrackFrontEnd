@@ -6,6 +6,7 @@ import { Input } from "../ui/Input";
 import { getUser } from "../api/auth/getUser";
 import { updateProfile } from "../api/auth/updateProfile";
 import { updatePassword } from "../api/auth/updatePassword";
+import { useUserStore } from "../store/useUserStore";
 
 export default function Profile() {
     const [activeTab, setActiveTab] = useState("info"); // "info" or "security"
@@ -104,14 +105,13 @@ export default function Profile() {
 
             const updatedUser = res.data?.user || res.user;
 
-            // Sync with local storage user representation
             const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
             const newStoredUser = {
                 ...storedUser,
                 name: updatedUser.name,
                 profile_photo_url: updatedUser.profile_photo_url
             };
-            localStorage.setItem("user", JSON.stringify(newStoredUser));
+            useUserStore.getState().setUser(newStoredUser);
 
             // Update local state
             setProfileData(prev => ({
@@ -187,7 +187,7 @@ export default function Profile() {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
                 <Loader2 className="animate-spin text-blue-600" size={32} />
-                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest animate-pulse">Loading Profile...</p>
+                <p className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest animate-pulse">Loading Profile...</p>
             </div>
         );
     }
@@ -198,11 +198,11 @@ export default function Profile() {
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                <h1 className="text-3xl font-black text-slate-900 dark:text-slate-50 tracking-tight flex items-center gap-2">
                     <Sparkles className="text-blue-600" size={24} />
                     My Account Profile
                 </h1>
-                <p className="text-sm text-slate-500 font-medium mt-1">
+                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">
                     Manage and secure your personal account details
                 </p>
             </div>
@@ -223,10 +223,10 @@ export default function Profile() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 {/* Left Card: Summary */}
-                <div className="md:col-span-1 bg-white border border-slate-200 rounded-[1.5rem] p-6 shadow-sm flex flex-col items-center justify-between text-center min-h-[350px]">
+                <div className="md:col-span-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-[1.5rem] p-6 shadow-sm dark:shadow-none flex flex-col items-center justify-between text-center min-h-[350px]">
                     <div className="space-y-4 w-full flex flex-col items-center">
                         {/* Avatar */}
-                        <div className="relative w-24 h-24 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-3xl shadow-lg shadow-blue-500/20 group border-4 border-white">
+                        <div className="relative w-24 h-24 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-3xl shadow-lg dark:shadow-none shadow-blue-500/20 group border-4 border-white">
                             <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-transparent">
                                 {photoPreview || profileData.profile_photo_url ? (
                                     <img src={photoPreview || profileData.profile_photo_url} alt="Profile" className="w-full h-full object-cover" />
@@ -236,7 +236,7 @@ export default function Profile() {
                             </div>
                             
                             {/* Upload Badge */}
-                            <label className="absolute bottom-0 right-0 w-8 h-8 bg-white border border-slate-200 text-slate-600 rounded-full flex items-center justify-center cursor-pointer shadow-sm hover:bg-slate-50 hover:text-blue-600 transition-colors z-10">
+                            <label className="absolute bottom-0 right-0 w-8 h-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-full flex items-center justify-center cursor-pointer shadow-sm dark:shadow-none hover:bg-slate-50 dark:bg-slate-800/50 hover:text-blue-600 transition-colors z-10">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
                                     <circle cx="12" cy="13" r="4"></circle>
@@ -251,7 +251,7 @@ export default function Profile() {
                         </div>
 
                         <div>
-                            <h3 className="text-lg font-black text-slate-800 leading-snug">
+                            <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 leading-snug">
                                 {profileData.first_name} {profileData.last_name}
                             </h3>
                             <span className="inline-block mt-1 px-3 py-1 bg-blue-50 border border-blue-100 text-blue-700 text-[10px] font-black uppercase tracking-widest rounded-full">
@@ -260,25 +260,25 @@ export default function Profile() {
                         </div>
                     </div>
 
-                    <div className="w-full border-t border-slate-100 pt-5 space-y-3.5 text-left">
+                    <div className="w-full border-t border-slate-100 dark:border-slate-800 pt-5 space-y-3.5 text-left">
                         {/* Details */}
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400">
+                            <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-400">
                                 <Shield size={14} />
                             </div>
                             <div>
                                 <p className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">User Identifier</p>
-                                <p className="text-xs font-bold text-slate-700 font-mono select-all">{profileData.user_id}</p>
+                                <p className="text-xs font-bold text-slate-700 dark:text-slate-200 font-mono select-all">{profileData.user_id}</p>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400">
+                            <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-400">
                                 <Building size={14} />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">Duty Station Assignment</p>
-                                <p className="text-xs font-bold text-slate-700 truncate">
+                                <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">
                                     {profileData.assigned_center?.name || "No assigned center"}
                                 </p>
                             </div>
@@ -287,15 +287,15 @@ export default function Profile() {
                 </div>
 
                 {/* Right Card: Editor and Tabs */}
-                <div className="md:col-span-2 bg-white border border-slate-200 rounded-[1.5rem] shadow-sm flex flex-col overflow-hidden">
+                <div className="md:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-[1.5rem] shadow-sm dark:shadow-none flex flex-col overflow-hidden">
                     {/* Tabs Header */}
-                    <div className="flex border-b border-slate-100 bg-slate-50/50 p-2 gap-2">
+                    <div className="flex border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50/50 p-2 gap-2">
                         <button
                             onClick={() => setActiveTab("info")}
                             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
                                 activeTab === "info"
-                                    ? "bg-white text-blue-600 shadow-sm border border-slate-200"
-                                    : "text-slate-500 hover:text-slate-800"
+                                    ? "bg-white dark:bg-slate-900 text-blue-600 shadow-sm dark:shadow-none border border-slate-200 dark:border-slate-700"
+                                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:text-slate-100"
                             }`}
                         >
                             <User size={13} />
@@ -305,8 +305,8 @@ export default function Profile() {
                             onClick={() => setActiveTab("security")}
                             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
                                 activeTab === "security"
-                                    ? "bg-white text-blue-600 shadow-sm border border-slate-200"
-                                    : "text-slate-500 hover:text-slate-800"
+                                    ? "bg-white dark:bg-slate-900 text-blue-600 shadow-sm dark:shadow-none border border-slate-200 dark:border-slate-700"
+                                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:text-slate-100"
                             }`}
                         >
                             <Lock size={13} />
@@ -341,11 +341,11 @@ export default function Profile() {
                                         placeholder="e.g. 09123456789"
                                     />
 
-                                <div className="border-t border-slate-100 pt-5 flex justify-end">
+                                <div className="border-t border-slate-100 dark:border-slate-800 pt-5 flex justify-end">
                                     <button
                                         type="submit"
                                         disabled={submitting}
-                                        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white text-[10px] font-black rounded-lg shadow-lg shadow-blue-600/20 uppercase tracking-wider hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
+                                        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white text-[10px] font-black rounded-lg shadow-lg dark:shadow-none shadow-blue-600/20 uppercase tracking-wider hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
                                     >
                                         {submitting ? <Loader2 className="animate-spin" size={13} /> : <Save size={13} />}
                                         Save Changes
@@ -384,11 +384,11 @@ export default function Profile() {
                                         />
                                 </div>
 
-                                <div className="border-t border-slate-100 pt-5 flex justify-end">
+                                <div className="border-t border-slate-100 dark:border-slate-800 pt-5 flex justify-end">
                                     <button
                                         type="submit"
                                         disabled={submitting}
-                                        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white text-[10px] font-black rounded-lg shadow-lg shadow-blue-600/20 uppercase tracking-wider hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
+                                        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white text-[10px] font-black rounded-lg shadow-lg dark:shadow-none shadow-blue-600/20 uppercase tracking-wider hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
                                     >
                                         {submitting ? <Loader2 className="animate-spin" size={13} /> : <Lock size={13} />}
                                         Update Password

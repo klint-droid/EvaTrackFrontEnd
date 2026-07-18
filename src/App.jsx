@@ -8,6 +8,7 @@ import PublicPortal from "./pages/PublicPortal";
 import Login from "./pages/Login";
 import Navbar from "./components/Navbar";
 import { AlertProvider } from "./context/AlertContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 // Admin Pages
 import Dashboard from "./pages/Dashboard";
@@ -37,9 +38,10 @@ const PublicLayout = () => {
 
 function App() {
   return (
-    <AlertProvider>
-      <BrowserRouter>
-        <Routes>
+    <ThemeProvider>
+      <AlertProvider>
+        <BrowserRouter>
+          <Routes>
         
         {/* PUBLIC ROUTES (With Navbar) */}
         <Route element={<PublicLayout />}>
@@ -77,8 +79,9 @@ function App() {
         </Route>
 
         </Routes>
-      </BrowserRouter>
-    </AlertProvider>
+        </BrowserRouter>
+      </AlertProvider>
+    </ThemeProvider>
   );
 }
 

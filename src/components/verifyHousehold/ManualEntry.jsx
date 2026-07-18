@@ -13,9 +13,9 @@ export default function ManualEntry({
 }) {
     return (
         <div className="p-6 sm:p-10 flex flex-col items-center justify-center min-h-[380px]">
-            <div className="max-w-md w-full p-8 bg-white border border-slate-200 rounded-3xl space-y-6 shadow-sm">
+            <div className="max-w-md w-full p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl space-y-6 shadow-sm dark:shadow-none">
                 <div className="text-center space-y-1 mb-2">
-                    <h2 className="text-lg font-black text-slate-900 tracking-tight flex items-center justify-center gap-2">
+                    <h2 className="text-lg font-black text-slate-900 dark:text-slate-50 tracking-tight flex items-center justify-center gap-2">
                         <UserPlus size={20} className="text-blue-600" />
                         On-Site Emergency Entry
                     </h2>
@@ -32,7 +32,7 @@ export default function ManualEntry({
                         value={headName}
                         onChange={(e) => setHeadName(e.target.value)}
                         placeholder="e.g. John Doe"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 focus:bg-white outline-none transition-all"
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 focus:bg-white dark:bg-slate-900 outline-none transition-all"
                     />
                 </div>
 
@@ -44,7 +44,7 @@ export default function ManualEntry({
                         value={contactNumber}
                         onChange={(e) => setContactNumber(e.target.value)}
                         placeholder="e.g. 09123456789"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 focus:bg-white outline-none transition-all"
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 focus:bg-white dark:bg-slate-900 outline-none transition-all"
                     />
                 </div>
 
@@ -58,14 +58,14 @@ export default function ManualEntry({
                         value={memberCount}
                         onChange={(e) => setMemberCount(e.target.value)}
                         placeholder="e.g. 4"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 focus:bg-white outline-none transition-all"
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 focus:bg-white dark:bg-slate-900 outline-none transition-all"
                     />
                 </div>
 
                 <button
                     onClick={handleCreate}
                     disabled={!headName || !memberCount || loading}
-                    className="w-full py-3.5 bg-blue-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-xl shadow-md shadow-blue-600/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full py-3.5 bg-blue-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-xl shadow-md dark:shadow-none shadow-blue-600/20 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                     {loading ? (
                         <Loader2 className="animate-spin" size={16} />

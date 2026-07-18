@@ -31,15 +31,15 @@ export default function AdmissionModal({
                 onClick={closeAdmissionModal}
             />
 
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 flex flex-col text-left">
+            <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-700 flex flex-col text-left">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white">
+                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-slate-900 text-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <div className="w-10 h-10 bg-slate-900 text-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm dark:shadow-none">
                             <UserCheck className="w-5 h-5" />
                         </div>
                         <div>
-                            <h2 className="text-base font-bold text-slate-800 leading-tight">
+                            <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 leading-tight">
                                 Finalize Admission
                             </h2>
                             <p className="text-xs text-slate-505">
@@ -50,7 +50,7 @@ export default function AdmissionModal({
 
                     <button
                         onClick={closeAdmissionModal}
-                        className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-full transition-all"
+                        className="p-1.5 text-slate-400 hover:bg-slate-100 dark:bg-slate-800 rounded-full transition-all"
                     >
                         <X size={18} />
                     </button>
@@ -71,12 +71,12 @@ export default function AdmissionModal({
                             Household Summary
                         </h4>
                         
-                        <div className="bg-slate-50/50 border border-slate-205 border-l-[4px] border-l-blue-600 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="bg-slate-50 dark:bg-slate-800/50/50 border border-slate-205 border-l-[4px] border-l-blue-600 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-0.5">
                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
                                     Household Head
                                 </p>
-                                <p className="text-sm font-bold text-slate-800">
+                                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
                                     {scannedData?.household?.household_name ||
                                         scannedData?.household?.head_name ||
                                         "Selected household"}
@@ -87,7 +87,7 @@ export default function AdmissionModal({
                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest sm:text-right">
                                     Household ID
                                 </p>
-                                <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-500 border border-slate-200 rounded text-[11px] font-mono font-medium">
+                                <span className="inline-block px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 rounded text-[11px] font-mono font-medium">
                                     {scannedData?.household?.household_id}
                                 </span>
                             </div>
@@ -96,7 +96,7 @@ export default function AdmissionModal({
                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
                                     Current Address
                                 </p>
-                                <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+                                <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
                                     <MapPin size={14} className="text-slate-400" />
                                     <span>
                                         {scannedData?.household?.address?.full_address || "No address specified"}
@@ -129,21 +129,21 @@ export default function AdmissionModal({
                                                         setSelectedMembers(eligibleMembers.map(m => m.member_id));
                                                     }
                                                 }}
-                                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 disabled:opacity-50"
+                                                className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 disabled:opacity-50"
                                             />
                                             <span>Select All</span>
                                         </label>
                                     </div>
 
                                     {/* Members List Table */}
-                                    <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                    <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm dark:shadow-none">
                                         <div className="bg-slate-900 px-4 py-2 flex items-center justify-between text-white text-[10px] font-black uppercase tracking-wider">
                                             <span className="w-1/2">Name</span>
                                             <span className="w-1/4 text-center">Age</span>
                                             <span className="w-1/4 text-right">Gender</span>
                                         </div>
 
-                                        <div className="divide-y divide-slate-100 bg-white max-h-[180px] overflow-y-auto">
+                                        <div className="divide-y divide-slate-100 bg-white dark:bg-slate-900 max-h-[180px] overflow-y-auto">
                                             {scannedData.household.members.map((member) => {
                                                 const isChecked = selectedMembers.includes(member.member_id);
                                                 const activeEvac = getActiveEvacuation(member);
@@ -161,7 +161,7 @@ export default function AdmissionModal({
                                                             }
                                                         }}
                                                         className={`px-4 py-3 flex items-center justify-between transition-colors ${
-                                                            isDisabled ? "bg-rose-50/30 opacity-75 cursor-not-allowed" : "hover:bg-slate-50/50 cursor-pointer"
+                                                            isDisabled ? "bg-rose-50/30 opacity-75 cursor-not-allowed" : "hover:bg-slate-50 dark:bg-slate-800/50/50 cursor-pointer"
                                                         }`}
                                                     >
                                                         {/* Left Checkbox & Name info */}
@@ -171,10 +171,10 @@ export default function AdmissionModal({
                                                                 checked={isChecked}
                                                                 disabled={isDisabled}
                                                                 readOnly
-                                                                className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 disabled:opacity-50 pointer-events-none"
+                                                                className="mt-0.5 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 disabled:opacity-50 pointer-events-none"
                                                             />
                                                             <div>
-                                                                <p className="text-xs font-bold text-slate-700 leading-tight">
+                                                                <p className="text-xs font-bold text-slate-700 dark:text-slate-200 leading-tight">
                                                                     {member.first_name} {member.last_name}
                                                                 </p>
                                                                 <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
@@ -196,7 +196,7 @@ export default function AdmissionModal({
 
                                                         {/* GenderBadge */}
                                                         <div className="w-1/4 flex justify-end">
-                                                            <span className="px-3 py-1 bg-slate-100 text-slate-600 font-bold rounded-full text-[10px]">
+                                                            <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-full text-[10px]">
                                                                 {member.gender?.gender_label || member.gender?.label || "—"}
                                                             </span>
                                                         </div>
@@ -218,7 +218,7 @@ export default function AdmissionModal({
                                 type="number"
                                 min="1"
                                 placeholder="e.g. 4"
-                                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+                                className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
                                 value={memberCount}
                                 onChange={(e) => setMemberCount(e.target.value)}
                             />
@@ -264,14 +264,14 @@ export default function AdmissionModal({
                             Accommodation Assignment
                         </h4>
 
-                        <div className="relative border border-slate-202 rounded-xl px-3 py-2.5 bg-white focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/5 transition-all">
-                            <label className="absolute -top-2 left-3 bg-white px-1 text-[9px] font-black text-slate-450 uppercase tracking-widest">
+                        <div className="relative border border-slate-202 rounded-xl px-3 py-2.5 bg-white dark:bg-slate-900 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/5 transition-all">
+                            <label className="absolute -top-2 left-3 bg-white dark:bg-slate-900 px-1 text-[9px] font-black text-slate-450 uppercase tracking-widest">
                                 Select Unit
                             </label>
                             <select
                                 value={selectedUnitId}
                                 onChange={(e) => setSelectedUnitId(e.target.value)}
-                                className="w-full bg-white text-xs font-semibold text-slate-705 outline-none border-none py-1 cursor-pointer"
+                                className="w-full bg-white dark:bg-slate-900 text-xs font-semibold text-slate-705 outline-none border-none py-1 cursor-pointer"
                             >
                                 <option value="">Choose available unit...</option>
                                 {units.map((unit) => {
@@ -310,10 +310,10 @@ export default function AdmissionModal({
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-end gap-3">
+                <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
                     <button
                         onClick={closeAdmissionModal}
-                        className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                        className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:bg-slate-800/50 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                     >
                         Cancel
                     </button>
@@ -321,7 +321,7 @@ export default function AdmissionModal({
                     <button
                         disabled={loading || (scannedData?.household?.members?.length > 0 ? selectedMembers.length === 0 : !memberCount)}
                         onClick={handleConfirmAdmission}
-                        className={`px-5 py-2.5 text-white text-xs font-bold rounded-lg shadow-lg flex items-center gap-1.5 transition-all cursor-pointer ${
+                        className={`px-5 py-2.5 text-white text-xs font-bold rounded-lg shadow-lg dark:shadow-none flex items-center gap-1.5 transition-all cursor-pointer ${
                             loading || (scannedData?.household?.members?.length > 0 ? selectedMembers.length === 0 : !memberCount)
                                 ? "bg-emerald-300 cursor-not-allowed"
                                 : "bg-emerald-600 hover:bg-emerald-700 active:scale-95 shadow-emerald-600/10"

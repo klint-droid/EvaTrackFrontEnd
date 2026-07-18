@@ -5,7 +5,7 @@ import { updateUser } from "../api/users/updateUser";
 import { deleteUser as deleteUserAPI } from "../api/users/deleteUser";
 import { assignCenter } from "../api/users/assignCenter";
 import { getCenters } from "../api/evacuation/getCenters";
-import { isAdmin, isSuperAdmin } from "../utils/roles";
+import { useUserStore } from "../store/useUserStore";
 import { useAlert } from "../context/AlertContext";
 
 interface UserFormState {
@@ -52,10 +52,10 @@ export const useUserManagement = () => {
     { value: "evac_personnel", label: "Evacuation Personnel", desc: "Intake and logging duties at assigned centers." }
   ];
 
-  const storedUser = localStorage.getItem("user");
-  const currentUser = storedUser ? JSON.parse(storedUser) : null;
-  const isAdminUser: boolean = isAdmin();
-  const isSuperAdminUser: boolean = isSuperAdmin();
+  const currentUser = useUserStore(state => state.user);
+  const fetchFreshUser = useUserStore(state => state.fetchFreshUser);
+  const isAdminUser: boolean = currentUser?.role === "evac_admin";
+  const isSuperAdminUser: boolean = currentUser?.role === "super_admin";
 
   const canEdit = (targetUser: any): boolean => {
     if (isSuperAdminUser) return true;
@@ -101,6 +101,7 @@ export const useUserManagement = () => {
   };
 
   useEffect(() => {
+    fetchFreshUser();
     fetchUsers(1, search, roleFilter);
     loadCenters();
   }, [roleFilter]);

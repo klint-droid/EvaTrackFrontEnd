@@ -39,7 +39,7 @@ export default function HouseholdDetail() {
                         <div className="w-12 h-12 bg-slate-200 rounded-xl" />
                         <div className="space-y-2">
                             <div className="w-48 h-6 bg-slate-200 rounded-md" />
-                            <div className="w-32 h-4 bg-slate-100 rounded-md" />
+                            <div className="w-32 h-4 bg-slate-100 dark:bg-slate-800 rounded-md" />
                         </div>
                     </div>
                     <div className="w-24 h-10 bg-slate-200 rounded-xl" />
@@ -48,17 +48,17 @@ export default function HouseholdDetail() {
                 {/* Stats Skeleton */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {[1, 2, 3, 4].map(i => (
-                        <div key={i} className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
+                        <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 space-y-3 shadow-sm dark:shadow-none">
                             <div className="w-8 h-8 bg-slate-200 rounded-lg" />
                             <div className="w-16 h-8 bg-slate-200 rounded-md" />
-                            <div className="w-24 h-3 bg-slate-100 rounded-md" />
+                            <div className="w-24 h-3 bg-slate-100 dark:bg-slate-800 rounded-md" />
                         </div>
                     ))}
                 </div>
 
                 {/* List Skeleton */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
-                    <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 space-y-4 shadow-sm dark:shadow-none">
+                    <div className="flex justify-between items-center pb-4 border-b border-slate-100 dark:border-slate-800">
                         <div className="w-32 h-5 bg-slate-200 rounded-md" />
                         <div className="w-24 h-8 bg-slate-200 rounded-lg" />
                     </div>
@@ -68,7 +68,7 @@ export default function HouseholdDetail() {
                                 <div className="w-10 h-10 bg-slate-200 rounded-full" />
                                 <div className="space-y-2">
                                     <div className="w-32 h-4 bg-slate-200 rounded-md" />
-                                    <div className="w-20 h-3 bg-slate-100 rounded-md" />
+                                    <div className="w-20 h-3 bg-slate-100 dark:bg-slate-800 rounded-md" />
                                 </div>
                             </div>
                             <div className="w-16 h-6 bg-slate-200 rounded-full" />
@@ -81,9 +81,9 @@ export default function HouseholdDetail() {
 
     if (!household) {
         return (
-            <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center">
+            <div className="min-h-screen bg-white dark:bg-slate-900 flex flex-col items-center justify-center p-6 text-center">
                 <XCircle size={48} className="text-red-200 mb-4" />
-                <p className="text-base font-black text-slate-700 mb-1">Household Not Found</p>
+                <p className="text-base font-black text-slate-700 dark:text-slate-200 mb-1">Household Not Found</p>
                 <p className="text-xs text-slate-400 mb-6">
                     This household does not exist or you don&apos;t have access to it.
                 </p>

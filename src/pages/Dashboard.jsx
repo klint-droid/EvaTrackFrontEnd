@@ -7,6 +7,8 @@ import { getUser } from "../api/auth/getUser";
 import { getEvents } from "../api/events/getEvents";
 import { getLastUpdated } from "../api/analytics/getLastUpdated";
 
+import { useUserStore } from "../store/useUserStore";
+
 import DashboardHeader from "../components/dashboard/DashboardHeader";
 import DashboardMetrics from "../components/dashboard/DashboardMetrics";
 import DashboardCapacityArea from "../components/dashboard/DashboardCapacityArea";
@@ -18,8 +20,8 @@ let dashboardCacheTime = 0;
 const CACHE_DURATION = 30000; // 30 seconds cache expiration
 
 const Dashboard = () => {
-    // Derive role context from localStorage for UI branching
-    const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+    // Derive role context from Zustand for UI branching
+    const storedUser = useUserStore(state => state.user) || {};
     const isPersonnel = storedUser?.role === "evac_personnel";
     const assignedCenter = storedUser?.assigned_center; // { id, name } or null
 

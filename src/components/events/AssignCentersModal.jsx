@@ -63,10 +63,10 @@ export default function AssignCentersModal({ event, onClose, onSaved }) {
 
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] animate-in fade-in">
-            <div className="bg-white rounded-3xl p-6 md:p-8 w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
-                <h2 className="text-xl font-black text-slate-800 tracking-tight mb-1">Assign Centers</h2>
-                <p className="text-xs text-slate-500 font-bold mb-5">
-                    Event: <span className="text-slate-700">{event.name}</span>
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+                <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight mb-1">Assign Centers</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-bold mb-5">
+                    Event: <span className="text-slate-700 dark:text-slate-200">{event.name}</span>
                 </p>
 
                 {error && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-bold border border-red-100">{error}</div>}
@@ -90,11 +90,11 @@ export default function AssignCentersModal({ event, onClose, onSaved }) {
                                     key={center.evacuation_center_id}
                                     className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
                                         isAssignedToThis ? 'bg-indigo-50/50 border-indigo-100' : 
-                                        isAssignedElsewhere ? 'bg-slate-50 opacity-60 border-slate-200' : 'bg-white border-slate-100 hover:border-slate-200 hover:shadow-sm'
+                                        isAssignedElsewhere ? 'bg-slate-50 dark:bg-slate-800/50 opacity-60 border-slate-200 dark:border-slate-700' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:border-slate-700 hover:shadow-sm dark:shadow-none'
                                     }`}
                                 >
                                     <div>
-                                        <p className="text-sm font-bold text-slate-800">{center.name}</p>
+                                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{center.name}</p>
                                         <div className="flex items-center gap-2 mt-1">
                                             {isAssignedToThis ? (
                                                 <span className="inline-flex items-center gap-1 text-[10px] font-black text-indigo-600 uppercase tracking-wider">
@@ -115,7 +115,7 @@ export default function AssignCentersModal({ event, onClose, onSaved }) {
                                         {isAssignedToThis ? (
                                             <button
                                                 onClick={() => openConfirm('unassign', center)}
-                                                className="px-4 py-2 rounded-xl text-xs font-bold bg-white text-red-600 border border-red-100 hover:bg-red-50 hover:border-red-200 transition-colors shadow-sm"
+                                                className="px-4 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-red-600 border border-red-100 hover:bg-red-50 hover:border-red-200 transition-colors shadow-sm dark:shadow-none"
                                             >
                                                 Unassign
                                             </button>
@@ -123,7 +123,7 @@ export default function AssignCentersModal({ event, onClose, onSaved }) {
                                             <button
                                                 onClick={() => openConfirm('assign', center)}
                                                 disabled={isAssignedElsewhere}
-                                                className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-500/20 transition-colors disabled:opacity-50 disabled:shadow-none"
+                                                className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-md dark:shadow-none shadow-indigo-500/20 transition-colors disabled:opacity-50 disabled:shadow-none"
                                             >
                                                 Assign
                                             </button>
@@ -135,10 +135,10 @@ export default function AssignCentersModal({ event, onClose, onSaved }) {
                     </div>
                 )}
 
-                <div className="flex justify-end pt-5 mt-5 border-t border-slate-100">
+                <div className="flex justify-end pt-5 mt-5 border-t border-slate-100 dark:border-slate-800">
                     <button
                         onClick={onClose}
-                        className="px-6 py-2.5 text-xs font-bold rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                        className="px-6 py-2.5 text-xs font-bold rounded-xl text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition-colors"
                     >
                         Close
                     </button>

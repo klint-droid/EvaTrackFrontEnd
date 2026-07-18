@@ -16,10 +16,10 @@ export default function AnalyticsHeader({
     return (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-                <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+                <h1 className="text-3xl font-black text-slate-900 dark:text-slate-50 tracking-tight">
                     Analytics Command Center
                 </h1>
-                <p className="text-sm text-slate-500 font-medium">
+                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
                     {isPersonnel && assignedCenter
                         ? `Real-time demographic tracking, evacuation trends, and utilization metrics for ${assignedCenter.name || "your assigned center"}.`
                         : 'Real-time demographic tracking, evacuation intake trends, and center utilization indices across all locations.'
@@ -33,7 +33,7 @@ export default function AnalyticsHeader({
                     <button
                         onClick={() => setExportDropdown(prev => !prev)}
                         disabled={exporting || loading}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black active:scale-95 transition-all shadow-md shadow-blue-600/10 disabled:opacity-50 cursor-pointer"
+                        className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black active:scale-95 transition-all shadow-md dark:shadow-none shadow-blue-600/10 disabled:opacity-50 cursor-pointer"
                     >
                         {exporting ? (
                             <RefreshCw size={14} className="animate-spin" />
@@ -45,8 +45,8 @@ export default function AnalyticsHeader({
                     </button>
 
                     {exportDropdown && (
-                        <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100">
-                            <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100">
+                        <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100">
+                            <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Report to Export</p>
                             </div>
                             <div className="max-h-96 overflow-y-auto">
@@ -59,16 +59,16 @@ export default function AnalyticsHeader({
                                     { key: "issues", label: "Center Issues Log", desc: "Facility issues tracking and severity levels", formats: ["csv", "pdf"] },
                                     { key: "daily-intake", label: "Daily Intake Trends", desc: "Tabular curve of daily evacuee intake", formats: ["csv"] }
                                 ].map((report) => (
-                                    <div key={report.key} className="p-3.5 hover:bg-slate-50/50 transition-colors flex flex-col gap-2">
+                                    <div key={report.key} className="p-3.5 hover:bg-slate-50 dark:bg-slate-800/50/50 transition-colors flex flex-col gap-2">
                                         <div>
-                                            <h4 className="text-xs font-black text-slate-800">{report.label}</h4>
+                                            <h4 className="text-xs font-black text-slate-800 dark:text-slate-100">{report.label}</h4>
                                             <p className="text-[10px] text-slate-400 font-medium">{report.desc}</p>
                                         </div>
                                         <div className="flex gap-2.5">
                                             {report.formats.includes("csv") && (
                                                 <button
                                                     onClick={() => handleExport(report.key, "csv")}
-                                                    className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-[10px] font-black rounded-lg transition-all cursor-pointer"
+                                                    className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-[10px] font-black rounded-lg transition-all cursor-pointer"
                                                 >
                                                     <FileSpreadsheet size={12} className="text-emerald-500" />
                                                     CSV
@@ -77,7 +77,7 @@ export default function AnalyticsHeader({
                                             {report.formats.includes("pdf") && (
                                                 <button
                                                     onClick={() => handleExport(report.key, "pdf")}
-                                                    className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-[10px] font-black rounded-lg transition-all cursor-pointer"
+                                                    className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-[10px] font-black rounded-lg transition-all cursor-pointer"
                                                 >
                                                     <FileText size={12} className="text-red-500" />
                                                     PDF
@@ -94,7 +94,7 @@ export default function AnalyticsHeader({
                 <button 
                     onClick={handleRefresh}
                     disabled={loading || refreshing}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-slate-800 active:scale-95 transition-all shadow-md shadow-slate-900/10 disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-slate-800 active:scale-95 transition-all shadow-md dark:shadow-none shadow-slate-900/10 disabled:opacity-50"
                     title="Force refresh"
                 >
                     <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />

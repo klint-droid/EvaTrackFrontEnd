@@ -94,11 +94,11 @@ export default function MemberModal({ open, onClose, onSave, editingMember }) {
                 onClick={onClose}
             />
 
-            <div className="relative bg-white rounded-[1.5rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
+            <div className="relative bg-white dark:bg-slate-900 rounded-[1.5rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-700">
 
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                    <h2 className="text-sm font-black text-slate-800 tracking-tight">
+                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50/50">
+                    <h2 className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-tight">
                         {editingMember ? 'Edit Member' : 'Add Member'}
                     </h2>
 
@@ -134,7 +134,7 @@ export default function MemberModal({ open, onClose, onSave, editingMember }) {
                                     </label>
                                     <input
                                         type="text"
-                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
                                         value={form[field.key]}
                                         onChange={e => setForm({ ...form, [field.key]: e.target.value })}
                                     />
@@ -148,7 +148,7 @@ export default function MemberModal({ open, onClose, onSave, editingMember }) {
                                 </label>
                                 <input
                                     type="date"
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
                                     value={form.birth_date}
                                     onChange={e => setForm({ ...form, birth_date: e.target.value })}
                                 />
@@ -160,7 +160,7 @@ export default function MemberModal({ open, onClose, onSave, editingMember }) {
                                     Gender
                                 </label>
                                 <select
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none"
                                     value={form.gender_id}
                                     onChange={e => setForm({ ...form, gender_id: Number(e.target.value) })}
                                 >
@@ -177,7 +177,7 @@ export default function MemberModal({ open, onClose, onSave, editingMember }) {
                                     Relation to Head
                                 </label>
                                 <select
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none"
                                     value={form.relationship_id}
                                     onChange={e => setForm({ ...form, relationship_id: Number(e.target.value) })}
                                 >
@@ -194,7 +194,7 @@ export default function MemberModal({ open, onClose, onSave, editingMember }) {
                                     Civil Status
                                 </label>
                                 <select
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none"
                                     value={form.civil_status_id}
                                     onChange={e => setForm({ ...form, civil_status_id: Number(e.target.value) })}
                                 >
@@ -221,7 +221,7 @@ export default function MemberModal({ open, onClose, onSave, editingMember }) {
                                                 className={`px-3 py-1.5 text-[10px] font-black rounded-full border transition-all ${
                                                     checked
                                                         ? 'bg-blue-600 text-white border-blue-600'
-                                                        : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-blue-300'
+                                                        : 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-blue-300'
                                                 }`}
                                             >
                                                 {v.label}
@@ -235,7 +235,7 @@ export default function MemberModal({ open, onClose, onSave, editingMember }) {
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-end gap-3">
+                <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
                     <button
                         onClick={onClose}
                         className="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
@@ -246,7 +246,7 @@ export default function MemberModal({ open, onClose, onSave, editingMember }) {
                     <button
                         onClick={handleSubmit}
                         disabled={saving || loadingLookups}
-                        className="px-5 py-2 bg-blue-600 text-white text-[10px] font-black rounded-lg shadow-lg uppercase tracking-wider hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
+                        className="px-5 py-2 bg-blue-600 text-white text-[10px] font-black rounded-lg shadow-lg dark:shadow-none uppercase tracking-wider hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
                     >
                         {saving ? 'Saving...' : editingMember ? 'Save Changes' : 'Add Member'}
                     </button>

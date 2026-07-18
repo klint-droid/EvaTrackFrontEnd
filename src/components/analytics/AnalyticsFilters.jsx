@@ -17,7 +17,7 @@ export default function AnalyticsFilters({
     setEndDate
 }) {
     return (
-        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-5 shadow-sm dark:shadow-none flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="flex flex-col md:flex-row gap-3 w-full lg:w-auto">
                 {/* Disaster Event Dropdown */}
                 <div className="flex flex-col gap-1">

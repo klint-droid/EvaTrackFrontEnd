@@ -4,6 +4,7 @@ import { AlertCircle, ArrowLeft, Eye, EyeOff, ShieldCheck, Lock, Award, IdCard }
 import API from "../api";
 import placeImage from "../assets/place.png";
 import evaTrackLogo from "../assets/evatrack_logo_stacked.svg";
+import { useUserStore } from "../store/useUserStore";
 import { useAlert } from "../context/AlertContext";
 import { Input } from "../ui/Input";
 
@@ -38,7 +39,7 @@ function Login() {
       });
 
       localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+      useUserStore.getState().setUser(response.data.user);
 
       navigate("/dashboard");
     } catch (err) {
@@ -56,16 +57,16 @@ function Login() {
     <main className="min-h-screen flex flex-col md:flex-row bg-[#F8F9FC] font-sans overflow-hidden">
       
       {/* ── LEFT COLUMN: SIGN IN FORM ── */}
-      <section className="w-full md:w-[45%] lg:w-[40%] xl:w-[35%] flex flex-col justify-between bg-white px-6 sm:px-10 py-10 shadow-2xl z-10 relative">
+      <section className="w-full md:w-[45%] lg:w-[40%] xl:w-[35%] flex flex-col justify-between bg-white dark:bg-slate-900 px-6 sm:px-10 py-10 shadow-2xl z-10 relative">
         
         {/* Top Header Row */}
         <div className="flex items-center justify-start">
           {/* Portal Link */}
           <Link
             to="/"
-            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors uppercase tracking-wider group"
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:text-slate-100 transition-colors uppercase tracking-wider group"
           >
-            <ArrowLeft className="h-4 w-4 text-slate-400 group-hover:text-slate-700" />
+            <ArrowLeft className="h-4 w-4 text-slate-400 group-hover:text-slate-700 dark:text-slate-200" />
             Portal
           </Link>
         </div>
@@ -74,12 +75,12 @@ function Login() {
         <div className="my-auto py-10 max-w-[360px] w-full mx-auto">
           {/* Header */}
           <div className="mb-8 text-left">
-            <h1 className="text-3.5xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-3.5xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">
               Sign In
             </h1>
             <div className="flex items-center gap-2 mt-2">
               <div className="h-[2px] w-6 bg-[#0B1530] rounded"></div>
-              <span className="text-xs font-semibold text-slate-500 tracking-wide">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wide">
                 Official Personnel Access
               </span>
             </div>
@@ -122,7 +123,7 @@ function Login() {
                   <button
                     type="button"
                     onClick={() => setShowPassword((current) => !current)}
-                    className="text-slate-400 transition hover:text-slate-700 focus:outline-none"
+                    className="text-slate-400 transition hover:text-slate-700 dark:text-slate-200 focus:outline-none"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
@@ -136,9 +137,9 @@ function Login() {
               <label className="flex items-center gap-2.5 cursor-pointer group select-none">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 rounded border-slate-300 text-[#0B1530] focus:ring-[#0B1530] transition cursor-pointer"
+                  className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-[#0B1530] focus:ring-[#0B1530] transition cursor-pointer"
                 />
-                <span className="text-[11px] font-semibold text-slate-500 group-hover:text-slate-700 transition">
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:text-slate-200 transition">
                   Remember me
                 </span>
               </label>
@@ -148,7 +149,7 @@ function Login() {
                   e.preventDefault();
                   showAlert("Please contact your municipal system administrator to reset credentials.", "Reset Credentials", "info");
                 }} 
-                className="text-[11px] font-bold text-slate-500 hover:text-slate-800 transition"
+                className="text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:text-slate-100 transition"
               >
                 Forgot Password?
               </a>
@@ -159,7 +160,7 @@ function Login() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold text-white shadow-lg transition-all active:scale-[0.98] ${
+                className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold text-white shadow-lg dark:shadow-none transition-all active:scale-[0.98] ${
                   isLoading
                     ? "cursor-not-allowed bg-[#0B1530]/70"
                     : "bg-[#0B1530] hover:bg-slate-800 shadow-slate-900/10 focus:outline-none focus:ring-4 focus:ring-slate-200"
@@ -185,7 +186,7 @@ function Login() {
         </div>
 
         {/* Bottom Secured Footer */}
-        <div className="text-center pt-8 border-t border-slate-100">
+        <div className="text-center pt-8 border-t border-slate-100 dark:border-slate-800">
           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3">
             Secured by Barangay Disaster Management Authority
           </p>
@@ -235,7 +236,7 @@ function Login() {
               EvaTrack centralizes multi-agency data to protect communities during critical environmental events.
             </p>
 
-            <div className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-wider text-sky-300 mt-6">
+            <div className="flex items-center gap-2 px-3 py-1 bg-white dark:bg-slate-900/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-wider text-sky-300 mt-6">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-sky-500" />

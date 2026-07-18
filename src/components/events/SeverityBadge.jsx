@@ -5,7 +5,7 @@ const SEVERITY_STYLES = {
     critical: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },
 };
 
-const DEFAULT_STYLE = { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200' };
+const DEFAULT_STYLE = { bg: 'bg-slate-50 dark:bg-slate-800/50', text: 'text-slate-600 dark:text-slate-300', border: 'border-slate-200 dark:border-slate-700' };
 
 export default function SeverityBadge({ severity }) {
     if (!severity) return <span className="text-slate-300 text-xs">—</span>;

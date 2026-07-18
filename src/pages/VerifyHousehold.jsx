@@ -48,11 +48,11 @@ export default function VerifyHousehold() {
       {/* Header matching Disaster Events style */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-slate-950 text-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+          <div className="w-12 h-12 bg-slate-950 text-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md dark:shadow-none">
             <QrCode className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+            <h1 className="text-3xl font-black text-slate-900 dark:text-slate-50 tracking-tight">
               Household Verification
             </h1>
             {user && !isUserAdmin && (
@@ -86,7 +86,7 @@ export default function VerifyHousehold() {
       )}
 
       {/* Main Screen Wrapper: Card with tabs inside */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-h-[380px] flex flex-col relative">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm dark:shadow-none overflow-hidden min-h-[380px] flex flex-col relative">
         <VerifyHouseholdTabs tab={tab} setTab={setTab} />
 
         {tab === "admit" && (

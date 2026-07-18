@@ -56,17 +56,17 @@ export default function RoomModal({ centerId, onClose, onSuccess }) {
       />
 
       {/* 📦 COMPACT MODAL CARD */}
-      <div className="relative bg-white rounded-[1.5rem] shadow-2xl w-full max-w-[320px] overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
+      <div className="relative bg-white dark:bg-slate-900 rounded-[1.5rem] shadow-2xl w-full max-w-[320px] overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-700">
         
         {/* HEADER */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <h2 className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-2">
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50/50">
+          <h2 className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
             <DoorOpen size={16} className="text-blue-600" /> Add New Room
           </h2>
           <button 
             onClick={onClose} 
             disabled={loading}
-            className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-all"
+            className="p-1 text-slate-400 hover:text-slate-600 dark:text-slate-300 hover:bg-slate-200 rounded-full transition-all"
           >
             <X size={16} strokeWidth={2.5} />
           </button>
@@ -84,7 +84,7 @@ export default function RoomModal({ centerId, onClose, onSuccess }) {
               value={roomNumber}
               onChange={(e) => setRoomNumber(e.target.value)}
               disabled={loading}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all placeholder:text-slate-300 disabled:opacity-50"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white dark:bg-slate-900 outline-none transition-all placeholder:text-slate-300 disabled:opacity-50"
             />
           </div>
 
@@ -98,24 +98,24 @@ export default function RoomModal({ centerId, onClose, onSuccess }) {
               value={capacity}
               onChange={(e) => setCapacity(e.target.value)}
               disabled={loading}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all disabled:opacity-50"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white dark:bg-slate-900 outline-none transition-all disabled:opacity-50"
             />
           </div>
         </div>
 
         {/* FOOTER */}
-        <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-end items-center gap-3">
+        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50/50 border-t border-slate-100 dark:border-slate-800 flex justify-end items-center gap-3">
           <button 
             onClick={onClose} 
             disabled={loading}
-            className="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors disabled:opacity-50"
+            className="text-[10px] font-bold text-slate-400 hover:text-slate-600 dark:text-slate-300 uppercase tracking-widest transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="px-5 py-2 bg-blue-600 text-white text-[10px] font-black rounded-lg shadow-lg shadow-blue-600/25 hover:bg-blue-700 active:scale-95 transition-all uppercase tracking-wider flex items-center gap-2 disabled:opacity-70"
+            className="px-5 py-2 bg-blue-600 text-white text-[10px] font-black rounded-lg shadow-lg dark:shadow-none shadow-blue-600/25 hover:bg-blue-700 active:scale-95 transition-all uppercase tracking-wider flex items-center gap-2 disabled:opacity-70"
           >
             {loading && <Loader2 size={12} className="animate-spin" />}
             {loading ? "Saving..." : "Create Room"}

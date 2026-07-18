@@ -98,16 +98,16 @@ export default function EventModal({ onClose, onCreated }) {
         <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9999] p-4 sm:p-8">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={onClose} />
 
-            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-300">
+            <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-300">
                 {/* Header */}
-                <div className="px-8 py-6 border-b border-slate-100 flex items-start justify-between shrink-0">
+                <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between shrink-0">
                     <div>
-                        <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Declare Official Disaster Event</h2>
-                        <p className="text-sm text-slate-500 font-medium mt-1">
+                        <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Declare Official Disaster Event</h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">
                             Formalize crisis response and activate barangay-level command protocols.
                         </p>
                     </div>
-                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:bg-slate-800 rounded-lg transition-colors">
                         <X size={20} />
                     </button>
                 </div>
@@ -123,7 +123,7 @@ export default function EventModal({ onClose, onCreated }) {
 
                     {/* 1. EVENT CATEGORY */}
                     <div className="space-y-3">
-                        <label className="text-xs font-black text-slate-500 tracking-widest uppercase">1. Event Category</label>
+                        <label className="text-xs font-black text-slate-500 dark:text-slate-400 tracking-widest uppercase">1. Event Category</label>
                         {typesLoading ? (
                             <div className="text-sm text-slate-400">Loading categories...</div>
                         ) : (
@@ -137,8 +137,8 @@ export default function EventModal({ onClose, onCreated }) {
                                             onClick={() => setForm({ ...form, type_id: type.type_id })}
                                             className={`flex flex-col items-center justify-center py-5 rounded-xl border-2 transition-all ${
                                                 isSelected 
-                                                    ? 'border-blue-200 bg-blue-50 text-blue-700 shadow-sm' 
-                                                    : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50 text-slate-600'
+                                                    ? 'border-blue-200 bg-blue-50 text-blue-700 shadow-sm dark:shadow-none' 
+                                                    : 'border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300'
                                             }`}
                                         >
                                             <Icon size={28} className={`mb-3 ${isSelected ? 'text-blue-600' : 'text-slate-400'}`} strokeWidth={1.5} />
@@ -153,11 +153,11 @@ export default function EventModal({ onClose, onCreated }) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* 2. DECLARATION LEVEL */}
                         <div className="space-y-3">
-                            <label className="text-xs font-black text-slate-500 tracking-widest uppercase">2. Severity Level</label>
+                            <label className="text-xs font-black text-slate-500 dark:text-slate-400 tracking-widest uppercase">2. Severity Level</label>
                             {typesLoading ? (
                                 <div className="text-sm text-slate-400">Loading levels...</div>
                             ) : (
-                                <div className="flex bg-slate-100 p-1 rounded-xl">
+                                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
                                     {severityLevels.map(severity => {
                                         const isSelected = form.severity_id === severity.severity_id;
                                         return (
@@ -166,8 +166,8 @@ export default function EventModal({ onClose, onCreated }) {
                                                 onClick={() => setForm({ ...form, severity_id: severity.severity_id })}
                                                 className={`flex-1 py-3.5 px-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all ${
                                                     isSelected
-                                                        ? 'bg-white text-slate-800 shadow-sm ring-1 ring-slate-200/50'
-                                                        : 'text-slate-500 hover:text-slate-700'
+                                                        ? 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 shadow-sm dark:shadow-none ring-1 ring-slate-200/50'
+                                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200'
                                                 }`}
                                             >
                                                 {severity.severity_label}
@@ -180,7 +180,7 @@ export default function EventModal({ onClose, onCreated }) {
 
                         {/* 3. EVENT NAME */}
                         <div className="space-y-3">
-                            <label className="text-xs font-black text-slate-500 tracking-widest uppercase">3. Event Name</label>
+                            <label className="text-xs font-black text-slate-500 dark:text-slate-400 tracking-widest uppercase">3. Event Name</label>
                             <input
                                 type="text"
                                 placeholder="e.g., Typhoon Aghon - May 2024"
@@ -192,8 +192,8 @@ export default function EventModal({ onClose, onCreated }) {
 
                         {/* 4. GEOGRAPHIC SCOPE */}
                         <div className="space-y-3">
-                            <label className="text-xs font-black text-slate-500 tracking-widest uppercase">4. Geographic Scope</label>
-                            <div className="w-full border-2 border-slate-200 rounded-xl p-3 min-h-[52px] bg-white transition-all focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10">
+                            <label className="text-xs font-black text-slate-500 dark:text-slate-400 tracking-widest uppercase">4. Geographic Scope</label>
+                            <div className="w-full border-2 border-slate-200 dark:border-slate-700 rounded-xl p-3 min-h-[52px] bg-white dark:bg-slate-900 transition-all focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10">
                                 <div className="flex flex-wrap gap-2 mb-2">
                                     {selectedScopes.map(scope => (
                                         <span key={scope.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg border border-blue-100">
@@ -206,7 +206,7 @@ export default function EventModal({ onClose, onCreated }) {
                                 </div>
                                 <select 
                                     onChange={handleAddScope} 
-                                    className="w-full text-sm font-medium outline-none text-slate-600 bg-transparent cursor-pointer"
+                                    className="w-full text-sm font-medium outline-none text-slate-600 dark:text-slate-300 bg-transparent cursor-pointer"
                                     defaultValue=""
                                 >
                                     <option value="" disabled>Add Territory +</option>
@@ -219,12 +219,12 @@ export default function EventModal({ onClose, onCreated }) {
                     </div>
 
                     {/* CRITICAL WARNING */}
-                    <div className="mt-8 border-l-4 border-red-500 bg-white shadow-sm ring-1 ring-slate-100 p-5 rounded-r-xl">
+                    <div className="mt-8 border-l-4 border-red-500 bg-white dark:bg-slate-900 shadow-sm dark:shadow-none ring-1 ring-slate-100 p-5 rounded-r-xl">
                         <div className="flex gap-4">
                             <AlertTriangle size={24} className="text-red-500 shrink-0 mt-0.5" />
                             <div>
                                 <h4 className="text-xs font-bold text-red-600 uppercase tracking-widest mb-1.5">Critical Action Warning</h4>
-                                <p className="text-[13px] text-slate-600 font-medium leading-relaxed">
+                                <p className="text-[13px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
                                     This action will trigger automatic notifications to all barangay officials, emergency response teams, and local evacuation coordinators. Official data reporting windows will be initialized upon declaration.
                                 </p>
                             </div>
@@ -233,17 +233,17 @@ export default function EventModal({ onClose, onCreated }) {
                 </div>
 
                 {/* Footer */}
-                <div className="px-8 py-5 border-t border-slate-100 bg-slate-50 shrink-0 flex items-center justify-end gap-3 rounded-b-xl">
+                <div className="px-8 py-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 shrink-0 flex items-center justify-end gap-3 rounded-b-xl">
                     <button 
                         onClick={onClose}
-                        className="px-6 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-all"
+                        className="px-6 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:bg-slate-800/50 hover:text-slate-900 dark:text-slate-50 transition-all"
                     >
                         Save as Draft
                     </button>
                     <button
                         onClick={handleSubmit}
                         disabled={loading || typesLoading || !form.name || !form.type_id || !form.severity_id}
-                        className="px-6 py-2.5 bg-[#f5cb5c] hover:bg-[#ebd54b] text-slate-900 text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-6 py-2.5 bg-[#f5cb5c] hover:bg-[#ebd54b] text-slate-900 dark:text-slate-50 text-sm font-bold rounded-xl shadow-sm dark:shadow-none transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <Megaphone size={16} strokeWidth={2.5} />
                         {loading ? 'Declaring...' : 'Declare Event'}

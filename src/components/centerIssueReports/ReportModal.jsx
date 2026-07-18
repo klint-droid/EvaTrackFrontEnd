@@ -19,19 +19,19 @@ export default function ReportModal({
         onClick={() => setModalOpen(false)}
       />
 
-      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 my-auto">
-        <div className="px-6 py-4 border-b border-slate-200/60 flex items-start justify-between bg-white">
+      <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-slate-700 my-auto">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700/60 flex items-start justify-between bg-white dark:bg-slate-900">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
               {editingReport ? 'Update Center Issue' : 'Report Center Issue'}
             </h2>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Identify facility, health, or safety concerns for immediate resolution.
             </p>
           </div>
           <button
             onClick={() => setModalOpen(false)}
-            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+            className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:bg-slate-800 rounded-lg transition-all"
           >
             <X size={18} />
           </button>
@@ -39,7 +39,7 @@ export default function ReportModal({
 
         <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto text-left">
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-700">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
               Issue Category
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -58,7 +58,7 @@ export default function ReportModal({
                     className={`flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer transition-all ${
                       isSelected
                         ? 'border-blue-500 bg-blue-50/30 shadow-[0_0_0_1px_rgba(59,130,246,1)] text-blue-700'
-                        : 'border-slate-200 bg-white hover:border-slate-300 text-slate-600'
+                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300'
                     }`}
                   >
                     <Icon size={22} className={isSelected ? "text-blue-600" : "text-slate-400"} strokeWidth={isSelected ? 2.5 : 2} />
@@ -71,13 +71,13 @@ export default function ReportModal({
 
           {canChooseCenter && (
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
                 Target Center
               </label>
               <select
                 value={form.evacuation_center_id}
                 onChange={(e) => setForm({ ...form, evacuation_center_id: e.target.value })}
-                className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 transition-all cursor-pointer"
+                className="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 transition-all cursor-pointer"
               >
                 <option value="">Select an evacuation center...</option>
                 {centers.map(center => (
@@ -90,10 +90,10 @@ export default function ReportModal({
           )}
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
               Severity Level
             </label>
-            <div className="flex border border-slate-200 rounded-lg overflow-hidden">
+            <div className="flex border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
               {SEVERITY_OPTIONS.map((sev) => {
                 const isSelected = form.severity === sev;
                 return (
@@ -102,9 +102,9 @@ export default function ReportModal({
                     onClick={() => setForm({ ...form, severity: sev })}
                     className={`flex-1 text-center py-2.5 text-xs font-semibold cursor-pointer transition-colors capitalize ${
                       isSelected
-                        ? 'bg-slate-200 text-slate-900 shadow-inner'
-                        : 'bg-white text-slate-500 hover:bg-slate-50'
-                    } ${sev !== SEVERITY_OPTIONS[0] ? 'border-l border-slate-200' : ''}`}
+                        ? 'bg-slate-200 text-slate-900 dark:text-slate-50 shadow-inner'
+                        : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:bg-slate-800/50'
+                    } ${sev !== SEVERITY_OPTIONS[0] ? 'border-l border-slate-200 dark:border-slate-700' : ''}`}
                   >
                     {sev}
                   </div>
@@ -114,19 +114,19 @@ export default function ReportModal({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
               Issue Title
             </label>
             <input
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               placeholder="Brief summary of the issue..."
-              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 transition-all"
+              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 transition-all"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
               Detailed Description
             </label>
             <textarea
@@ -134,16 +134,16 @@ export default function ReportModal({
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="Provide specific context, individuals involved, or immediate needs..."
-              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 resize-none transition-all"
+              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 resize-none transition-all"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
               Attach Photo (Optional)
             </label>
             <div 
-              className="border-2 border-dashed border-slate-300 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-colors relative"
+              className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 dark:bg-slate-800/50 transition-colors relative"
               onClick={() => document.getElementById('issue-attachment')?.click()}
             >
               <input 
@@ -163,7 +163,7 @@ export default function ReportModal({
                   <div className="p-3 bg-blue-50 text-blue-600 rounded-full mb-2">
                     <UploadCloud size={24} />
                   </div>
-                  <p className="text-sm font-bold text-slate-800">{form.attachment.name}</p>
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{form.attachment.name}</p>
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
@@ -179,7 +179,7 @@ export default function ReportModal({
               ) : (
                 <>
                   <UploadCloud size={28} className="text-slate-400 mb-3" />
-                  <p className="text-sm text-slate-600 font-medium">Click to upload or drag and drop</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">Click to upload or drag and drop</p>
                   <p className="text-[10px] text-slate-400 mt-1 font-bold tracking-widest uppercase">PNG, JPG, or PDF up to 5MB</p>
                 </>
               )}
@@ -187,10 +187,10 @@ export default function ReportModal({
           </div>
         </div>
 
-        <div className="px-6 py-4 bg-slate-50/80 border-t border-slate-200 flex justify-end gap-3">
+        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50/80 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
           <button
             onClick={() => setModalOpen(false)}
-            className="px-5 py-2.5 text-sm font-bold text-slate-700 hover:text-slate-900 transition-colors bg-white border border-slate-200 rounded-lg shadow-sm"
+            className="px-5 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:text-slate-50 transition-colors bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm dark:shadow-none"
           >
             Cancel
           </button>
@@ -198,7 +198,7 @@ export default function ReportModal({
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="px-6 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-lg shadow-sm hover:bg-slate-800 transition-all disabled:opacity-50 flex items-center gap-2"
+            className="px-6 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-lg shadow-sm dark:shadow-none hover:bg-slate-800 transition-all disabled:opacity-50 flex items-center gap-2"
           >
             {saving ? (
               <Loader2 size={16} className="animate-spin" />

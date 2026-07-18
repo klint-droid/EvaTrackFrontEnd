@@ -47,7 +47,7 @@ export default function LocationPicker({ position, onSelect }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 relative">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-800/50 relative">
       {/* 🔍 FLOATING SEARCH BAR */}
       <div className="absolute top-4 left-4 right-4 z-[1000] flex gap-2">
         <div className="relative flex-1 group">
@@ -57,7 +57,7 @@ export default function LocationPicker({ position, onSelect }) {
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder="Search address or landmark..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm shadow-xl focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm shadow-xl focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
           />
         </div>
         <button
@@ -69,7 +69,7 @@ export default function LocationPicker({ position, onSelect }) {
       </div>
 
       {/* 🗺 MAP CONTAINER */}
-      <div className="flex-1 overflow-hidden border-l border-slate-200">
+      <div className="flex-1 overflow-hidden border-l border-slate-200 dark:border-slate-700">
         <MapContainer
           center={defaultCenter}
           zoom={13}
