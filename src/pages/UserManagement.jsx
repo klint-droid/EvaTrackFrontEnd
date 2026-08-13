@@ -3,7 +3,6 @@ import { UserPlus } from "lucide-react";
 import AnimatedFAB from "../components/ui/AnimatedFAB";
 import AlertConfirmModal from "../components/AlertConfirmModal";
 import UserStats from "../components/userManagement/UserStats";
-import UserFilters from "../components/userManagement/UserFilters";
 import UserTable from "../components/userManagement/UserTable";
 import UserModal from "../components/userManagement/UserModal";
 import { useUserManagement } from "../hooks/useUserManagement";
@@ -104,18 +103,31 @@ const UserManagement = () => {
 
       <TableLayout
         title="User Management"
+        badgeText={`${totalEntries} Personnel`}
+        subtitle="Manage system accounts, roles, and station assignments"
+        selectedCount={selectedUsers.length}
+        onDeleteSelected={() => {
+          selectedUsers.forEach((id) => triggerDeleteUser(id));
+          setSelectedUsers([]);
+        }}
+        onExport={() => {
+          const csvHeader = "User ID,Name,Contact,Role,Station Assignment\n";
+          const csvRows = users
+            .map((u) => `${u.user_id},"${u.first_name || u.name || ''} ${u.last_name || ''}",${u.contact_number || ''},${u.role || ''},"${u.assigned_center_id || 'Unassigned'}"`)
+            .join("\n");
+          const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.setAttribute("download", "personnel_report.csv");
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }}
+        onAdd={(isSuperAdminUser || isAdminUser) ? () => setShowCreateModal(true) : undefined}
+        addLabel="Add Personnel"
         stats={stats}
-        tabs={tabs}
         pagination={paginationComponent}
       >
-
-        {/* ─── Search Filter ─── */}
-        <UserFilters 
-          search={search}
-          setSearch={setSearch}
-          fetchUsers={fetchUsers}
-          roleFilter={roleFilter}
-        />
 
         <UserTable 
           users={users}

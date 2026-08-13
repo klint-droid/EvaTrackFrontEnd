@@ -177,24 +177,24 @@ export default function Analytics() {
             />
 
             {error && (
-                <div className="p-4 bg-red-50 border border-red-100 text-red-700 rounded-2xl flex items-center gap-3 shadow-sm dark:shadow-none">
-                    <AlertCircle size={20} className="flex-shrink-0" />
-                    <span className="text-xs font-black uppercase tracking-wide">{error}</span>
+                <div className="p-3.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 rounded-xl flex items-center gap-3 text-xs font-semibold">
+                    <AlertCircle size={18} className="flex-shrink-0" />
+                    <span>{error}</span>
                 </div>
             )}
 
             {loading ? (
                 /* ── LOADING SKELETON STATE ── */
                 <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="h-28 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl animate-pulse" />
+                            <div key={i} className="h-28 bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 rounded-xl animate-pulse" />
                         ))}
                     </div>
-                    <div className="h-96 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl animate-pulse" />
+                    <div className="h-80 bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 rounded-xl animate-pulse" />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="h-80 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl animate-pulse" />
-                        <div className="h-80 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl animate-pulse" />
+                        <div className="h-72 bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 rounded-xl animate-pulse" />
+                        <div className="h-72 bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 rounded-xl animate-pulse" />
                     </div>
                 </div>
             ) : analytics ? (
@@ -202,15 +202,15 @@ export default function Analytics() {
                     
                     {/* ── EVENT METADATA WIDGET ── */}
                     {selectedEventId !== "all" && selectedEvent && (
-                        <div className="flex flex-wrap items-center gap-4 bg-blue-50 border border-blue-100 p-4 rounded-xl text-sm">
-                            <span className="flex items-center gap-1.5 text-blue-600 font-semibold">
-                                <Calendar size={16} /> Selected Disaster Event Status:
+                        <div className="flex flex-wrap items-center gap-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/50 p-3.5 rounded-xl text-xs">
+                            <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-semibold">
+                                <Calendar size={15} /> Disaster Event:
                             </span>
-                            <span className="text-slate-700 dark:text-slate-200 font-medium">Type: {selectedEvent.type}</span>
-                            <span className="text-slate-300">|</span>
-                            <span className="text-slate-700 dark:text-slate-200 font-medium">Started: {selectedEvent.started_at ? new Date(selectedEvent.started_at).toLocaleString() : "N/A"}</span>
-                            <span className="text-slate-300">|</span>
-                            <span className="text-slate-700 dark:text-slate-200 font-medium">Ended: {selectedEvent.ended_at ? new Date(selectedEvent.ended_at).toLocaleString() : <span className="text-emerald-600 font-bold animate-pulse">● Active & Ongoing</span>}</span>
+                            <span className="text-slate-700 dark:text-slate-200 font-bold">{selectedEvent.name} ({selectedEvent.type})</span>
+                            <span className="text-slate-300 dark:text-slate-700">|</span>
+                            <span className="text-slate-600 dark:text-slate-300">Started: {selectedEvent.started_at ? new Date(selectedEvent.started_at).toLocaleDateString() : "N/A"}</span>
+                            <span className="text-slate-300 dark:text-slate-700">|</span>
+                            <span className="text-slate-600 dark:text-slate-300">Status: {selectedEvent.ended_at ? "Ended" : <span className="text-emerald-600 dark:text-emerald-400 font-bold">● Active & Ongoing</span>}</span>
                         </div>
                     )}
 
@@ -234,10 +234,10 @@ export default function Analytics() {
 
                 </div>
             ) : (
-                 <div className="h-[60vh] flex flex-col items-center justify-center text-slate-400 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm dark:shadow-none">
-                    <AlertTriangle size={48} className="text-amber-500 mb-2" />
-                    <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">Terminal Offline</h3>
-                    <p className="text-sm font-bold text-slate-400 mt-1">Unable to construct metrics due to missing database response.</p>
+                <div className="h-[50vh] flex flex-col items-center justify-center text-slate-400 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs p-6">
+                    <AlertTriangle size={40} className="text-amber-500 mb-2" />
+                    <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">No Analytics Data Available</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm text-center">Unable to construct metrics for the selected scope or server response was empty.</p>
                 </div>
             )}
 

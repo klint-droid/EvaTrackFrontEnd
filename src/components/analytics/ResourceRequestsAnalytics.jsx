@@ -18,26 +18,36 @@ const URGENCY_COLORS = {
 };
 
 export default function ResourceRequestsAnalytics({ analytics }) {
+    const resRequests = analytics?.resource_requests || {};
+    const statusDist = resRequests.status_distribution || [];
+    const urgencyDist = resRequests.urgency_distribution || [];
+    const topTypes = resRequests.top_types || [];
+
     return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-6 rounded-2xl shadow-sm dark:shadow-none space-y-6">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-xs transition-colors text-left space-y-6">
             <div className="flex items-center gap-2">
-                <Package className="text-emerald-600" size={20} />
-                <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 tracking-tight">Logistics & Resource Demands</h3>
+                <div className="p-2 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50">
+                    <Package size={18} />
+                </div>
+                <div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 leading-tight">Logistics & Resource Demands</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Request status breakdowns, urgency distribution, and supply types</p>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Request Status Donut Chart */}
-                <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/60 p-5 rounded-2xl flex flex-col justify-between">
+                <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 p-4 rounded-xl flex flex-col justify-between">
                     <div>
-                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
                             Request Status Breakdown
                         </h4>
                         <div className="h-44 flex items-center justify-center">
-                            {analytics.resource_requests?.status_distribution?.length > 0 ? (
+                            {statusDist.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie
-                                            data={analytics.resource_requests.status_distribution}
+                                            data={statusDist}
                                             cx="50%"
                                             cy="50%"
                                             innerRadius={45}
@@ -45,11 +55,11 @@ export default function ResourceRequestsAnalytics({ analytics }) {
                                             paddingAngle={3}
                                             dataKey="count"
                                         >
-                                            {analytics.resource_requests.status_distribution.map((entry, index) => (
+                                            {statusDist.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={REQ_STATUS_COLORS[entry.status_key] || "#64748b"} />
                                             ))}
                                         </Pie>
-                                        <Tooltip contentStyle={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0", borderRadius: "10px" }} />
+                                        <Tooltip contentStyle={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0", borderRadius: "10px", color: "#1e293b", fontSize: "12px" }} />
                                     </PieChart>
                                 </ResponsiveContainer>
                             ) : (
@@ -58,34 +68,34 @@ export default function ResourceRequestsAnalytics({ analytics }) {
                         </div>
                     </div>
                     <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                        {analytics.resource_requests?.status_distribution?.map((item) => (
-                            <div key={item.status_key} className="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-2 rounded-lg">
+                        {statusDist.map((item) => (
+                            <div key={item.status_key} className="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 rounded-lg">
                                 <div className="flex items-center gap-1.5 min-w-0">
                                     <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: REQ_STATUS_COLORS[item.status_key] }} />
-                                    <span className="text-slate-500 dark:text-slate-400 font-bold truncate capitalize">{item.status_label}</span>
+                                    <span className="text-slate-600 dark:text-slate-300 font-semibold truncate capitalize">{item.status_label}</span>
                                 </div>
-                                <span className="font-extrabold text-slate-800 dark:text-slate-100 shrink-0 ml-1">{item.count}</span>
+                                <span className="font-bold text-slate-900 dark:text-slate-100 shrink-0 ml-1">{item.count}</span>
                             </div>
                         ))}
                     </div>
                 </div>
 
                 {/* Urgency Distribution Bar Chart */}
-                <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/60 p-5 rounded-2xl flex flex-col justify-between">
+                <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 p-4 rounded-xl flex flex-col justify-between">
                     <div>
-                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
                             Demands by Urgency Index
                         </h4>
                         <div className="h-44">
-                            {analytics.resource_requests?.urgency_distribution?.length > 0 ? (
+                            {urgencyDist.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={analytics.resource_requests.urgency_distribution} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <BarChart data={urgencyDist} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                                         <XAxis dataKey="urgency_label" stroke="#94a3b8" fontSize={9} tickLine={false} />
                                         <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
-                                        <Tooltip contentStyle={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0", borderRadius: "10px" }} />
+                                        <Tooltip contentStyle={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0", borderRadius: "10px", color: "#1e293b", fontSize: "12px" }} />
                                         <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={30}>
-                                            {analytics.resource_requests.urgency_distribution.map((entry, index) => (
+                                            {urgencyDist.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={URGENCY_COLORS[entry.urgency_key] || "#3b82f6"} />
                                             ))}
                                         </Bar>
@@ -97,32 +107,32 @@ export default function ResourceRequestsAnalytics({ analytics }) {
                         </div>
                     </div>
                     <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                        {analytics.resource_requests?.urgency_distribution?.map((item) => (
-                            <div key={item.urgency_key} className="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-2 rounded-lg">
+                        {urgencyDist.map((item) => (
+                            <div key={item.urgency_key} className="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 rounded-lg">
                                 <div className="flex items-center gap-1.5 min-w-0">
                                     <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: URGENCY_COLORS[item.urgency_key] }} />
-                                    <span className="text-slate-500 dark:text-slate-400 font-bold truncate capitalize">{item.urgency_label}</span>
+                                    <span className="text-slate-600 dark:text-slate-300 font-semibold truncate capitalize">{item.urgency_label}</span>
                                 </div>
-                                <span className="font-extrabold text-slate-800 dark:text-slate-100 shrink-0 ml-1">{item.count}</span>
+                                <span className="font-bold text-slate-900 dark:text-slate-100 shrink-0 ml-1">{item.count}</span>
                             </div>
                         ))}
                     </div>
                 </div>
 
                 {/* Top Requested Items (Horizontal Bar Chart) */}
-                <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/60 p-5 rounded-2xl flex flex-col justify-between">
+                <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 p-4 rounded-xl flex flex-col justify-between">
                     <div>
-                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
                             Top Requested Resource Types
                         </h4>
                         <div className="h-44">
-                            {analytics.resource_requests?.top_types?.length > 0 ? (
+                            {topTypes.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={analytics.resource_requests.top_types} layout="vertical" margin={{ top: 0, right: 10, left: 10, bottom: 0 }}>
+                                    <BarChart data={topTypes} layout="vertical" margin={{ top: 0, right: 10, left: 10, bottom: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
                                         <XAxis type="number" stroke="#94a3b8" fontSize={9} tickLine={false} />
                                         <YAxis dataKey="type" type="category" stroke="#94a3b8" fontSize={9} width={80} tickLine={false} />
-                                        <Tooltip contentStyle={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0", borderRadius: "10px" }} />
+                                        <Tooltip contentStyle={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0", borderRadius: "10px", color: "#1e293b", fontSize: "12px" }} />
                                         <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} maxBarSize={16}>
                                             <LabelList dataKey="total_quantity" content={(props) => {
                                                 const { x, y, width, value } = props;
@@ -140,9 +150,9 @@ export default function ResourceRequestsAnalytics({ analytics }) {
                             )}
                         </div>
                     </div>
-                    <div className="mt-4 border-t border-slate-200 dark:border-slate-700/60 pt-3">
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">
-                            Total Request Types: {analytics.resource_requests?.top_types?.length || 0}
+                    <div className="mt-4 border-t border-slate-200 dark:border-slate-800 pt-2.5 text-center">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
+                            Total Request Types: {topTypes.length}
                         </p>
                     </div>
                 </div>
@@ -150,3 +160,4 @@ export default function ResourceRequestsAnalytics({ analytics }) {
         </div>
     );
 }
+

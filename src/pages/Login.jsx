@@ -236,7 +236,7 @@ function Login() {
               EvaTrack centralizes multi-agency data to protect communities during critical environmental events.
             </p>
 
-            <div className="flex items-center gap-2 px-3 py-1 bg-white dark:bg-slate-900/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-wider text-sky-300 mt-6">
+            <div className="flex items-center gap-2 px-3 py-1 bg-white/10 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-wider text-sky-300 mt-6">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-sky-500" />

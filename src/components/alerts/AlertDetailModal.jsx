@@ -90,13 +90,49 @@ export default function AlertDetailModal({ notifId, onClose }) {
                                 )}
                             </div>
 
-                            {/* Message */}
-                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
-                                    Message
-                                </p>
-                                <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">{alert.message}</p>
-                            </div>
+                            {/* Message Card */}
+                            {(() => {
+                                const cleanMessage = alert.message
+                                    ? alert.message.split('\n\nEvent:')[0].split('\n\nCenter:')[0].split('\n\nCenters:')[0].split('\n\nLink:')[0].split('\n\nhttp')[0].trim()
+                                    : '';
+                                const dateStr = alert.created_at
+                                    ? new Date(alert.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })
+                                    : new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+
+                                return (
+                                    <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800 space-y-3">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                            Broadcast Directive Message
+                                        </p>
+                                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
+                                            {cleanMessage}
+                                        </p>
+                                        
+                                        <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex flex-col gap-1 text-xs">
+                                            <span className="font-extrabold text-slate-700 dark:text-slate-200">
+                                                As of {dateStr} Announcement
+                                            </span>
+                                            <span className="font-bold text-slate-500">
+                                                Event: <span className="text-slate-800 dark:text-slate-100 font-extrabold">{alert.event?.name || 'General Emergency Alert'}</span>
+                                            </span>
+                                            <span className="font-bold text-slate-500">
+                                                {alert.center ? 'Center: ' : 'Centers: '}
+                                                <span className="text-slate-800 dark:text-slate-100 font-extrabold">
+                                                    {alert.center ? alert.center.name : 'All Evacuation Centers'}
+                                                </span>
+                                            </span>
+                                            <a
+                                                href={alert.center ? `http://100.73.14.100:5173/evacuation-centers/${alert.center.evacuation_center_id}` : `http://100.73.14.100:5173/public`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="font-bold text-blue-600 underline hover:text-blue-700 truncate mt-1"
+                                            >
+                                                {alert.center ? `http://100.73.14.100:5173/evacuation-centers/${alert.center.evacuation_center_id}` : `http://100.73.14.100:5173/public`}
+                                            </a>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
 
                             {/* Meta grid */}
                             <div className="grid grid-cols-2 gap-x-6 gap-y-4">
@@ -127,6 +163,13 @@ export default function AlertDetailModal({ notifId, onClose }) {
                                         icon={<CheckCircle size={12} className="text-slate-400" />}
                                         label="Last Sent"
                                         value={new Date(alert.last_sent_at).toLocaleString()}
+                                    />
+                                )}
+                                {alert.is_recurring && alert.recurrence_end_at && (
+                                    <MetaField
+                                        icon={<RefreshCw size={12} className="text-slate-400" />}
+                                        label="Ends Recurrence On"
+                                        value={new Date(alert.recurrence_end_at).toLocaleString()}
                                     />
                                 )}
                             </div>

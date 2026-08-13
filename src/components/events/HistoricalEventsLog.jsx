@@ -1,191 +1,125 @@
 import React from 'react';
-import { Archive, Filter, CheckCircle2, Eye, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Archive, CheckCircle2 } from 'lucide-react';
 import SeverityBadge from './SeverityBadge';
+import { TableLayout } from '../ui/TableLayout';
+import { Table, TableHeader, TableRow, TableHead, TableCell, RowMenu } from '../../ui/Table';
+import { Pagination } from '../ui/Pagination';
 
 export default function HistoricalEventsLog({
-  historyPagination, showFilters, setShowFilters, filters, setFilters,
+  historyPagination, filters, setFilters,
   disasterTypes, historyLoading, historicalEvents, fetchHistory, setViewingEvent
 }) {
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden mb-4">
-      <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 flex items-center gap-2">
-            <Archive size={17} className="text-slate-400" />
-            Historical Operations Log
-          </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            {historyPagination.total || 0} record{(historyPagination.total || 0) !== 1 ? 's' : ''} found
-          </p>
-        </div>
-        
-        <div className="flex gap-2 relative w-full lg:w-auto justify-end">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all ${
-              (filters.type_id || filters.start_date || filters.end_date) || showFilters
-                ? 'bg-blue-50 border-blue-200 text-blue-700'
-                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:bg-slate-800/50'
-            }`}
-          >
-            <Filter size={16} />
-            <span className="hidden sm:inline">Filters</span>
-            {(filters.type_id || filters.start_date || filters.end_date) && (
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-[10px]">
-                {(filters.type_id ? 1 : 0) + (filters.start_date ? 1 : 0) + (filters.end_date ? 1 : 0)}
-              </span>
-            )}
-          </button>
+    <TableLayout
+      title="Historical Operations Log"
+      badgeText={`${historyPagination.total || historicalEvents.length} Archives`}
+      subtitle="Past disaster events, emergency responses, and historical incident logs"
+      onExport={() => {
+        const csvHeader = "Event ID,Name,Type,Severity,Duration,Status\n";
+        const csvRows = historicalEvents
+          .map((e) => `${e.event_id},"${e.name || ''}",${e.primary_type?.type_name || ''},${e.severity || ''},Closed`)
+          .join("\n");
+        const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", "historical_events_report.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }}
+      pagination={
+        <Pagination
+          currentPage={historyPagination.current_page || 1}
+          totalPages={historyPagination.last_page || 1}
+          totalEntries={historyPagination.total || 0}
+          perPage={historyPagination.per_page || 10}
+          onPageChange={(page) => fetchHistory(page)}
+        />
+      }
+    >
+      <Table>
+        <TableHeader>
+          <tr className="border-b border-slate-100 dark:border-slate-800">
+            <TableHead>Event ID</TableHead>
+            <TableHead
+              filterable
+              filterValue={filters.q}
+              onFilterChange={(v) => setFilters((prev) => ({ ...prev, q: v }))}
+            >
+              Name
+            </TableHead>
+            <TableHead
+              filterable
+              filterValue={filters.type_id}
+              onFilterChange={(v) => setFilters((prev) => ({ ...prev, type_id: v }))}
+              filterOptions={disasterTypes.map((t) => ({ value: t.type_id, label: t.type_name }))}
+            >
+              Type
+            </TableHead>
+            <TableHead>Severity</TableHead>
+            <TableHead>Duration</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </tr>
+        </TableHeader>
+        <tbody>
+          {historyLoading ? (
+            [...Array(5)].map((_, i) => (
+              <TableRow key={i} className="animate-pulse">
+                <TableCell><div className="w-16 h-3 bg-slate-200 rounded" /></TableCell>
+                <TableCell><div className="w-32 h-3 bg-slate-200 rounded" /></TableCell>
+                <TableCell><div className="w-20 h-3 bg-slate-200 rounded" /></TableCell>
+                <TableCell><div className="w-16 h-5 bg-slate-200 rounded-full" /></TableCell>
+                <TableCell><div className="w-12 h-3 bg-slate-200 rounded" /></TableCell>
+                <TableCell><div className="w-16 h-3 bg-slate-200 rounded" /></TableCell>
+                <TableCell className="text-right"><div className="w-10 h-4 bg-slate-200 rounded ml-auto" /></TableCell>
+              </TableRow>
+            ))
+          ) : historicalEvents.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan="7" className="py-14 text-center text-slate-400 text-xs">
+                No historical operations recorded yet.
+              </TableCell>
+            </TableRow>
+          ) : (
+            historicalEvents.map((event) => {
+              const start = new Date(event.started_at);
+              const end = event.ended_at ? new Date(event.ended_at) : null;
 
-          {showFilters && (
-            <div className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-200 dark:border-slate-700 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Advanced Filters</h3>
-                {(filters.type_id || filters.start_date || filters.end_date) && (
-                  <button 
-                    onClick={() => setFilters({type_id: '', start_date: '', end_date: ''})}
-                    className="text-xs font-bold text-blue-600 hover:text-blue-700"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Event Type</label>
-                  <select
-                    value={filters.type_id}
-                    onChange={e => setFilters(prev => ({...prev, type_id: e.target.value}))}
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
-                  >
-                    <option value="">All Types</option>
-                    {disasterTypes.map(type => (
-                      <option key={type.type_id} value={type.type_id}>{type.type_name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">From</label>
-                  <input
-                    type="date"
-                    value={filters.start_date}
-                    onChange={e => setFilters(prev => ({...prev, start_date: e.target.value}))}
-                    onClick={e => e.target.showPicker && e.target.showPicker()}
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">To</label>
-                  <input
-                    type="date"
-                    value={filters.end_date}
-                    onChange={e => setFilters(prev => ({...prev, end_date: e.target.value}))}
-                    onClick={e => e.target.showPicker && e.target.showPicker()}
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
-                  />
-                </div>
-              </div>
-            </div>
+              let durationStr = "—";
+              if (end) {
+                const diffMs = end.getTime() - start.getTime();
+                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                durationStr = diffDays > 0 ? `${diffDays} Day${diffDays > 1 ? "s" : ""}` : `${diffHours}h`;
+              }
+
+              return (
+                <TableRow key={event.event_id}>
+                  <TableCell className="font-mono text-xs text-slate-400">{event.event_id}</TableCell>
+                  <TableCell isBold>{event.name}</TableCell>
+                  <TableCell className="text-xs text-slate-500 dark:text-slate-400">
+                    {event.primary_type?.type_name || "—"}
+                  </TableCell>
+                  <TableCell>
+                    <SeverityBadge severity={event.severity} />
+                  </TableCell>
+                  <TableCell className="text-xs text-slate-500 dark:text-slate-400">{durationStr}</TableCell>
+                  <TableCell>
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                      <CheckCircle2 size={13} />
+                      Closed
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <RowMenu onView={() => setViewingEvent(event)} />
+                  </TableCell>
+                </TableRow>
+              );
+            })
           )}
-        </div>
-      </div>
-
-      {historyLoading ? (
-        <div className="px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-400">
-          Loading historical operations...
-        </div>
-      ) : historicalEvents.length === 0 ? (
-        <div className="px-6 py-12 text-center">
-          <Archive className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-sm text-slate-400">No historical operations recorded yet.</p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-                {['Event ID', 'Name', 'Type', 'Severity', 'Duration', 'Status', 'Command'].map(h => (
-                  <th key={h} className="px-6 py-3.5 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {historicalEvents.map(event => {
-                const start = new Date(event.started_at);
-                const end = event.ended_at ? new Date(event.ended_at) : null;
-                
-                let durationStr = "—";
-                if (end) {
-                  const diffMs = end.getTime() - start.getTime();
-                  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                  const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                  durationStr = diffDays > 0 
-                    ? `${diffDays} Day${diffDays > 1 ? 's' : ''}` 
-                    : `${diffHours}h`;
-                }
-
-                return (
-                  <tr key={event.event_id} className="hover:bg-slate-50 dark:bg-slate-800/50/20 transition-colors group">
-                    <td className="px-6 py-4.5 font-mono text-xs text-slate-400">{event.event_id}</td>
-                    <td className="px-6 py-4.5 font-bold text-slate-800 dark:text-slate-100">{event.name}</td>
-                    <td className="px-6 py-4.5 text-xs text-slate-500 dark:text-slate-400">{event.primary_type?.type_name || '—'}</td>
-                    <td className="px-6 py-4.5">
-                      <SeverityBadge severity={event.severity} />
-                    </td>
-                    <td className="px-6 py-4.5 text-xs text-slate-500 dark:text-slate-400">{durationStr}</td>
-                    <td className="px-6 py-4.5">
-                      <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
-                        <CheckCircle2 size={14} />
-                        Closed
-                      </span>
-                    </td>
-                    <td className="px-6 py-4.5">
-                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                        <button
-                          onClick={() => setViewingEvent(event)}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all  hover:shadow"
-                          title="View Details & Logs"
-                        >
-                          <Eye size={14} />
-                        </button>
-                      </div>
-                      <div className="group-hover:hidden text-slate-300">
-                        <MoreHorizontal size={14} className="ml-auto" />
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          
-          <div className="px-6 py-3.5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              Page {historyPagination.current_page || 1} of {historyPagination.last_page || 1}
-              {' · '}
-              {historyPagination.total || 0} total records
-            </p>
-            <div className="flex gap-2">
-              <button
-                disabled={!historyPagination.prev_page_url}
-                onClick={() => fetchHistory(historyPagination.current_page - 1)}
-                className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg disabled:opacity-30 hover:bg-slate-50 dark:bg-slate-800/50 transition-all  active:scale-95"
-              >
-                <ChevronLeft size={14} />
-              </button>
-              <button
-                disabled={!historyPagination.next_page_url}
-                onClick={() => fetchHistory(historyPagination.current_page + 1)}
-                className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg disabled:opacity-30 hover:bg-slate-50 dark:bg-slate-800/50 transition-all  active:scale-95"
-              >
-                <ChevronRight size={14} />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+        </tbody>
+      </Table>
+    </TableLayout>
   );
 }

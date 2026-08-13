@@ -5,6 +5,7 @@ import {
     Plus,
     Trash2,
     Home,
+    Search,
     ChevronDown,
     ChevronUp,
     ChevronLeft,
@@ -17,6 +18,7 @@ import {
     ArrowLeft,
     Download,
     FileSpreadsheet,
+    Phone,
 } from 'lucide-react';
 
 import { getCenter } from '../../api/evacuation/getCenter';
@@ -36,7 +38,10 @@ import AssignHouseholdModal from '../../components/units/AssignHouseholdModal';
 import AlertConfirmModal from '../../components/AlertConfirmModal';
 import { isAdmin, isSuperAdmin, isPersonnel } from '../../utils/roles';
 import { useAlert } from '../../context/AlertContext';
-import { Table, TableHeader, TableRow, TableHead, TableCell } from '../../ui/Table';
+import { Table, TableHeader, TableRow, TableHead, TableCell, StatusBadge, Checkbox } from '../../ui/Table';
+import { TableLayout } from '../../components/ui/TableLayout';
+import { TableTabs } from '../../components/ui/TableTabs';
+import { Pagination } from '../../components/ui/Pagination';
 import { Select } from '../../ui/Select';
 import { Input } from '../../ui/Input';
 
@@ -62,6 +67,17 @@ export default function EvacuationDetail() {
     // expanded unit to show allocations
     const [expandedUnit, setExpandedUnit] = useState(null);
     const [allocations, setAllocations] = useState({});
+    const [unitNameFilter, setUnitNameFilter] = useState("");
+    const [unitTypeFilter, setUnitTypeFilter] = useState("");
+    const [unitStatusFilter, setUnitStatusFilter] = useState("");
+    const [selectedUnits, setSelectedUnits] = useState([]);
+
+    const [householdNameFilter, setHouseholdNameFilter] = useState("");
+    const [householdContactFilter, setHouseholdContactFilter] = useState("");
+    const [householdUnitFilter, setHouseholdUnitFilter] = useState("");
+    const [householdMethodFilter, setHouseholdMethodFilter] = useState("");
+    const [selectedHouseholds, setSelectedHouseholds] = useState([]);
+    const [householdPage, setHouseholdPage] = useState(1);
 
     // modals
     const [unitModal, setUnitModal] = useState(false);
@@ -325,6 +341,57 @@ export default function EvacuationDetail() {
     }
     if (!center) return <div className="p-6 text-red-500">Center not found.</div>;
 
+    const filteredUnits = units.filter(unit => {
+        if (unitNameFilter && !`${unit.name} ID-${unit.unit_id}`.toLowerCase().includes(unitNameFilter.toLowerCase())) {
+            return false;
+        }
+        const typeLabel = unit.type?.type_label || 'Standard Unit';
+        if (unitTypeFilter && !typeLabel.toLowerCase().includes(unitTypeFilter.toLowerCase())) {
+            return false;
+        }
+        const occupancy = Number(unit.current_occupancy ?? 0);
+        const capacity = Number(unit.max_capacity ?? 0);
+        const percent = capacity > 0 ? Math.round((occupancy / capacity) * 100) : 0;
+        const isFull = capacity > 0 && occupancy >= capacity;
+        const isHigh = percent >= 80 && percent < 100;
+        const isAvailable = percent < 80;
+
+        if (unitStatusFilter === "available" && !isAvailable) return false;
+        if (unitStatusFilter === "high" && !isHigh) return false;
+        if (unitStatusFilter === "full" && !isFull) return false;
+
+        return true;
+    });
+
+    const filteredHouseholds = evacuatedHouseholds.filter(record => {
+        const nameStr = `${record.household?.household_name || ''} ID-${record.household_id || ''}`.toLowerCase();
+        if (householdNameFilter && !nameStr.includes(householdNameFilter.toLowerCase())) {
+            return false;
+        }
+        const contactStr = record.household?.contact_number || '';
+        if (householdContactFilter && !contactStr.includes(householdContactFilter)) {
+            return false;
+        }
+        const unitName = record.unit_allocation?.unit?.name || record.unit_allocations?.[0]?.unit?.name || record.unit?.name;
+        if (householdUnitFilter === "assigned" && !unitName) return false;
+        if (householdUnitFilter === "unassigned" && unitName) return false;
+        if (householdUnitFilter && householdUnitFilter !== "assigned" && householdUnitFilter !== "unassigned") {
+            if (!unitName || !unitName.toLowerCase().includes(householdUnitFilter.toLowerCase())) return false;
+        }
+        const methodStr = (record.method || 'manual').toLowerCase();
+        if (householdMethodFilter && methodStr !== householdMethodFilter.toLowerCase()) {
+            return false;
+        }
+        return true;
+    });
+
+    const householdPerPage = 10;
+    const totalHouseholdPages = Math.ceil(filteredHouseholds.length / householdPerPage) || 1;
+    const paginatedHouseholds = filteredHouseholds.slice(
+        (householdPage - 1) * householdPerPage,
+        householdPage * householdPerPage
+    );
+
     return (
         <div className="p-6 space-y-6 text-left">
 
@@ -414,98 +481,175 @@ export default function EvacuationDetail() {
                     </button>
                 </nav>
             </div>
-
             {/* Tab Panels */}
             {activeTab === 'units' && (
-                <div className="space-y-4">
-                    {/* Tab Header & Action */}
-                    <div className="flex items-center justify-between mb-2">
-                        <div>
-                            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Accommodation Units</h2>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Manage housing structures and unit allocations.</p>
-                        </div>
-
-                        {canEditUnits && (
-                            <button
-                                onClick={() => {
-                                    setEditingUnit(null);
-                                    setUnitModal(true);
-                                }}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 cursor-pointer"
-                            >
-                                <Plus size={16} />
-                                Add Unit
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Units List */}
-                    {units.length === 0 ? (
-                        <div className="bg-white dark:bg-slate-900 rounded-xl border p-8 text-center text-slate-400">
-                            No units yet. Add one to get started.
-                        </div>
-                    ) : (
-                        <div className="bg-white dark:bg-slate-900 rounded-xl border overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <Table>
-                                    <TableHeader className="bg-slate-50 dark:bg-slate-800/50">
-                                        <TableRow>
-                                            <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs w-[250px]">Unit</TableHead>
-                                            <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">Type</TableHead>
-                                            <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">Capacity</TableHead>
-                                            <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">Occupancy Status</TableHead>
-                                            <TableHead className="px-4 py-3 text-right font-bold text-slate-500 dark:text-slate-400 uppercase text-xs w-[200px]">Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <tbody className="divide-y divide-slate-200">
-                                        {units.map(unit => {
+                <TableLayout
+                    title="Accommodation Units"
+                    badgeText={`${unitsMeta?.total || units.length} Units`}
+                    subtitle="Manage housing structures, room capacities, and household allocations"
+                    onAdd={canEditUnits ? () => { setEditingUnit(null); setUnitModal(true); } : undefined}
+                    addLabel="Add Unit"
+                    selectedCount={selectedUnits.length}
+                    onDeleteSelected={canEditUnits && selectedUnits.length > 0 ? () => {
+                        selectedUnits.forEach(id => {
+                            const target = units.find(u => u.unit_id === id);
+                            if (target && Number(target.current_occupancy || 0) === 0) {
+                                setDeleteUnitModal(target);
+                            }
+                        });
+                        setSelectedUnits([]);
+                    } : undefined}
+                    pagination={
+                        <Pagination
+                            currentPage={unitsPage}
+                            totalPages={unitsMeta?.last_page || 1}
+                            totalEntries={unitsMeta?.total || units.length}
+                            perPage={unitsMeta?.per_page || 15}
+                            onPageChange={(page) => fetchUnits(page)}
+                        />
+                    }
+                >
+                    {/* Main Table Container */}
+                    <div className="hidden md:block">
+                        <Table>
+                            <TableHeader>
+                                <tr className="border-b border-gray-100 dark:border-slate-800">
+                                    <TableHead className="w-12">
+                                        <Checkbox
+                                            checked={filteredUnits.length > 0 && selectedUnits.length === filteredUnits.length}
+                                            indeterminate={selectedUnits.length > 0 && selectedUnits.length < filteredUnits.length}
+                                            onChange={() => {
+                                                if (selectedUnits.length === filteredUnits.length) {
+                                                    setSelectedUnits([]);
+                                                } else {
+                                                    setSelectedUnits(filteredUnits.map(u => u.unit_id));
+                                                }
+                                            }}
+                                            ariaLabel="Select all units"
+                                        />
+                                    </TableHead>
+                                    <TableHead
+                                        filterable
+                                        filterValue={unitNameFilter}
+                                        onFilterChange={setUnitNameFilter}
+                                    >
+                                        Unit Name & ID
+                                    </TableHead>
+                                    <TableHead
+                                        filterable
+                                        filterValue={unitTypeFilter}
+                                        onFilterChange={setUnitTypeFilter}
+                                    >
+                                        Unit Type
+                                    </TableHead>
+                                    <TableHead>
+                                        Capacity & Evacuees
+                                    </TableHead>
+                                    <TableHead
+                                        filterable
+                                        filterValue={unitStatusFilter}
+                                        onFilterChange={setUnitStatusFilter}
+                                        filterOptions={[
+                                            { value: "available", label: "Available (< 80%)" },
+                                            { value: "high", label: "High (80% - 99%)" },
+                                            { value: "full", label: "Fully Occupied (100%)" },
+                                        ]}
+                                    >
+                                        Occupancy Status
+                                    </TableHead>
+                                    <TableHead className="text-center">
+                                        Assigned Households
+                                    </TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </tr>
+                            </TableHeader>
+                            <tbody>
+                                {filteredUnits.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan="7" className="px-6 py-16 text-center">
+                                            <Home className="mx-auto text-slate-300 dark:text-slate-600 mb-2" size={28} />
+                                            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">No accommodation units found</p>
+                                            <p className="text-xs text-slate-400 mt-1">Try adjusting your column filters.</p>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    filteredUnits.map((unit) => {
                                             const occupancy = Number(unit.current_occupancy ?? 0);
                                             const capacity = Number(unit.max_capacity ?? 0);
                                             const percent = capacity > 0 ? Math.round((occupancy / capacity) * 100) : 0;
                                             const isExpanded = expandedUnit === unit.unit_id;
+                                            const unitAllocations = allocations[unit.unit_id] || [];
+                                            const isChecked = selectedUnits.includes(unit.unit_id);
 
                                             return (
                                                 <Fragment key={unit.unit_id}>
-                                                    <TableRow className="hover:bg-slate-50 dark:bg-slate-800/50 transition-colors">
-                                                        <TableCell className="px-4 py-3">
+                                                    <TableRow isSelected={isChecked}>
+                                                        <TableCell>
+                                                            <Checkbox
+                                                                checked={isChecked}
+                                                                onChange={() => {
+                                                                    setSelectedUnits(prev => 
+                                                                        prev.includes(unit.unit_id) 
+                                                                            ? prev.filter(id => id !== unit.unit_id) 
+                                                                            : [...prev, unit.unit_id]
+                                                                    );
+                                                                }}
+                                                                ariaLabel={`Select unit ${unit.unit_id}`}
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell>
                                                             <div className="flex items-center gap-3">
-                                                                <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 border border-blue-100">
-                                                                    <Home size={14} />
+                                                                <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50 flex items-center justify-center flex-shrink-0">
+                                                                    <Home size={16} />
                                                                 </div>
-                                                                <p className="font-bold text-slate-800 dark:text-slate-100">{unit.name}</p>
+                                                                <div>
+                                                                    <p className="text-xs font-bold text-gray-900 dark:text-slate-100 leading-tight">
+                                                                        {unit.name}
+                                                                    </p>
+                                                                    <p className="text-[10px] text-gray-400 dark:text-slate-400 leading-none mt-0.5">
+                                                                        ID-{unit.unit_id}
+                                                                    </p>
+                                                                </div>
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell className="px-4 py-3">
+                                                        <TableCell>
                                                             <span className="text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-md font-semibold">
-                                                                {unit.type?.type_label || 'Unknown'}
+                                                                {unit.type?.type_label || 'Standard Unit'}
                                                             </span>
                                                         </TableCell>
-                                                        <TableCell className="px-4 py-3">
-                                                            <div className="flex items-center gap-1.5 text-sm">
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 font-semibold">
                                                                 <Users size={14} className="text-slate-400" />
-                                                                <span className="font-bold text-slate-700 dark:text-slate-200">{occupancy}</span>
+                                                                <span className="font-bold text-slate-900 dark:text-white">{occupancy}</span>
                                                                 <span className="text-slate-400">/ {capacity}</span>
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell className="px-4 py-3">
-                                                            <div className="flex items-center gap-2 max-w-[150px]">
-                                                                <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                                                    <div
-                                                                        className={`h-full rounded-full transition-all ${
-                                                                            percent >= 90 ? 'bg-red-500' : percent >= 70 ? 'bg-amber-500' : 'bg-emerald-500'
-                                                                        }`}
-                                                                        style={{ width: `${percent}%` }}
-                                                                    />
-                                                                </div>
-                                                                <span className="text-[11px] font-black text-slate-600 dark:text-slate-300 w-8">{percent}%</span>
-                                                            </div>
+                                                        <TableCell>
+                                                            <StatusBadge
+                                                                label={percent >= 100 ? `Full (${percent}%)` : percent >= 80 ? `High (${percent}%)` : `Available (${percent}%)`}
+                                                                color={percent >= 100 ? "red" : percent >= 80 ? "orange" : "green"}
+                                                            />
                                                         </TableCell>
-                                                        <TableCell className="px-4 py-3 text-right">
+                                                        <TableCell className="text-center">
+                                                            <button
+                                                                onClick={() => toggleUnit(unit.unit_id)}
+                                                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold transition-colors cursor-pointer ${
+                                                                    isExpanded
+                                                                        ? 'bg-blue-600 text-white'
+                                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                                                }`}
+                                                            >
+                                                                <Users size={13} />
+                                                                <span>{unitAllocations.length} Assigned</span>
+                                                                {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                                                            </button>
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
                                                             <div className="flex items-center justify-end gap-1.5">
                                                                 {canManage && (
                                                                     <button
                                                                         onClick={() => setAssignModal(unit)}
-                                                                        className="px-2.5 py-1.5 text-xs font-bold rounded bg-blue-50 text-blue-600 hover:bg-blue-100 border border-transparent hover:border-blue-200 transition-all"
+                                                                        className="px-2.5 py-1 text-xs font-bold rounded bg-blue-50 text-blue-600 hover:bg-blue-100 border border-transparent hover:border-blue-200 transition-all cursor-pointer"
                                                                     >
                                                                         Assign
                                                                     </button>
@@ -528,69 +672,69 @@ export default function EvacuationDetail() {
                                                                             title={occupancy > 0 ? "Cannot delete unit with occupants" : "Delete unit"}
                                                                             className={`p-1.5 rounded transition-colors ${
                                                                                 occupancy > 0 
-                                                                                    ? 'text-slate-200 cursor-not-allowed' 
-                                                                                    : 'text-slate-400 hover:text-red-600 hover:bg-red-50 cursor-pointer'
+                                                                                    ? 'text-slate-200 dark:text-slate-700 cursor-not-allowed' 
+                                                                                    : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer'
                                                                             }`}
                                                                         >
                                                                             <Trash2 size={15} />
                                                                         </button>
                                                                     </>
                                                                 )}
-                                                                <button
-                                                                    onClick={() => toggleUnit(unit.unit_id)}
-                                                                    className={`p-1.5 rounded transition-colors ${isExpanded ? 'bg-slate-200 text-slate-700 dark:text-slate-200' : 'text-slate-400 hover:bg-slate-100 dark:bg-slate-800 hover:text-slate-700 dark:text-slate-200'}`}
-                                                                    title={isExpanded ? "Hide allocations" : "Show allocations"}
-                                                                >
-                                                                    {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-                                                                </button>
                                                             </div>
                                                         </TableCell>
                                                     </TableRow>
 
+                                                    {/* Chevron Accordion Household Drawer */}
                                                     {isExpanded && (
                                                         <TableRow>
-                                                            <TableCell colSpan="5" className="p-0 border-b-0">
+                                                            <TableCell colSpan="7" className="p-0 border-b-0">
                                                                 <div className="bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 p-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]">
-                                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">
-                                                                        Assigned Households
-                                                                    </p>
+                                                                    <div className="flex items-center justify-between mb-3 px-1">
+                                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                                                            Assigned Households in {unit.name} ({unitAllocations.length})
+                                                                        </p>
+                                                                        {canManage && (
+                                                                            <button
+                                                                                onClick={() => setAssignModal(unit)}
+                                                                                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                                                                            >
+                                                                                + Assign Household
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
 
                                                                     {!allocations[unit.unit_id] ? (
                                                                         <p className="text-sm font-medium text-slate-400 px-1">Loading allocations...</p>
-                                                                    ) : allocations[unit.unit_id].length === 0 ? (
-                                                                        <p className="text-sm font-medium text-slate-400 px-1">No households assigned yet.</p>
+                                                                    ) : unitAllocations.length === 0 ? (
+                                                                        <p className="text-xs font-medium text-slate-400 px-1">No households assigned yet.</p>
                                                                     ) : (
-                                                                        <div className="space-y-2 max-w-2xl">
-                                                                            {allocations[unit.unit_id].map(alloc => (
+                                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                                                                            {unitAllocations.map(alloc => (
                                                                                 <div
                                                                                     key={alloc.allocation_id}
-                                                                                    className="flex items-center justify-between bg-white dark:bg-slate-900 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-none hover:shadow-md dark:shadow-none transition-shadow"
+                                                                                    className="flex items-center justify-between bg-white dark:bg-slate-900 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs"
                                                                                 >
-                                                                                    <div className="flex items-center gap-3">
-                                                                                        <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100">
-                                                                                            <Users size={14} className="text-indigo-500" />
+                                                                                    <div className="flex items-center gap-2.5 min-w-0">
+                                                                                        <div className="w-7 h-7 rounded-full bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center border border-indigo-100 dark:border-indigo-900 flex-shrink-0">
+                                                                                            <Users size={13} className="text-indigo-600 dark:text-indigo-400" />
                                                                                         </div>
-
-                                                                                        <div>
-                                                                                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">
-                                                                                                {alloc.evacuation_record?.household?.household_name}
+                                                                                        <div className="min-w-0">
+                                                                                            <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate leading-tight">
+                                                                                                {alloc.evacuation_record?.household?.household_name || "Household"}
                                                                                             </p>
-
-                                                                                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
-                                                                                                {alloc.evacuation_record?.evacuated_count} members
+                                                                                            <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
+                                                                                                {alloc.evacuation_record?.evacuated_count || 0} members
                                                                                             </p>
                                                                                         </div>
                                                                                     </div>
 
                                                                                     {canManage && (
                                                                                         <button
-                                                                                            onClick={() =>
-                                                                                                setUnassignModal({
-                                                                                                    unitId: unit.unit_id,
-                                                                                                    allocationId: alloc.allocation_id
-                                                                                                })
-                                                                                            }
-                                                                                            className="px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded-md font-bold transition-colors border border-transparent hover:border-red-100"
+                                                                                            onClick={() => setUnassignModal({
+                                                                                                unitId: unit.unit_id,
+                                                                                                allocationId: alloc.allocation_id
+                                                                                            })}
+                                                                                            className="px-2 py-1 text-[11px] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded font-bold transition-colors"
                                                                                         >
                                                                                             Unassign
                                                                                         </button>
@@ -605,273 +749,220 @@ export default function EvacuationDetail() {
                                                     )}
                                                 </Fragment>
                                             );
-                                        })}
-                                    </tbody>
-                                </Table>
-                            </div>
-
-                            {/* Pagination Controls */}
-                            {unitsMeta && unitsMeta.last_page > 1 && (
-                                <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700">
-                                    <div className="flex flex-1 justify-between sm:hidden">
-                                        <button 
-                                            onClick={() => fetchUnits(unitsPage - 1)} 
-                                            disabled={unitsPage === 1} 
-                                            className="relative inline-flex items-center rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:bg-slate-800/50 disabled:opacity-50"
-                                        >
-                                            Previous
-                                        </button>
-                                        <button 
-                                            onClick={() => fetchUnits(unitsPage + 1)} 
-                                            disabled={unitsPage === unitsMeta.last_page} 
-                                            className="relative ml-3 inline-flex items-center rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:bg-slate-800/50 disabled:opacity-50"
-                                        >
-                                            Next
-                                        </button>
-                                    </div>
-                                    <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                                        <div>
-                                            <p className="text-sm text-slate-700 dark:text-slate-200">
-                                                Showing <span className="font-bold">{unitsMeta.from || 0}</span> to <span className="font-bold">{unitsMeta.to || 0}</span> of <span className="font-bold">{unitsMeta.total || 0}</span> units
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm dark:shadow-none" aria-label="Pagination">
-                                                <button
-                                                    onClick={() => fetchUnits(unitsPage - 1)}
-                                                    disabled={unitsPage === 1}
-                                                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-800/50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 transition-colors"
-                                                >
-                                                    <span className="sr-only">Previous</span>
-                                                    <ChevronLeft size={16} aria-hidden="true" />
-                                                </button>
-                                                <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-slate-900 dark:text-slate-50 ring-1 ring-inset ring-slate-300 focus:outline-offset-0">
-                                                    Page {unitsPage} of {unitsMeta.last_page}
-                                                </span>
-                                                <button
-                                                    onClick={() => fetchUnits(unitsPage + 1)}
-                                                    disabled={unitsPage === unitsMeta.last_page}
-                                                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-800/50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 transition-colors"
-                                                >
-                                                    <span className="sr-only">Next</span>
-                                                    <ChevronRight size={16} aria-hidden="true" />
-                                                </button>
-                                            </nav>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
+                                        })
+                                )}
+                            </tbody>
+                        </Table>
+                    </div>
+                </TableLayout>
             )}
 
             {activeTab === 'households' && (
-                <div className="space-y-4">
-                    {/* Tab Header & Actions */}
-                    <div className="flex items-center justify-between mb-2">
-                        <div>
-                            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Evacuated Households</h2>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                                Households currently evacuated and verified in this center.
-                            </p>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            {/* Event Filter Dropdown */}
-                            <Select
-                                value={selectedEventId}
-                                onChange={(e) => setSelectedEventId(e.target.value)}
-                                options={[
-                                    { value: 'all', label: 'All Events' },
-                                    ...events.map(evt => ({
-                                        value: evt.event_id,
-                                        label: `${evt.name} ${evt.ended_at ? "(Ended)" : "(Active)"}`
-                                    }))
-                                ]}
-                            />
-
-                            <button
-                                onClick={() => fetchEvacuatedHouseholds(selectedEventId)}
-                                className="flex items-center gap-2 px-3 py-2.5 text-xs font-bold border rounded-xl hover:bg-slate-50 dark:bg-slate-800/50 cursor-pointer"
-                            >
-                                <RefreshCw size={15} />
-                                Refresh
-                            </button>
-
-                            {/* Export CSV Dropdown */}
-                            <div className="relative" ref={exportRef}>
-                                <button
-                                    onClick={() => setExportDropdown(prev => !prev)}
-                                    disabled={exporting || evacuatedHouseholds.length === 0}
-                                    className="flex items-center gap-2 px-3 py-2 text-sm border rounded-lg hover:bg-slate-50 dark:bg-slate-800/50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {exporting ? (
-                                        <RefreshCw size={15} className="animate-spin" />
-                                    ) : (
-                                        <Download size={15} />
-                                    )}
-                                    {exporting ? 'Exporting...' : 'Export CSV'}
-                                    <ChevronDown size={14} />
-                                </button>
-
-                                {exportDropdown && (
-                                    <div className="absolute right-0 top-full mt-1 w-64 bg-white dark:bg-slate-900 rounded-xl border shadow-lg dark:shadow-none z-50 overflow-hidden">
-                                        <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border-b">
-                                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Export Type</p>
-                                        </div>
-                                        <button
-                                            onClick={() => handleExport('household')}
-                                            className="w-full flex items-start gap-3 px-3 py-3 hover:bg-slate-50 dark:bg-slate-800/50 transition-colors cursor-pointer text-left"
-                                        >
-                                            <FileSpreadsheet size={18} className="text-blue-500 mt-0.5 flex-shrink-0" />
-                                            <div>
-                                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Household Summary</p>
-                                                <p className="text-xs text-slate-400">1 row per household — overview with unit and contact info</p>
-                                            </div>
-                                        </button>
-                                        <button
-                                            onClick={() => handleExport('member')}
-                                            className="w-full flex items-start gap-3 px-3 py-3 hover:bg-slate-50 dark:bg-slate-800/50 transition-colors cursor-pointer text-left border-t"
-                                        >
-                                            <Users size={18} className="text-emerald-500 mt-0.5 flex-shrink-0" />
-                                            <div>
-                                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Member Detail</p>
-                                                <p className="text-xs text-slate-400">1 row per member — includes age, gender, vulnerabilities</p>
-                                            </div>
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-
-                            {canAdmit && (
-                                <button
-                                    onClick={() => navigate('/household-verification')}
-                                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 cursor-pointer"
-                                >
-                                    <UserCheck size={16} />
-                                    Admit Household
-                                </button>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="bg-white dark:bg-slate-900 rounded-xl border overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <Table>
-                                <TableHeader className="bg-slate-50 dark:bg-slate-800/50">
+                <TableLayout
+                    title="Evacuated Households"
+                    badgeText={`${filteredHouseholds.length} Households`}
+                    subtitle="Households currently evacuated and verified in this center"
+                    selectedCount={selectedHouseholds.length}
+                    onDeleteSelected={canManage && selectedHouseholds.length > 0 ? () => {
+                        selectedHouseholds.forEach(id => {
+                            setDeleteRecordModal(id);
+                        });
+                        setSelectedHouseholds([]);
+                    } : undefined}
+                    onExport={() => setExportDropdown(prev => !prev)}
+                    onAdd={canAdmit ? () => navigate('/household-verification') : undefined}
+                    addLabel="Admit Household"
+                    pagination={
+                        <Pagination
+                            currentPage={householdPage}
+                            totalPages={totalHouseholdPages}
+                            totalEntries={filteredHouseholds.length}
+                            perPage={10}
+                            onPageChange={(page) => setHouseholdPage(page)}
+                        />
+                    }
+                >
+                    {/* Main Table Container */}
+                    <div className="hidden md:block">
+                        <Table>
+                            <TableHeader>
+                                <tr className="border-b border-gray-100 dark:border-slate-800">
+                                    <TableHead className="w-12">
+                                        <Checkbox
+                                            checked={paginatedHouseholds.length > 0 && selectedHouseholds.length === paginatedHouseholds.length}
+                                            indeterminate={selectedHouseholds.length > 0 && selectedHouseholds.length < paginatedHouseholds.length}
+                                            onChange={() => {
+                                                if (selectedHouseholds.length === paginatedHouseholds.length) {
+                                                    setSelectedHouseholds([]);
+                                                } else {
+                                                    setSelectedHouseholds(paginatedHouseholds.map(r => r.evacuation_id));
+                                                }
+                                            }}
+                                            ariaLabel="Select all households"
+                                        />
+                                    </TableHead>
+                                    <TableHead
+                                        filterable
+                                        filterValue={householdNameFilter}
+                                        onFilterChange={(val) => {
+                                            setHouseholdNameFilter(val);
+                                            setHouseholdPage(1);
+                                        }}
+                                    >
+                                        Household Name & ID
+                                    </TableHead>
+                                    <TableHead
+                                        filterable
+                                        filterValue={householdContactFilter}
+                                        onFilterChange={(val) => {
+                                            setHouseholdContactFilter(val);
+                                            setHouseholdPage(1);
+                                        }}
+                                    >
+                                        Contact Number
+                                    </TableHead>
+                                    <TableHead>Members</TableHead>
+                                    <TableHead
+                                        filterable
+                                        filterValue={householdUnitFilter}
+                                        onFilterChange={(val) => {
+                                            setHouseholdUnitFilter(val);
+                                            setHouseholdPage(1);
+                                        }}
+                                        filterOptions={[
+                                            { value: "assigned", label: "Unit Assigned" },
+                                            { value: "unassigned", label: "Unassigned" },
+                                        ]}
+                                    >
+                                        Assigned Unit
+                                    </TableHead>
+                                    <TableHead
+                                        filterable
+                                        filterValue={householdMethodFilter}
+                                        onFilterChange={(val) => {
+                                            setHouseholdMethodFilter(val);
+                                            setHouseholdPage(1);
+                                        }}
+                                        filterOptions={[
+                                            { value: "manual", label: "Manual" },
+                                            { value: "qr", label: "QR Code" },
+                                        ]}
+                                    >
+                                        Verification Method
+                                    </TableHead>
+                                    <TableHead>Verified At</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </tr>
+                            </TableHeader>
+                            <tbody>
+                                {householdsLoading ? (
                                     <TableRow>
-                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">
-                                            Household
-                                        </TableHead>
-                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">
-                                            Contact
-                                        </TableHead>
-                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">
-                                            Members
-                                        </TableHead>
-                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">
-                                            Unit
-                                        </TableHead>
-                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">
-                                            Method
-                                        </TableHead>
-                                        <TableHead className="px-4 py-3 text-left font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">
-                                            Verified At
-                                        </TableHead>
-                                        <TableHead className="px-4 py-3 text-right font-bold text-slate-500 dark:text-slate-400 uppercase text-xs">
-                                            Actions
-                                        </TableHead>
+                                        <TableCell colSpan="8" className="px-6 py-16 text-center text-slate-400">
+                                            Loading evacuated households...
+                                        </TableCell>
                                     </TableRow>
-                                </TableHeader>
+                                ) : paginatedHouseholds.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan="8" className="px-6 py-16 text-center">
+                                            <Users className="mx-auto text-slate-300 dark:text-slate-600 mb-2" size={28} />
+                                            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">No evacuated households found</p>
+                                                                        <p className="text-xs text-slate-400 mt-1">Try adjusting your search terms or status filter.</p>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    paginatedHouseholds.map(record => {
+                                        const isChecked = selectedHouseholds.includes(record.evacuation_id);
+                                        const unitName = record.unit_allocation?.unit?.name || record.unit_allocations?.[0]?.unit?.name || record.unit?.name;
 
-                                <tbody>
-                                    {householdsLoading ? (
-                                        <TableRow>
-                                            <TableCell colSpan="7" className="px-4 py-8 text-center text-slate-400">
-                                                Loading evacuated households...
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : evacuatedHouseholds.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan="7" className="px-4 py-8 text-center text-slate-400">
-                                                No evacuated households yet.
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        evacuatedHouseholds.map(record => (
-                                            <TableRow
-                                                key={record.evacuation_id}
-                                                className="border-b last:border-b-0 hover:bg-slate-50 dark:bg-slate-800/50"
-                                            >
-                                                <TableCell className="px-4 py-3">
-                                                    <div>
-                                                        <p className="font-semibold text-slate-800 dark:text-slate-100">
-                                                            {record.household?.household_name || 'Unnamed Household'}
-                                                        </p>
-                                                        <p className="text-xs text-slate-400">
-                                                            {record.household_id}
-                                                        </p>
+                                        return (
+                                            <TableRow key={record.evacuation_id} isSelected={isChecked}>
+                                                <TableCell>
+                                                    <Checkbox
+                                                        checked={isChecked}
+                                                        onChange={() => {
+                                                            setSelectedHouseholds(prev =>
+                                                                prev.includes(record.evacuation_id)
+                                                                    ? prev.filter(id => id !== record.evacuation_id)
+                                                                    : [...prev, record.evacuation_id]
+                                                            );
+                                                        }}
+                                                        ariaLabel={`Select household ${record.evacuation_id}`}
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50 flex items-center justify-center flex-shrink-0">
+                                                            <Users size={16} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-bold text-gray-900 dark:text-slate-100 leading-tight">
+                                                                {record.household?.household_name || 'Unnamed Household'}
+                                                            </p>
+                                                            <p className="text-[10px] text-gray-400 dark:text-slate-400 leading-none mt-0.5">
+                                                                ID-{record.household_id}
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </TableCell>
-
-                                                <TableCell className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                                                    {record.household?.contact_number || '—'}
+                                                <TableCell>
+                                                    <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-slate-300">
+                                                        <Phone size={13} className="text-slate-400" />
+                                                        {record.household?.contact_number || '—'}
+                                                    </div>
                                                 </TableCell>
-
-                                                <TableCell className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                                                    {record.evacuated_count || record.household?.member_count || 0}
+                                                <TableCell>
+                                                    <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                                                        {record.evacuated_count || record.household?.member_count || 0} members
+                                                    </span>
                                                 </TableCell>
-
-                                                <TableCell className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                                                    {record.unit_allocations?.[0]?.unit?.name || (
-                                                        <span className="text-amber-600 font-medium">Unassigned</span>
+                                                <TableCell>
+                                                    {unitName ? (
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200/50">
+                                                            <Home size={12} />
+                                                            {unitName}
+                                                        </span>
+                                                    ) : (
+                                                        <StatusBadge label="Unassigned" color="orange" />
                                                     )}
                                                 </TableCell>
-
-                                                <TableCell className="px-4 py-3 text-slate-600 dark:text-slate-300 capitalize">
-                                                    {record.method || 'manual'}
+                                                <TableCell>
+                                                    <span className="text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[11px] font-medium capitalize">
+                                                        {record.method || 'manual'}
+                                                    </span>
                                                 </TableCell>
-
-                                                <TableCell className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                                                    {formatDateTime(record.verified_at)}
+                                                <TableCell>
+                                                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                                        {formatDateTime(record.verified_at)}
+                                                    </span>
                                                 </TableCell>
-
-                                                <TableCell className="px-4 py-3">
-                                                    <div className="flex justify-end gap-2">
+                                                <TableCell className="text-right">
+                                                    <div className="flex items-center justify-end gap-1.5">
                                                         <button
-                                                            onClick={() =>
-                                                                navigate(
-                                                                    `/households/${record.household_id}?evacuation_id=${record.evacuation_id}&center_id=${id}`
-                                                                )
-                                                            }
-                                                            className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border hover:bg-slate-50 dark:bg-slate-800/50 cursor-pointer"
+                                                            onClick={() => navigate(`/households/${record.household_id}?evacuation_id=${record.evacuation_id}&center_id=${id}`)}
+                                                            className="p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 rounded transition-colors"
+                                                            title="View / Edit Household"
                                                         >
-                                                            <Eye size={13} />
-                                                            View/Edit
+                                                            <Eye size={15} />
                                                         </button>
-
                                                         {canManage && (
                                                             <button
-                                                                onClick={() =>
-                                                                    setDeleteRecordModal(record.evacuation_id)
-                                                                }
-                                                                className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-red-200 text-red-600 hover:bg-red-50 cursor-pointer"
+                                                                onClick={() => setDeleteRecordModal(record.evacuation_id)}
+                                                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded transition-colors"
+                                                                title="Delete Evacuation Record"
                                                             >
-                                                                <Trash2 size={13} />
-                                                                Delete Record
+                                                                <Trash2 size={15} />
                                                             </button>
                                                         )}
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
-                                        ))
-                                    )}
-                                </tbody>
-                            </Table>
-                        </div>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </Table>
                     </div>
-                </div>
+                </TableLayout>
             )}
 
             {/* Modals */}

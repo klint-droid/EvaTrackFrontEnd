@@ -1,15 +1,16 @@
 import React from "react";
+import { Calendar } from "lucide-react";
 import { Select } from "../../ui/Select";
 import { Input } from "../../ui/Input";
 
 export default function AnalyticsFilters({
     selectedEventId,
     setSelectedEventId,
-    events,
+    events = [],
     isPersonnel,
     selectedCenterId,
     setSelectedCenterId,
-    centers,
+    centers = [],
     assignedCenter,
     startDate,
     setStartDate,
@@ -17,11 +18,11 @@ export default function AnalyticsFilters({
     setEndDate
 }) {
     return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-5 shadow-sm dark:shadow-none flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="flex flex-col md:flex-row gap-3 w-full lg:w-auto">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-colors text-left">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full lg:w-auto">
                 {/* Disaster Event Dropdown */}
-                <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Disaster Event</span>
+                <div className="flex flex-col gap-1 min-w-[220px]">
+                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Disaster Event</span>
                     <Select
                         value={selectedEventId}
                         onChange={(e) => setSelectedEventId(e.target.value)}
@@ -36,10 +37,10 @@ export default function AnalyticsFilters({
                 </div>
 
                 {/* Center Dropdown (Admin Only) */}
-                <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Evacuation Center</span>
+                <div className="flex flex-col gap-1 min-w-[220px]">
+                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Evacuation Center</span>
                     {!isPersonnel ? (
-                        <div className="min-w-[200px]"><Select
+                        <Select
                             value={selectedCenterId}
                             onChange={(e) => setSelectedCenterId(e.target.value)}
                             options={[
@@ -49,9 +50,9 @@ export default function AnalyticsFilters({
                                     label: center.name
                                 }))
                             ]}
-                        /></div>
+                        />
                     ) : (
-                        <span className="px-3 py-2 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-black rounded-xl inline-block max-w-[250px] truncate">
+                        <span className="px-3 py-2 bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/50 text-blue-700 dark:text-blue-400 text-xs font-semibold rounded-lg inline-block truncate">
                             🏠 {assignedCenter?.name || "Assigned Center"}
                         </span>
                     )}
@@ -59,19 +60,21 @@ export default function AnalyticsFilters({
             </div>
 
             {/* Date Filters Section */}
-            <div className="flex flex-row gap-4 items-center w-full lg:w-auto justify-start lg:justify-end">
+            <div className="flex flex-row items-end gap-3 w-full lg:w-auto justify-start lg:justify-end">
                 <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">From Date</span>
+                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">From Date</span>
                     <Input
                         type="date"
+                        icon={Calendar}
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
                     />
                 </div>
                 <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">To Date</span>
+                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">To Date</span>
                     <Input
                         type="date"
+                        icon={Calendar}
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
                     />
@@ -83,7 +86,7 @@ export default function AnalyticsFilters({
                             setEndDate("");
                             if (!isPersonnel) setSelectedCenterId("all");
                         }}
-                        className="mt-5 text-xs text-red-500 hover:text-red-700 font-black uppercase tracking-widest transition-colors"
+                        className="px-3 py-2 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors border border-red-100 dark:border-red-900/40 cursor-pointer shrink-0"
                     >
                         Clear
                     </button>
@@ -92,3 +95,5 @@ export default function AnalyticsFilters({
         </div>
     );
 }
+
+

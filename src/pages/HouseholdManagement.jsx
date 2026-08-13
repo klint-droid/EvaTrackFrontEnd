@@ -18,7 +18,7 @@ import { updateHousehold } from "../api/households/updateHousehold";
 import { getEvents } from "../api/events/getEvents";
 import { useUserStore } from "../store/useUserStore";
 import { useAlert } from "../context/AlertContext";
-import { Table, TableHeader, TableRow, TableHead, TableCell } from "../ui/Table";
+import { Table, TableHeader, TableRow, TableHead, TableCell, StatusBadge, RowMenu } from "../ui/Table";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { Modal } from "../ui/Modal";
@@ -210,12 +210,12 @@ export default function HouseholdManagement() {
     const totalPages = pagination.last_page || Math.ceil(households.length / perPage) || 1;
 
     const stats = (
-        <>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <StatCard title="Total Households" value={totalHouseholds} dotColor="#6366f1" />
             <StatCard title="Evacuated" value={evacuatedCount} dotColor="#10b981" />
             <StatCard title="Not Evacuated" value={notEvacuatedCount} dotColor="#f59e0b" />
             <StatCard title="Total Members" value={totalMembers} dotColor="#ef4444" />
-        </>
+        </div>
     );
 
     const paginationComponent = (
@@ -226,260 +226,160 @@ export default function HouseholdManagement() {
             perPage={perPage}
             onPageChange={(page) => fetchHouseholds(page)}
         />
-    );
-
-    const tabs = (
-        <TableTabs
-            tabs={[
-                { key: "all", label: "All" },
-                { key: "evacuated", label: "Evacuated" },
-                { key: "not_evacuated", label: "Not Evacuated" },
-            ]}
-            activeTab={filters.status || "all"}
-            onChange={(key) => {
-                handleFilterChange('status', key === "all" ? "" : key);
-            }}
-        />
-    );
-
-    return (
-        <div className="min-h-screen font-sans text-left pb-24 relative">
+    );    return (
+        <div className="min-h-screen font-sans text-left pb-24">
             <TableLayout
                 title="Households"
+                badgeText={`${pagination.total || households.length} Households`}
+                subtitle="Manage registered family units, contact info, and evacuation statuses"
+                onExport={() => {
+                  const csvHeader = "Household ID,Household Name,Contact Number,Members Count,Status,Center\n";
+                  const csvRows = households
+                    .map((h) => `${h.household_id},"${h.household_name || ''}",${h.contact_number || ''},${h.current_evacuation ? h.current_evacuation.evacuated_count : h.members_count},${getStatusLabel(h)},"${h.current_evacuation?.center?.name || ''}"`)
+                    .join("\n");
+                  const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
+                  const link = document.createElement("a");
+                  link.href = URL.createObjectURL(blob);
+                  link.setAttribute("download", "household_reports.csv");
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                onAdd={(isAdminUser || isSuperAdminUser) ? () => navigate('/households/register') : undefined}
+                addLabel="Register Household"
                 stats={stats}
-                tabs={tabs}
                 pagination={paginationComponent}
             >
-                {/* FILTERS HEADER */}
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 w-full lg:w-auto">
-                        <div className="relative flex-1 sm:max-w-[280px]">
-                            <Input
-                                icon={Search}
-                                placeholder="Search households..."
-                                value={searchInput}
-                                onChange={e => setSearchInput(e.target.value)}
-                                className="w-full"
-                            />
-                        </div>
-                    </div>
-                    
-                    <div className="flex gap-2 relative w-full lg:w-auto justify-end">
-
-                        <button
-                            onClick={() => setShowFilters(!showFilters)}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all ${
-                                (filters.event_id || filters.center_id) || showFilters
-                                    ? 'bg-blue-50 border-blue-200 text-blue-700'
-                                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:bg-slate-800/50'
-                            }`}
-                        >
-                            <Filter size={16} />
-                            <span className="hidden sm:inline">More Filters</span>
-                            {(filters.event_id || filters.center_id) && (
-                                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-[10px]">
-                                    {(filters.event_id ? 1 : 0) + (filters.center_id ? 1 : 0)}
-                                </span>
-                            )}
-                        </button>
-
-                        {/* Filters Popover */}
-                        {showFilters && (
-                            <div className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-200 dark:border-slate-700 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Advanced Filters</h3>
-                                    {(filters.event_id || filters.center_id) && (
-                                        <button 
-                                            onClick={() => {
-                                                const newFilters = { ...filters, event_id: '', center_id: '' };
-                                                setFilters(newFilters);
-                                                fetchHouseholds(1, newFilters);
-                                            }}
-                                            className="text-xs font-bold text-blue-600 hover:text-blue-700"
-                                        >
-                                            Clear
-                                        </button>
-                                    )}
-                                </div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Event</label>
-                                        <Select
-                                            value={filters.event_id}
-                                            onChange={e => handleFilterChange('event_id', e.target.value)}
-                                            options={[
-                                                { value: '', label: 'All Events' },
-                                                ...events.map(evt => ({
-                                                    value: evt.event_id,
-                                                    label: `${evt.name} ${evt.ended_at ? "(Ended)" : "(Active)"}`
-                                                }))
-                                            ]}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Evacuation Center</label>
-                                        <Select
-                                            value={filters.center_id}
-                                            onChange={e => handleFilterChange('center_id', e.target.value)}
-                                            options={[
-                                                { value: '', label: 'All Centers' },
-                                                ...centers.map(c => ({
-                                                    value: c.evacuation_center_id,
-                                                    label: c.name
-                                                }))
-                                            ]}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
                 <Table>
                     <TableHeader>
-                        <tr className="border-none">
-                            {['Household', 'Contact', 'Members', 'Status', 'Center / Unit', 'Command'].map((h, i) => (
-                                <TableHead key={h} className={`text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ${i === 2 || i === 3 ? 'text-center' : ''} ${i === 5 ? 'text-right' : ''}`}>
-                                    {h}
-                                </TableHead>
-                            ))}
+                        <tr className="border-b border-slate-100 dark:border-slate-800">
+                            <TableHead
+                              filterable
+                              filterValue={filters.q}
+                              onFilterChange={(val) => {
+                                const newFilters = { ...filters, q: val };
+                                setFilters(newFilters);
+                                fetchHouseholds(1, newFilters);
+                              }}
+                            >
+                              Household
+                            </TableHead>
+                            <TableHead>Contact</TableHead>
+                            <TableHead className="text-center">Members</TableHead>
+                            <TableHead
+                              filterable
+                              filterValue={filters.status}
+                              onFilterChange={(val) => handleFilterChange('status', val)}
+                              filterOptions={[
+                                { value: "evacuated", label: "Evacuated" },
+                                { value: "not_evacuated", label: "Home / Safe" },
+                                { value: "unverified", label: "Unverified" },
+                              ]}
+                            >
+                              Status
+                            </TableHead>
+                            <TableHead
+                              filterable
+                              filterValue={filters.center_id}
+                              onFilterChange={(val) => handleFilterChange('center_id', val)}
+                              filterOptions={centers.map(c => ({ value: c.evacuation_center_id, label: c.name }))}
+                            >
+                              Center / Unit
+                            </TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </tr>
                     </TableHeader>
-                        <tbody className="divide-y divide-slate-100">
-                            {loading ? (
-                                [1, 2, 3, 4, 5].map((i) => (
-                                    <TableRow key={i} className="animate-pulse">
-                                        <TableCell>
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/55 flex-shrink-0" />
-                                                <div className="space-y-2">
-                                                    <div className="w-32 h-3.5 bg-slate-200 rounded-md" />
-                                                    <div className="w-20 h-2.5 bg-slate-100 dark:bg-slate-800 rounded-sm" />
-                                                </div>
+                    <tbody>
+                        {loading ? (
+                            [1, 2, 3, 4, 5].map((i) => (
+                                <TableRow key={i} className="animate-pulse">
+                                    <TableCell>
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex-shrink-0" />
+                                            <div className="space-y-1">
+                                                <div className="w-28 h-3 bg-slate-200 rounded" />
+                                                <div className="w-16 h-2 bg-slate-100 dark:bg-slate-800 rounded" />
                                             </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="w-28 h-4 bg-slate-100 dark:bg-slate-800 rounded-md" />
-                                        </TableCell>
-                                        <TableCell className="text-center">
-                                            <div className="w-10 h-4 bg-slate-100 dark:bg-slate-800 rounded-md mx-auto" />
-                                        </TableCell>
-                                        <TableCell className="text-center">
-                                            <div className="w-24 h-6 bg-slate-100 dark:bg-slate-800 rounded-full mx-auto" />
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="space-y-1.5">
-                                                <div className="w-36 h-3.5 bg-slate-100 dark:bg-slate-800 rounded-md" />
-                                                <div className="w-24 h-2.5 bg-slate-100/50 rounded-sm" />
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="w-16 h-4 bg-slate-100 dark:bg-slate-800 rounded-md ml-auto" />
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            ) : households.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan="6" className="py-20 text-center text-slate-400 text-sm">
-                                        No households found.
+                                        </div>
                                     </TableCell>
+                                    <TableCell><div className="w-24 h-3 bg-slate-100 dark:bg-slate-800 rounded" /></TableCell>
+                                    <TableCell className="text-center"><div className="w-8 h-3 bg-slate-100 dark:bg-slate-800 rounded mx-auto" /></TableCell>
+                                    <TableCell className="text-center"><div className="w-20 h-5 bg-slate-100 dark:bg-slate-800 rounded-full mx-auto" /></TableCell>
+                                    <TableCell><div className="w-28 h-3 bg-slate-100 dark:bg-slate-800 rounded" /></TableCell>
+                                    <TableCell className="text-right"><div className="w-12 h-4 bg-slate-100 dark:bg-slate-800 rounded ml-auto" /></TableCell>
                                 </TableRow>
-                            ) : households.map(h => (
-                                <TableRow key={h.household_id} className="group">
-                                    <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 group-hover:bg-white dark:bg-slate-900 transition-colors">
-                                                <Home size={16} />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-none mb-1">
-                                                    {h.household_name}
-                                                </p>
-                                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">
-                                                    {h.household_id}
-                                                </p>
-                                            </div>
+                            ))
+                        ) : households.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan="6" className="py-14 text-center text-slate-400 text-xs">
+                                    No households found.
+                                </TableCell>
+                            </TableRow>
+                        ) : households.map(h => (
+                            <TableRow key={h.household_id} className="group">
+                                <TableCell>
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 flex-shrink-0">
+                                            <Home size={14} />
                                         </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <p className="text-sm text-slate-600 dark:text-slate-300">
-                                            {h.contact_number || '—'}
-                                        </p>
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                        <div className="flex items-center justify-center gap-1">
-                                            <Users size={13} className="text-blue-400" />
-                                            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                                                {h.current_evacuation ? h.current_evacuation.evacuated_count : h.members_count}
-                                            </span>
+                                        <div>
+                                            <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 leading-tight">
+                                                {h.household_name}
+                                            </p>
+                                            <p className="text-[10px] text-slate-400 font-mono leading-none">
+                                                {h.household_id}
+                                            </p>
                                         </div>
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                        <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border ${getStatusBadge(h)}`}>
-                                            {getStatusLabel(h)}
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-xs text-slate-600 dark:text-slate-300">
+                                    {h.contact_number || '—'}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                    <div className="flex items-center justify-center gap-1">
+                                        <Users size={12} className="text-blue-400" />
+                                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                                            {h.current_evacuation ? h.current_evacuation.evacuated_count : h.members_count}
                                         </span>
-                                    </TableCell>
-                                    <TableCell>
-                                        {h.current_evacuation ? (
-                                            <div>
-                                                <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                                                    {h.current_evacuation.center?.name || '—'}
-                                                </p>
-                                                <p className="text-[10px] text-slate-400">
-                                                    {h.current_evacuation.unit_allocation?.unit?.name || 'No unit assigned'}
-                                                </p>
-                                            </div>
-                                        ) : (
-                                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">—</span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-1">
-                                            <button
-                                                onClick={() => navigate(`/households/${h.household_id}`)}
-                                                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
-                                                title="View Details"
-                                            >
-                                                <Eye size={16} />
-                                            </button>
-                                            {canEditHousehold(h) ? (
-                                                <button
-                                                    disabled={!h.household_id?.startsWith('NHH-')}
-                                                    onClick={() => setEditingHousehold({ ...h })}
-                                                    className={`p-1.5 rounded-lg transition-all ${h.household_id?.startsWith('NHH-') ? 'text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20' : 'text-slate-300 cursor-not-allowed opacity-50'}`}
-                                                    title={h.household_id?.startsWith('NHH-') ? "Edit Household Info" : "Official record from barangay: Cannot edit"}
-                                                >
-                                                    <Edit3 size={16} />
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    disabled
-                                                    className="p-1.5 text-slate-300 cursor-not-allowed opacity-40"
-                                                    title="Read-Only: Managed by assigned center"
-                                                >
-                                                    <Edit3 size={16} />
-                                                </button>
-                                            )}
-                                            {canDeleteHousehold && (
-                                                <button
-                                                    disabled={!h.household_id?.startsWith('NHH-')}
-                                                    onClick={() => handleDelete(h.household_id)}
-                                                    className={`p-1.5 rounded-lg transition-all ${h.household_id?.startsWith('NHH-') ? 'text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20' : 'text-slate-300 cursor-not-allowed opacity-50'}`}
-                                                    title={h.household_id?.startsWith('NHH-') ? "Delete" : "Official record from barangay: Cannot delete"}
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            )}
-                                            <button className="p-1.5 text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 rounded-lg transition-all">
-                                                <MoreHorizontal size={16} />
-                                            </button>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                    <StatusBadge
+                                        value={getStatusLabel(h)}
+                                        color={
+                                            h.current_evacuation
+                                            ? "green"
+                                            : h.evacuation_status === "not_evacuated"
+                                            ? "blue"
+                                            : "orange"
+                                        }
+                                    />
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                    {h.current_evacuation ? (
+                                        <div>
+                                            <p className="font-medium text-slate-700 dark:text-slate-200 leading-tight">
+                                                {h.current_evacuation.center?.name || '—'}
+                                            </p>
+                                            <p className="text-[10px] text-slate-400 leading-none">
+                                                {h.current_evacuation.unit_allocation?.unit?.name || 'No unit assigned'}
+                                            </p>
                                         </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </tbody>
-                    </Table>
+                                    ) : (
+                                        <span className="text-slate-400 text-xs">—</span>
+                                    )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <RowMenu
+                                        onView={() => navigate(`/households/${h.household_id}`)}
+                                        onEdit={canEditHousehold(h) && h.household_id?.startsWith('NHH-') ? () => setEditingHousehold({ ...h }) : undefined}
+                                        onDelete={canDeleteHousehold && h.household_id?.startsWith('NHH-') ? () => handleDelete(h.household_id) : undefined}
+                                    />
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </tbody>
+                </Table>
             </TableLayout>
 
             {/* EDIT MODAL */}

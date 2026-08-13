@@ -2,6 +2,10 @@ import React from "react";
 import { Users, Phone, MapPin, AlertCircle, Building, DoorOpen, CheckCircle, XCircle } from "lucide-react";
 
 export default function HouseholdStats({ household, isEvacuated, isScattered, allActiveEvacuations, primaryEvacuation, allEvacuatedMemberIds }) {
+    const evacCount = primaryEvacuation?.evacuated_count || primaryEvacuation?.evacuated_members?.length || 0;
+    const totalMemberCount = Math.max(household.member_count || 0, household.members?.length || 0, evacCount);
+    const verifiedCount = Math.max(allEvacuatedMemberIds?.size || 0, primaryEvacuation?.evacuated_members?.length || 0, evacCount);
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Basic Info */}
@@ -10,7 +14,7 @@ export default function HouseholdStats({ household, isEvacuated, isScattered, al
                     Basic Information
                 </p>
                 {[
-                    { icon: <Users size={16} className="text-blue-600" />,  label: 'Members', value: `${household.member_count || household.members?.length || 0} people` },
+                    { icon: <Users size={16} className="text-blue-600" />,  label: 'Members', value: `${totalMemberCount} people` },
                     { icon: <Phone size={16} className="text-blue-600" />,  label: 'Contact', value: household.contact_number || '—' },
                     { icon: <MapPin size={16} className="text-blue-600" />, label: 'Address', value: household.address?.full_address || '—' },
                 ].map(({ icon, label, value }) => (
@@ -48,7 +52,7 @@ export default function HouseholdStats({ household, isEvacuated, isScattered, al
                             { icon: <Building size={16} className="text-green-600" />,     label: 'Center',           value: isScattered ? `${allActiveEvacuations.length} centers` : (primaryEvacuation?.center?.name || '—') },
                             { icon: <DoorOpen size={16} className="text-green-600" />,     label: 'Unit',             value: primaryEvacuation?.unit_allocation?.unit?.name || primaryEvacuation?.unitAllocation?.unit?.name || 'No unit assigned' },
                             { icon: <CheckCircle size={16} className="text-green-600" />,  label: 'Event',            value: primaryEvacuation?.event?.name || '—' },
-                            { icon: <Users size={16} className="text-green-600" />,        label: 'Verified Members', value: `${allEvacuatedMemberIds.size} of ${household.members?.length || 0} verified` },
+                            { icon: <Users size={16} className="text-green-600" />,        label: 'Verified Members', value: `${verifiedCount} of ${totalMemberCount} verified` },
                         ].map(({ icon, label, value }) => (
                             <div key={label} className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">

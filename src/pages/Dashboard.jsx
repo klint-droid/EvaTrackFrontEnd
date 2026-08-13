@@ -5,6 +5,7 @@ import { getCenterIssueReports } from "../api/centerIssueReports/getCenterIssueR
 import { getResourceRequests } from "../api/resourceRequests/getResourceRequests";
 import { getUser } from "../api/auth/getUser";
 import { getEvents } from "../api/events/getEvents";
+import { getActiveEvent } from "../api/events/getActiveEvent";
 import { getLastUpdated } from "../api/analytics/getLastUpdated";
 
 import { useUserStore } from "../store/useUserStore";
@@ -28,6 +29,7 @@ const Dashboard = () => {
     const [user, setUser] = useState(dashboardCache?.user || null);
     const [centers, setCenters] = useState(dashboardCache?.centers || []);
     const [activeEvents, setActiveEvents] = useState(dashboardCache?.activeEvents || []);
+    const [activeEvent, setActiveEvent] = useState(dashboardCache?.activeEvent || null);
     const [selectedEventId, setSelectedEventId] = useState("all");
     const [stats, setStats] = useState(dashboardCache?.stats || {
         totalCenters: 0,
@@ -58,14 +60,15 @@ const Dashboard = () => {
             setLoading(true);
         }
         try {
-            const [userRes, centersRes, alertsRes, issuesRes, requestsRes, eventsRes, lastUpdatedRes] = await Promise.allSettled([
+            const [userRes, centersRes, alertsRes, issuesRes, requestsRes, eventsRes, lastUpdatedRes, activeEvtRes] = await Promise.allSettled([
                 getUser(),
                 getCenters(),
                 getAlerts(1),
                 getCenterIssueReports({ limit: 10 }),
                 getResourceRequests({ limit: 10 }),
                 getEvents(),
-                getLastUpdated()
+                getLastUpdated(),
+                getActiveEvent()
             ]);
 
             // 1. Process User Context
@@ -109,6 +112,14 @@ const Dashboard = () => {
                 console.error("Failed to load events:", eventsRes.reason);
             }
             setActiveEvents(eventsList);
+
+            // Process Primary Active Event
+            let primaryActiveEvt = null;
+            if (activeEvtRes && activeEvtRes.status === 'fulfilled') {
+                const res = activeEvtRes.value;
+                primaryActiveEvt = res?.data || res || null;
+            }
+            setActiveEvent(primaryActiveEvt);
 
             const capacities = centersList.map(c => ({
                 name: c.name,
@@ -205,7 +216,7 @@ const Dashboard = () => {
         ? centers
         : selectedEventId === "all"
             ? centers.filter(c => c.current_event_id !== null)
-            : centers.filter(c => c.current_event_id === selectedEventId);
+            : centers.filter(c => String(c.current_event_id) === String(selectedEventId));
 
     const chartData = filteredCenters.map(c => ({
         name: c.name,
@@ -220,7 +231,7 @@ const Dashboard = () => {
             ? recentRequests.filter(r => {
                     if (r.status?.status_key !== 'pending' && r.status !== 'pending') return false;
                     const isCenterAssignedToActiveEvent = r.center?.current_event_id &&
-                        activeEventsList.some(evt => evt.event_id === r.center.current_event_id);
+                        activeEventsList.some(evt => String(evt.event_id) === String(r.center.current_event_id));
                     if (isCenterAssignedToActiveEvent) return true;
 
                     const reqTime = new Date(r.created_at).getTime();
@@ -232,11 +243,11 @@ const Dashboard = () => {
                 }).slice(0, 3)
             : recentRequests.filter(r => {
                     if (r.status?.status_key !== 'pending' && r.status !== 'pending') return false;
-                    const evt = activeEvents.find(e => e.event_id === selectedEventId);
+                    const evt = activeEvents.find(e => String(e.event_id) === String(selectedEventId));
                     if (!evt) return false;
 
                     if (!evt.ended_at) {
-                        return r.center?.current_event_id === selectedEventId;
+                        return String(r.center?.current_event_id) === String(selectedEventId);
                     }
 
                     const reqTime = new Date(r.created_at).getTime();
@@ -251,7 +262,7 @@ const Dashboard = () => {
             ? recentIssues.filter(i => {
                     if (i.status !== 'open') return false;
                     const isCenterAssignedToActiveEvent = i.center?.current_event_id &&
-                        activeEventsList.some(evt => evt.event_id === i.center.current_event_id);
+                        activeEventsList.some(evt => String(evt.event_id) === String(i.center.current_event_id));
                     if (isCenterAssignedToActiveEvent) return true;
 
                     const issueTime = new Date(i.created_at).getTime();
@@ -263,11 +274,11 @@ const Dashboard = () => {
                 }).slice(0, 3)
             : recentIssues.filter(i => {
                     if (i.status !== 'open') return false;
-                    const evt = activeEvents.find(e => e.event_id === selectedEventId);
+                    const evt = activeEvents.find(e => String(e.event_id) === String(selectedEventId));
                     if (!evt) return false;
 
                     if (!evt.ended_at) {
-                        return i.center?.current_event_id === selectedEventId;
+                        return String(i.center?.current_event_id) === String(selectedEventId);
                     }
 
                     const issueTime = new Date(i.created_at).getTime();
@@ -359,6 +370,8 @@ const Dashboard = () => {
                 selectedEventId={selectedEventId}
                 setSelectedEventId={setSelectedEventId}
                 activeEvents={activeEvents}
+                activeEvent={activeEvent}
+                recentAlerts={recentAlerts}
                 loadDashboard={loadDashboard}
                 lastUpdatedTime={lastUpdatedTime}
             />

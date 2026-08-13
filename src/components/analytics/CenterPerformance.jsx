@@ -22,19 +22,28 @@ const renderInsideLabel = (props) => {
 };
 
 export default function CenterPerformance({ analytics, isPersonnel }) {
+    const centers = analytics?.center_performance || [];
+
     return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-6 rounded-2xl shadow-sm dark:shadow-none">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-xs transition-colors text-left">
             <div className="flex items-center gap-2 mb-6">
-                <Activity className="text-emerald-600" size={20} />
-                <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 tracking-tight">{isPersonnel ? 'Your Center Performance' : 'Evacuation Center Performance Dashboard'}</h3>
+                <div className="p-2 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50">
+                    <Activity size={18} />
+                </div>
+                <div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                        {isPersonnel ? 'Your Center Performance' : 'Evacuation Center Performance Dashboard'}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Capacity limits, active occupants, and operational index per shelter</p>
+                </div>
             </div>
 
-            {analytics.center_performance.length > 0 ? (
+            {centers.length > 0 ? (
                 <div className="space-y-6">
                     {/* Capacity comparison Bar Chart */}
                     <div className="h-64 w-full">
                         {(() => {
-                            const chartData = analytics.center_performance.map((center) => {
+                            const chartData = centers.map((center) => {
                                 const rawCapacity = center.capacity;
                                 const rawOccupancy = center.occupancy;
                                 const remaining = Math.max(0, rawCapacity - rawOccupancy);
@@ -51,21 +60,21 @@ export default function CenterPerformance({ analytics, isPersonnel }) {
                                 if (!active || !payload || !payload.length) return null;
                                 const entry = chartData.find((d) => d.name === label);
                                 return (
-                                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg dark:shadow-none p-4 text-xs text-slate-700 dark:text-slate-200">
-                                        <p className="font-bold text-slate-800 dark:text-slate-100 mb-2">{label}</p>
+                                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg p-3 text-xs text-slate-700 dark:text-slate-200">
+                                        <p className="font-bold text-slate-900 dark:text-slate-100 mb-2">{label}</p>
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="w-2.5 h-2.5 rounded-sm bg-[#e2e8f0] inline-block" />
-                                            <span className="text-slate-500 dark:text-slate-400">Remaining Slots:</span>
+                                            <span className="w-2.5 h-2.5 rounded-sm bg-[#e2e8f0] dark:bg-slate-700 inline-block" />
+                                            <span className="text-slate-500 dark:text-slate-400">Available Slots:</span>
                                             <span className="font-bold text-slate-800 dark:text-slate-100">{entry?.remaining}</span>
                                         </div>
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="w-2.5 h-2.5 rounded-sm bg-[#3b82f6] inline-block" />
-                                            <span className="text-slate-500 dark:text-slate-400">Active Occupancy:</span>
+                                            <span className="text-slate-500 dark:text-slate-400">Active Occupants:</span>
                                             <span className="font-bold text-[#3b82f6]">{entry?.rawOccupancy}</span>
                                         </div>
                                         <div className="border-t border-slate-100 dark:border-slate-800 mt-2 pt-2 flex items-center gap-2">
-                                            <span className="text-slate-400">Total Capacity:</span>
-                                            <span className="font-extrabold text-slate-800 dark:text-slate-100">{entry?.rawCapacity}</span>
+                                            <span className="text-slate-500 dark:text-slate-400">Total Capacity:</span>
+                                            <span className="font-extrabold text-slate-900 dark:text-slate-100">{entry?.rawCapacity}</span>
                                         </div>
                                     </div>
                                 );
@@ -73,7 +82,7 @@ export default function CenterPerformance({ analytics, isPersonnel }) {
 
                             return (
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }} barCategoryGap="30%" barSize={60}>
+                                    <BarChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }} barCategoryGap="30%" barSize={50}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                                         <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} />
                                         <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
@@ -84,7 +93,7 @@ export default function CenterPerformance({ analytics, isPersonnel }) {
                                             iconType="square" 
                                             iconSize={10}
                                             formatter={(value) => (
-                                                <span className="text-slate-500 dark:text-slate-400 text-xs font-semibold">
+                                                <span className="text-slate-600 dark:text-slate-300 text-xs font-semibold">
                                                     {value === "remaining" ? "Available Slots" : "Current Occupants"}
                                                 </span>
                                             )}
@@ -92,7 +101,7 @@ export default function CenterPerformance({ analytics, isPersonnel }) {
                                         <Bar name="occupancy" dataKey="occupancy" stackId="stack" fill="#3b82f6" radius={[0, 0, 0, 0]}>
                                             <LabelList dataKey="rawOccupancy" content={renderInsideLabel} />
                                         </Bar>
-                                        <Bar name="remaining" dataKey="remaining" stackId="stack" fill="#e2e8f0" radius={[4, 4, 0, 0]}>
+                                        <Bar name="remaining" dataKey="remaining" stackId="stack" fill="#cbd5e1" radius={[4, 4, 0, 0]}>
                                             <LabelList dataKey="rawCapacity" content={(props) => {
                                                 const { x, y, width, value } = props;
                                                 return (
@@ -116,50 +125,50 @@ export default function CenterPerformance({ analytics, isPersonnel }) {
                     </div>
 
                     {/* Centers detail utilization list */}
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
                         <Table>
-                            <TableHeader className="text-xs uppercase bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400">
+                            <TableHeader className="text-xs uppercase bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400">
                                 <TableRow>
-                                    <TableHead className="px-6 py-4 font-black">Evacuation Center</TableHead>
-                                    <TableHead className="px-6 py-4 font-black text-center">Households</TableHead>
-                                    <TableHead className="px-6 py-4 font-black text-center">Occupants</TableHead>
-                                    <TableHead className="px-6 py-4 font-black text-center">Total Capacity</TableHead>
-                                    <TableHead className="px-6 py-4 font-black">Capacity Index</TableHead>
-                                    <TableHead className="px-6 py-4 font-black text-right">Status</TableHead>
+                                    <TableHead className="px-5 py-3 font-semibold">Evacuation Center</TableHead>
+                                    <TableHead className="px-5 py-3 font-semibold text-center">Households</TableHead>
+                                    <TableHead className="px-5 py-3 font-semibold text-center">Occupants</TableHead>
+                                    <TableHead className="px-5 py-3 font-semibold text-center">Total Capacity</TableHead>
+                                    <TableHead className="px-5 py-3 font-semibold">Capacity Index</TableHead>
+                                    <TableHead className="px-5 py-3 font-semibold text-right">Status</TableHead>
                                 </TableRow>
                             </TableHeader>
-                            <tbody className="divide-y divide-slate-100">
-                                {analytics.center_performance.map((center) => (
-                                    <TableRow key={center.center_id} className="hover:bg-slate-50 dark:bg-slate-800/50/80 transition-colors">
-                                        <TableCell className="px-6 py-4 font-black text-slate-800 dark:text-slate-100">{center.name}</TableCell>
-                                        <TableCell className="px-6 py-4 text-center font-bold text-slate-700 dark:text-slate-200">{center.households}</TableCell>
-                                        <TableCell className="px-6 py-4 text-center font-black text-slate-800 dark:text-slate-100">{center.occupancy}</TableCell>
-                                        <TableCell className="px-6 py-4 text-center font-bold text-slate-400">{center.capacity}</TableCell>
-                                        <TableCell className="px-6 py-4 min-w-[200px]">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                                {centers.map((center) => (
+                                    <TableRow key={center.center_id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                                        <TableCell className="px-5 py-3.5 font-bold text-slate-900 dark:text-slate-100">{center.name}</TableCell>
+                                        <TableCell className="px-5 py-3.5 text-center font-medium text-slate-700 dark:text-slate-300">{center.households}</TableCell>
+                                        <TableCell className="px-5 py-3.5 text-center font-bold text-slate-900 dark:text-slate-100">{center.occupancy}</TableCell>
+                                        <TableCell className="px-5 py-3.5 text-center font-medium text-slate-500 dark:text-slate-400">{center.capacity}</TableCell>
+                                        <TableCell className="px-5 py-3.5 min-w-[180px]">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
                                                     <div 
                                                         style={{ width: `${Math.min(center.utilization_pct, 100)}%` }} 
                                                         className={`h-full rounded-full transition-all duration-500
-                                                            ${center.status === "critical" ? "bg-red-500" 
-                                                              : (center.status === "warning" ? "bg-red-500" : "bg-blue-500")}
+                                                            ${center.status === "critical" ? "bg-rose-500" 
+                                                              : (center.status === "warning" ? "bg-amber-500" : "bg-blue-500")}
                                                         `}
                                                     />
                                                 </div>
-                                                <span className="text-xs font-black text-slate-400 min-w-[35px]">{center.utilization_pct}%</span>
+                                                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 min-w-[35px]">{center.utilization_pct}%</span>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="px-6 py-4 text-right">
-                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border
-                                                ${center.status === "critical" ? "bg-red-500/10 text-red-400 border-red-500/20"
-                                                  : (center.status === "warning" ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                                                  : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20")}
+                                        <TableCell className="px-5 py-3.5 text-right">
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold border
+                                                ${center.status === "critical" ? "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900/50"
+                                                  : (center.status === "warning" ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900/50"
+                                                  : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50")}
                                             `}>
-                                                <span className={`w-1.5 h-1.5 rounded-full animate-ping
-                                                    ${center.status === "critical" ? "bg-red-400" 
-                                                      : (center.status === "warning" ? "bg-amber-400" : "bg-emerald-400")}
+                                                <span className={`w-1.5 h-1.5 rounded-full
+                                                    ${center.status === "critical" ? "bg-rose-500" 
+                                                      : (center.status === "warning" ? "bg-amber-500" : "bg-emerald-500")}
                                                 `} />
-                                                {center.status === "critical" ? "Overcapacity Alert" 
+                                                {center.status === "critical" ? "Overcapacity" 
                                                   : (center.status === "warning" ? "Near Capacity" : "Optimal Load")}
                                             </span>
                                         </TableCell>
@@ -171,11 +180,12 @@ export default function CenterPerformance({ analytics, isPersonnel }) {
 
                 </div>
             ) : (
-                <div className="flex flex-col items-center justify-center py-10 text-slate-500 dark:text-slate-400">
-                    <AlertTriangle size={36} className="text-slate-600 dark:text-slate-300 mb-2" />
+                <div className="flex flex-col items-center justify-center py-8 text-slate-400 text-xs">
+                    <AlertTriangle size={28} className="text-amber-500 mb-2" />
                     No evacuation centers are linked to the selected scope.
                 </div>
             )}
         </div>
     );
 }
+

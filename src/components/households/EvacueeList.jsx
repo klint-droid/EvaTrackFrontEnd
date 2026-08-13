@@ -1,6 +1,6 @@
 import React from "react";
 import { Search, Plus, Building, Lock, AlertCircle, Shield, DoorOpen, CheckCircle, MapPin, Edit3, Trash2, XCircle, Loader2 } from "lucide-react";
-import { Table, TableHeader, TableRow, TableHead, TableCell } from "../../ui/Table";
+import { Table, TableHeader, TableRow, TableHead, TableCell, RowMenu } from "../../ui/Table";
 import { Input } from "../../ui/Input";
 
 export default function EvacueeList({
@@ -179,29 +179,11 @@ export default function EvacueeList({
                     </>
                 )}
 
-                <TableCell>
-                    <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {canModify && canEdit && (
-                            <button
-                                disabled={!member.member_id?.startsWith('HM-')}
-                                onClick={() => openEdit(member)}
-                                className={`p-1.5 rounded-lg transition-all ${member.member_id?.startsWith('HM-') ? 'text-slate-400 hover:text-blue-600 hover:bg-blue-50' : 'text-slate-300 cursor-not-allowed opacity-50'}`}
-                                title={member.member_id?.startsWith('HM-') ? "Edit Member" : "Official record: Cannot edit this member"}
-                            >
-                                <Edit3 size={14} />
-                            </button>
-                        )}
-                        {canDelete && (
-                            <button
-                                disabled={!member.member_id?.startsWith('HM-')}
-                                onClick={() => handleDelete(member.member_id)}
-                                className={`p-1.5 rounded-lg transition-all ${member.member_id?.startsWith('HM-') ? 'text-slate-400 hover:text-red-600 hover:bg-red-50' : 'text-slate-300 cursor-not-allowed opacity-50'}`}
-                                title={member.member_id?.startsWith('HM-') ? "Delete Member" : "Official record: Cannot delete this member"}
-                            >
-                                <Trash2 size={14} />
-                            </button>
-                        )}
-                    </div>
+                <TableCell className="text-right">
+                    <RowMenu
+                        onEdit={(canModify && canEdit && member.member_id?.startsWith('HM-')) ? () => openEdit(member) : undefined}
+                        onDelete={(canDelete && member.member_id?.startsWith('HM-')) ? () => handleDelete(member.member_id) : undefined}
+                    />
                 </TableCell>
             </TableRow>
         );

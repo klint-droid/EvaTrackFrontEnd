@@ -38,6 +38,9 @@ export const useCenterIssueReports = () => {
     in_progress: 0,
     resolved: 0,
     critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
   });
 
   const [loading, setLoading] = useState<boolean>(true);
@@ -137,50 +140,51 @@ export const useCenterIssueReports = () => {
 
   const activeEventsList = activeEvents.filter(e => !e.ended_at);
 
-  const displayedReports = selectedEventId === "all_history"
+  const displayedReports = (selectedEventId === "all" || selectedEventId === "all_history" || !selectedEventId)
     ? reports
-    : selectedEventId === "all"
-      ? reports.filter(report => {
-          const isCenterAssignedToActiveEvent = report.center?.current_event_id &&
-            activeEventsList.some(evt => evt.event_id === report.center.current_event_id);
-          if (isCenterAssignedToActiveEvent) return true;
+    : reports.filter(report => {
+        const evt = activeEvents.find(e => e.event_id === selectedEventId);
+        if (!evt) return true;
 
-          const reportTime = new Date(report.created_at).getTime();
-          return activeEventsList.some(evt => {
-            const startTime = new Date(evt.started_at).getTime();
-            const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
-            return reportTime >= startTime && reportTime <= endTime;
-          });
-        })
-      : reports.filter(report => {
-          const evt = activeEvents.find(e => e.event_id === selectedEventId);
-          if (!evt) return false;
+        if (report.center?.current_event_id === selectedEventId) return true;
 
-          if (!evt.ended_at) {
-            return report.center?.current_event_id === selectedEventId;
-          }
+        const reportTime = new Date(report.created_at).getTime();
+        const startTime = new Date(evt.started_at).getTime();
+        const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+        return reportTime >= startTime && reportTime <= endTime;
+      });
 
-          const reportTime = new Date(report.created_at).getTime();
-          const startTime = new Date(evt.started_at).getTime();
-          const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
-          return reportTime >= startTime && reportTime <= endTime;
-        });
+  const getStatusKey = (r: any) => typeof r.status === 'object' ? r.status?.status_key : r.status;
+  const getSeverityKey = (r: any) => typeof r.severityLevel === 'object' ? r.severityLevel?.severity_key : (typeof r.severity === 'object' ? r.severity?.severity_key : r.severity);
 
-  const openCount = selectedEventId === "all_history"
-    ? summary.open || 0
-    : displayedReports.filter(r => r.status === 'open').length;
+  const openCount = (selectedEventId === "all" || selectedEventId === "all_history")
+    ? (summary.open !== undefined ? summary.open : displayedReports.filter(r => getStatusKey(r) === 'open').length)
+    : displayedReports.filter(r => getStatusKey(r) === 'open').length;
 
-  const inProgressCount = selectedEventId === "all_history"
-    ? summary.in_progress || 0
-    : displayedReports.filter(r => r.status === 'in_progress').length;
+  const inProgressCount = (selectedEventId === "all" || selectedEventId === "all_history")
+    ? (summary.in_progress !== undefined ? summary.in_progress : displayedReports.filter(r => getStatusKey(r) === 'in_progress').length)
+    : displayedReports.filter(r => getStatusKey(r) === 'in_progress').length;
 
-  const resolvedCount = selectedEventId === "all_history"
-    ? summary.resolved || 0
-    : displayedReports.filter(r => r.status === 'resolved').length;
+  const resolvedCount = (selectedEventId === "all" || selectedEventId === "all_history")
+    ? (summary.resolved !== undefined ? summary.resolved : displayedReports.filter(r => getStatusKey(r) === 'resolved').length)
+    : displayedReports.filter(r => getStatusKey(r) === 'resolved').length;
 
-  const criticalCount = selectedEventId === "all_history"
-    ? summary.critical || 0
-    : displayedReports.filter(r => r.severity === 'critical').length;
+  const criticalCount = (selectedEventId === "all" || selectedEventId === "all_history")
+    ? (summary.critical !== undefined ? summary.critical : displayedReports.filter(r => getSeverityKey(r) === 'critical').length)
+    : displayedReports.filter(r => getSeverityKey(r) === 'critical').length;
+
+  const highCount = (selectedEventId === "all" || selectedEventId === "all_history")
+    ? (summary.high !== undefined ? summary.high : displayedReports.filter(r => getSeverityKey(r) === 'high').length)
+    : displayedReports.filter(r => getSeverityKey(r) === 'high').length;
+
+  const mediumCount = (selectedEventId === "all" || selectedEventId === "all_history")
+    ? (summary.medium !== undefined ? summary.medium : displayedReports.filter(r => getSeverityKey(r) === 'medium').length)
+    : displayedReports.filter(r => getSeverityKey(r) === 'medium').length;
+
+  const lowCount = (selectedEventId === "all" || selectedEventId === "all_history")
+    ? (summary.low !== undefined ? summary.low : displayedReports.filter(r => getSeverityKey(r) === 'low').length)
+    : displayedReports.filter(r => getSeverityKey(r) === 'low').length;
+
 
   const openCreateModal = () => {
     setEditingReport(null);
@@ -319,7 +323,7 @@ export const useCenterIssueReports = () => {
     message,
     canCreate, canUpdateStatus, canChooseCenter,
     displayedReports,
-    openCount, inProgressCount, resolvedCount, criticalCount,
+    openCount, inProgressCount, resolvedCount, criticalCount, highCount, mediumCount, lowCount,
     fetchReports, openCreateModal, openEditModal, handleSubmit,
     handleStatusChange, handleDelete, canModifyReport
   };

@@ -33,6 +33,7 @@ export const useResourceRequests = () => {
   const [requests, setRequests] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>({
     pending: 0, acknowledged: 0, approved: 0, rejected: 0, delivered_24h: 0,
+    critical: 0, high: 0, medium: 0, low: 0,
   });
 
   const [urgencyLevels, setUrgencyLevels] = useState<any[]>([]);
@@ -121,34 +122,20 @@ export const useResourceRequests = () => {
 
   const activeEventsList = activeEvents.filter(e => !e.ended_at);
 
-  const displayedRequests = selectedEventId === "all_history"
+  const displayedRequests = (selectedEventId === "all" || selectedEventId === "all_history" || !selectedEventId)
     ? requests
-    : selectedEventId === "all"
-      ? requests.filter(req => {
-          const isCenterAssignedToActiveEvent = req.center?.current_event_id &&
-            activeEventsList.some(evt => evt.event_id === req.center.current_event_id);
-          if (isCenterAssignedToActiveEvent) return true;
+    : requests.filter(req => {
+        const evt = activeEvents.find(e => e.event_id === selectedEventId);
+        if (!evt) return true;
 
-          const reqTime = new Date(req.created_at).getTime();
-          return activeEventsList.some(evt => {
-            const startTime = new Date(evt.started_at).getTime();
-            const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
-            return reqTime >= startTime && reqTime <= endTime;
-          });
-        })
-      : requests.filter(req => {
-          const evt = activeEvents.find(e => e.event_id === selectedEventId);
-          if (!evt) return false;
+        if (req.center?.current_event_id === selectedEventId) return true;
 
-          if (!evt.ended_at) {
-            return req.center?.current_event_id === selectedEventId;
-          }
+        const reqTime = new Date(req.created_at).getTime();
+        const startTime = new Date(evt.started_at).getTime();
+        const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
+        return reqTime >= startTime && reqTime <= endTime;
+      });
 
-          const reqTime = new Date(req.created_at).getTime();
-          const startTime = new Date(evt.started_at).getTime();
-          const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
-          return reqTime >= startTime && reqTime <= endTime;
-        });
 
   const pendingCount = selectedEventId === "all_history"
     ? summary.pending || 0
@@ -161,6 +148,22 @@ export const useResourceRequests = () => {
   const deliveredCount = selectedEventId === "all_history"
     ? summary.delivered_24h || 0
     : displayedRequests.filter(r => r.status?.status_key === 'delivered' || r.status === 'delivered').length;
+
+  const criticalCount = selectedEventId === "all_history"
+    ? summary.critical || 0
+    : displayedRequests.filter(r => r.urgency_level?.urgency_key === 'critical').length;
+
+  const highCount = selectedEventId === "all_history"
+    ? summary.high || 0
+    : displayedRequests.filter(r => r.urgency_level?.urgency_key === 'high').length;
+
+  const mediumCount = selectedEventId === "all_history"
+    ? summary.medium || 0
+    : displayedRequests.filter(r => r.urgency_level?.urgency_key === 'medium').length;
+
+  const lowCount = selectedEventId === "all_history"
+    ? summary.low || 0
+    : displayedRequests.filter(r => r.urgency_level?.urgency_key === 'low').length;
 
   const openModal = () => {
     setForm({
@@ -253,6 +256,7 @@ export const useResourceRequests = () => {
     canUpdateStatus, canCreate,
     displayedRequests,
     pendingCount, acknowledgedCount, deliveredCount,
+    criticalCount, highCount, mediumCount, lowCount,
     openModal, handleSubmit, handleStatusChange, handleDelete, fetchRequests,
     viewingRequest, setViewingRequest
   };

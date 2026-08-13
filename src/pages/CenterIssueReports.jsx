@@ -36,7 +36,7 @@ export default function CenterIssueReports() {
     message,
     canCreate, canUpdateStatus, canChooseCenter,
     displayedReports,
-    openCount, inProgressCount, resolvedCount, criticalCount,
+    openCount, inProgressCount, resolvedCount, criticalCount, highCount, mediumCount, lowCount,
     fetchReports, openCreateModal, openEditModal, handleSubmit,
     handleStatusChange, handleDelete, canModifyReport,
     viewingReport, setViewingReport
@@ -101,6 +101,9 @@ export default function CenterIssueReports() {
       resolvedCount={resolvedCount}
       closedCount={closedCount}
       criticalCount={criticalCount}
+      highCount={highCount}
+      mediumCount={mediumCount}
+      lowCount={lowCount}
     />
   );
 
@@ -139,8 +142,24 @@ export default function CenterIssueReports() {
 
       <TableLayout
         title="Evacuation Center Issues"
+        badgeText={`${totalEntries} Reports`}
+        subtitle="Track and resolve evacuation center facility, health, and safety incidents"
+        onExport={() => {
+          const csvHeader = "Report ID,Title,Category,Severity,Status,Center,Reported By\n";
+          const csvRows = displayedReports
+            .map((r) => `${r.report_id},"${r.title || ''}",${r.category || ''},${r.severity || ''},${r.status || ''},"${r.center?.name || ''}","${r.reporter?.name || r.reported_by_user?.name || ''}"`)
+            .join("\n");
+          const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.setAttribute("download", "issue_reports.csv");
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }}
+        onAdd={canCreate ? openCreateModal : undefined}
+        addLabel="Report Issue"
         stats={stats}
-        tabs={tabs}
         pagination={
           <Pagination
             currentPage={currentPage}

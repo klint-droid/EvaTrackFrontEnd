@@ -3,7 +3,7 @@ import {
   Home, MapPin, Users, Plus, Search,
   ChevronRight, DoorOpen, AlertCircle, UserCheck, ShieldAlert, Eye
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { getCenters }    from "../../api/evacuation/getCenters";
 import { deleteCenter }  from "../../api/evacuation/deleteCenter";
@@ -12,56 +12,16 @@ import { updateCenter }  from "../../api/evacuation/updateCenter";
 import { isAdmin, isSuperAdmin, isPersonnel, getAssignedCenterId } from "../../utils/roles";
 
 import CenterModal  from "../../components/evacuation/CenterModal";
-import { Input } from "../../ui/Input";
-import { Select } from "../../ui/Select";
 import AlertConfirmModal from "../../components/AlertConfirmModal";
 import { useAlert } from "../../context/AlertContext";
+
+import { TableLayout } from "../../components/ui/TableLayout";
+import { Table, TableHeader, TableRow, TableHead, TableCell, StatusBadge, RowMenu } from "../../ui/Table";
+import { StatCard } from "../../components/ui/StatCard";
 import AnimatedFAB from "../../components/ui/AnimatedFAB";
 
-const CenterSkeleton = () => (
-  <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 space-y-4 animate-pulse flex flex-col justify-between h-[308px]">
-    <div className="space-y-4 flex-1">
-      {/* TOP ROW */}
-      <div className="flex justify-between items-start">
-        <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-xl" />
-        <div className="w-24 h-6 bg-slate-50 dark:bg-slate-800/50 rounded-full border border-slate-100 dark:border-slate-800/50" />
-      </div>
-
-      {/* NAME */}
-      <div className="h-6 bg-slate-200 rounded-lg w-2/3" />
-
-      {/* ADDRESS */}
-      <div className="space-y-1.5 mt-2">
-        <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-5/6" />
-        <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-1/2" />
-      </div>
-
-      {/* OCCUPANCY BAR */}
-      <div className="space-y-2 mt-4">
-        <div className="flex justify-between">
-          <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-1/4" />
-          <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-1/12" />
-        </div>
-        <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden" />
-      </div>
-
-      {/* STAT TILES */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50/50 rounded-xl border border-slate-100 dark:border-slate-800 space-y-2">
-          <div className="h-2.5 bg-slate-100 dark:bg-slate-800 rounded w-1/2" />
-          <div className="h-3.5 bg-slate-200 rounded w-2/3" />
-        </div>
-        <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50/50 rounded-xl border border-slate-100 dark:border-slate-800 space-y-2">
-          <div className="h-2.5 bg-slate-100 dark:bg-slate-800 rounded w-1/2" />
-          <div className="h-3.5 bg-slate-200 rounded w-2/3" />
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-// ─── component ────────────────────────────────────────────────────────────────
 export default function EvacuationList() {
+  const navigate = useNavigate();
   const [centers, setCenters]         = useState([]);
   const [loading, setLoading]         = useState(true);
   const [search, setSearch]           = useState("");
@@ -69,8 +29,7 @@ export default function EvacuationList() {
   const [deleteConfirmState, setDeleteConfirmState] = useState({ isOpen: false, centerId: null, isLoading: false });
   const [saveConfirmState, setSaveConfirmState] = useState({ isOpen: false, formData: null, isLoading: false });
   const [selected, setSelected]       = useState(null);
-  const [sortBy, setSortBy]           = useState("name");
-  const [activeTab, setActiveTab]     = useState("assigned");
+  const [colFilters, setColFilters]   = useState({ name: '', event: '' });
   const { showAlert } = useAlert();
 
   const canCreate = isAdmin() || isSuperAdmin();
@@ -132,268 +91,199 @@ export default function EvacuationList() {
   const assignedCenterId = getAssignedCenterId();
   const personnelWithCenter = isPersonnel() && assignedCenterId;
 
-  const processedCenters = centers
-    .filter((c) => {
-      const addrStr = (c.osm_address || "").toLowerCase();
-      const matchesSearch = `${c.name} ${addrStr}`.toLowerCase().includes(search.toLowerCase());
+  // Derived Statistics
+  const totalOccupants = centers.reduce((sum, c) => sum + (Number(c.current_occupancy) || 0), 0);
+  const totalCapacity = centers.reduce((sum, c) => sum + (Number(c.capacity) || 0), 0);
+  const totalHouseholds = centers.reduce((sum, c) => sum + (Number(c.household_count) || 0), 0);
 
-      // Tab-based filtering for personnel
-      if (personnelWithCenter) {
-        const isMine = String(c.evacuation_center_id) === String(assignedCenterId);
-        if (activeTab === "assigned") return matchesSearch && isMine;
-        if (activeTab === "others")   return matchesSearch && !isMine;
-      }
+  const statsComponent = (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <StatCard title="Total Centers" value={centers.length} dotColor="#3b82f6" />
+      <StatCard title="Current Occupants" value={totalOccupants} dotColor="#10b981" />
+      <StatCard title="Total Capacity" value={totalCapacity} dotColor="#6366f1" />
+      <StatCard title="Evacuated Families" value={totalHouseholds} dotColor="#f59e0b" />
+    </div>
+  );
 
-      return matchesSearch;
-    })
-    .sort((a, b) => {
-      // 1. Force the assigned center to the top (for admin / all-centers tab)
-      if (assignedCenterId && !personnelWithCenter) {
-        const aAssigned = String(a.evacuation_center_id) === String(assignedCenterId);
-        const bAssigned = String(b.evacuation_center_id) === String(assignedCenterId);
-        if (aAssigned && !bAssigned) return -1;
-        if (!aAssigned && bAssigned) return 1;
-      }
-
-      // 2. Fallback sorting
-      if (sortBy === "name")
-        return a.name.localeCompare(b.name);
-      if (sortBy === "capacity")
-        return (b.capacity ?? 0) - (a.capacity ?? 0);
-      if (sortBy === "occupancy") {
-        const rA = a.capacity ? (a.current_occupancy || 0) / a.capacity : 0;
-        const rB = b.capacity ? (b.current_occupancy || 0) / b.capacity : 0;
-        return rB - rA;
-      }
-      return 0;
-    });
+  const filteredCenters = centers.filter((c) => {
+    const addrStr = (c.osm_address || "").toLowerCase();
+    const nameMatch = `${c.name} ${addrStr}`.toLowerCase().includes((colFilters.name || search).toLowerCase());
+    const eventMatch = !colFilters.event || (c.current_event?.name || "").toLowerCase().includes(colFilters.event.toLowerCase());
+    return nameMatch && eventMatch;
+  });
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 text-left">
-
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-slate-50 tracking-tight">Evacuation Centers</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Real-time shelter monitoring</p>
-        </div>
-        {canCreate && (
-          <button 
-            onClick={() => { setSelected(null); setModalOpen(true); }}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-900 dark:bg-slate-50 dark:bg-slate-800/50 text-white dark:text-slate-900 dark:text-slate-50 rounded-lg hover:bg-slate-800 dark:hover:bg-slate-200 transition-all font-medium text-sm"
-          >
-            <Plus size={16} /> Add Center
-          </button>
-        )}
-      </div>
-
-      {/* SEARCH & FILTERS */}
-      <div className="flex flex-col md:flex-row gap-3">
-        <div className="w-full flex-1 group">
-          <Input
-            icon={Search}
-            type="text"
-            placeholder="Quick search centers..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <div className="flex gap-2">
-          <div className="w-48"><Select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            options={[
-                { value: 'name', label: 'Sort by Name' },
-                { value: 'capacity', label: 'Sort by Capacity' },
-                { value: 'occupancy', label: 'Sort by Occupancy' }
-            ]}
-          /></div>
-        </div>
-      </div>
-
-      {/* ACTIVE DUTY STATION QUICK LAUNCH */}
-      {assignedCenterId && isPersonnel() && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-blue-50 border border-blue-200 rounded-2xl animate-in slide-in-from-top-4 duration-300">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-md dark:shadow-none shadow-blue-500/10">
-              <UserCheck size={20} />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Active Duty Station Assigned</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">You are currently assigned to manage evacuation records for this center.</p>
-            </div>
-          </div>
-          <Link
-            to={`/evacuation-centers/${assignedCenterId}`}
-            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl shadow-lg dark:shadow-none shadow-blue-600/20 hover:bg-blue-700 transition-all active:scale-95 self-start sm:self-auto"
-          >
-            Launch Workstation <ChevronRight size={14} />
-          </Link>
-        </div>
-      )}
-
-      {/* PERSONNEL TABS */}
-      {personnelWithCenter && (
-        <div className="flex bg-slate-100/80 p-1 rounded-2xl border border-slate-200 dark:border-slate-700/60 gap-1 w-full sm:w-auto sm:max-w-md">
-          {[
-            { key: "assigned", label: "My Assigned Center", icon: <UserCheck size={13} strokeWidth={2.5} /> },
-            { key: "others",   label: "Other Centers",      icon: <Eye size={13} strokeWidth={2.5} /> },
-          ].map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold rounded-xl transition-all duration-200 ${
-                activeTab === tab.key
-                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50 shadow-sm dark:shadow-none border border-slate-200 dark:border-slate-700/80 font-black"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200"
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {loading ? (
-          [...Array(6)].map((_, i) => <CenterSkeleton key={i} />)
-        ) : processedCenters.length > 0 ? (
-          processedCenters.map((c) => {
-            const current  = Number(c.current_occupancy) || 0;
-            const max      = Number(c.capacity) || 0;
-            const percent  = max ? (current / max) * 100 : 0;
-            const addrStr  = c.osm_address || "Address not on record.";
-            const isAssigned = assignedCenterId && String(c.evacuation_center_id) === String(assignedCenterId);
-
-            return (
-              <div
-                key={c.evacuation_center_id}
-                className={`group bg-white dark:bg-slate-900 rounded-2xl border transition-all duration-300 flex flex-col overflow-hidden animate-in fade-in-50 duration-300 ${
-                  isAssigned
-                    ? "border-blue-500 ring-4 ring-blue-500/10 shadow-lg dark:shadow-none shadow-blue-500/5 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/10"
-                    : "border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none hover:shadow-xl hover:-translate-y-1"
-                }`}
+    <div className="space-y-4 font-sans text-left">
+      <TableLayout
+        title="Evacuation Centers"
+        badgeText={`${centers.length} Shelters`}
+        subtitle="Real-time shelter capacity, occupancy monitoring, and evacuation unit management"
+        onExport={() => {
+          const csvHeader = "Center ID,Name,Address,Occupancy,Capacity,Households,Current Event\n";
+          const csvRows = filteredCenters
+            .map((c) => `${c.evacuation_center_id},"${c.name || ''}","${c.osm_address || ''}",${c.current_occupancy || 0},${c.capacity || 0},${c.household_count || 0},"${c.current_event?.name || 'None'}"`)
+            .join("\n");
+          const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.setAttribute("download", "evacuation_centers_report.csv");
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }}
+        onAdd={canCreate ? () => { setSelected(null); setModalOpen(true); } : undefined}
+        addLabel="Add Center"
+        stats={statsComponent}
+      >
+        <Table>
+          <TableHeader>
+            <tr className="border-b border-slate-100 dark:border-slate-800">
+              <TableHead
+                filterable
+                filterValue={colFilters.name}
+                onFilterChange={(v) => setColFilters((prev) => ({ ...prev, name: v }))}
               >
-                <div className="p-5 flex-1">
-
-                  {/* TOP ROW */}
-                  <div className="flex justify-between items-start mb-4">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-300 ${
-                      isAssigned
-                        ? "bg-green-600 text-white"
-                        : "bg-blue-50 text-blue-600 group-hover:bg-green-600 group-hover:text-white"
-                    }`}>
-                      <Home size={20} />
+                Evacuation Center
+              </TableHead>
+              <TableHead
+                filterable
+                filterValue={colFilters.event}
+                onFilterChange={(v) => setColFilters((prev) => ({ ...prev, event: v }))}
+              >
+                Active Incident / Event
+              </TableHead>
+              <TableHead className="text-center">Occupancy Rate</TableHead>
+              <TableHead className="text-center">Evacuees</TableHead>
+              <TableHead className="text-center">Households</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </tr>
+          </TableHeader>
+          <tbody>
+            {loading ? (
+              [...Array(5)].map((_, i) => (
+                <TableRow key={i} className="animate-pulse">
+                  <TableCell>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex-shrink-0" />
+                      <div className="space-y-1">
+                        <div className="w-36 h-3 bg-slate-200 rounded" />
+                        <div className="w-24 h-2 bg-slate-100 dark:bg-slate-800 rounded" />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      {isAssigned && (
-                        <span className="flex items-center gap-1 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider rounded bg-blue-50 border border-blue-200 text-blue-700">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          My Assigned Center
-                        </span>
+                  </TableCell>
+                  <TableCell><div className="w-24 h-5 bg-slate-100 dark:bg-slate-800 rounded-full" /></TableCell>
+                  <TableCell><div className="w-28 h-2.5 bg-slate-100 dark:bg-slate-800 rounded mx-auto" /></TableCell>
+                  <TableCell className="text-center"><div className="w-12 h-3 bg-slate-100 dark:bg-slate-800 rounded mx-auto" /></TableCell>
+                  <TableCell className="text-center"><div className="w-8 h-3 bg-slate-100 dark:bg-slate-800 rounded mx-auto" /></TableCell>
+                  <TableCell className="text-right"><div className="w-12 h-4 bg-slate-100 dark:bg-slate-800 rounded ml-auto" /></TableCell>
+                </TableRow>
+              ))
+            ) : filteredCenters.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan="6" className="py-14 text-center text-slate-400 text-xs font-medium">
+                  No evacuation centers found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredCenters.map((c) => {
+                const current    = Number(c.current_occupancy) || 0;
+                const max        = Number(c.capacity) || 0;
+                const percent    = max ? Math.min(100, (current / max) * 100) : 0;
+                const isAssigned = assignedCenterId && String(c.evacuation_center_id) === String(assignedCenterId);
+
+                return (
+                  <TableRow
+                    key={c.evacuation_center_id}
+                    onClick={() => navigate(`/evacuation-centers/${c.evacuation_center_id}`)}
+                    className="cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group"
+                  >
+                    <TableCell>
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center border flex-shrink-0 transition-colors ${
+                          isAssigned
+                            ? "bg-green-600 text-white border-green-600"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600"
+                        }`}>
+                          <Home size={14} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                              {c.name}
+                            </p>
+                            {isAssigned && (
+                              <span className="px-1.5 py-0.2 text-[8px] font-black uppercase tracking-wider rounded bg-blue-50 border border-blue-200 text-blue-700">
+                                My Station
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-slate-400 truncate max-w-[280px] leading-tight">
+                            {c.osm_address || "No location address recorded"}
+                          </p>
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
+                      {c.current_event ? (
+                        <StatusBadge
+                          value={c.current_event.name}
+                          color="red"
+                        />
+                      ) : (
+                        <span className="text-[10px] font-semibold text-slate-400">No Active Event</span>
                       )}
-                      <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border animate-pulse ${
-                        c.current_event
-                          ? "text-red-600 bg-red-50 border-red-100"
-                          : "text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
-                      }`}>
-                        {c.current_event?.name || <span className="text-slate-400">No Active Event</span>}
-                      </span>
-                    </div>
-                  </div>
+                    </TableCell>
 
-                  {/* NAME */}
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 leading-tight mb-1">{c.name}</h3>
+                    <TableCell className="text-center min-w-[140px]">
+                      <div className="space-y-1 max-w-[120px] mx-auto">
+                        <div className="flex justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                          <span>{Math.round(percent)}%</span>
+                          <span>{current}/{max}</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              percent >= 90 ? "bg-red-500" : percent >= 70 ? "bg-amber-500" : "bg-emerald-500"
+                            }`}
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                      </div>
+                    </TableCell>
 
-                  {/* ADDRESS */}
-                  <div className="flex items-start text-xs font-medium mb-1 gap-1">
-                    <MapPin size={12} className="mt-0.5 shrink-0 text-blue-400" />
-                    <span className="text-slate-400 leading-snug">{addrStr}</span>
-                  </div>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <Users size={13} className="text-blue-500" />
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                          {current}
+                        </span>
+                      </div>
+                    </TableCell>
 
-                  {/* OCCUPANCY BAR */}
-                  <div className="space-y-2 mb-5 mt-3">
-                    <div className="flex justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tighter">
-                      <span>Occupancy</span>
-                      <span className="text-slate-800 dark:text-slate-100">{Math.round(percent)}%</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-1000 ${
-                          percent >= 90 ? "bg-red-500" : percent >= 70 ? "bg-amber-500" : "bg-emerald-500"
-                        }`}
-                        style={{ width: `${percent}%` }}
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <DoorOpen size={13} className="text-indigo-500" />
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                          {c.household_count ?? 0}
+                        </span>
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <RowMenu
+                        onView={() => navigate(`/evacuation-centers/${c.evacuation_center_id}`)}
+                        onEdit={canEdit ? () => { setSelected(c); setModalOpen(true); } : undefined}
+                        onDelete={canDelete ? () => { setSelected(c); setDeleteConfirmState({ isOpen: true, centerId: c.evacuation_center_id, isLoading: false }); } : undefined}
                       />
-                    </div>
-                  </div>
-
-                  {/* STAT TILES */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                      <p className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1.5">Evacuees</p>
-                      <div className="flex items-center gap-2">
-                        <Users size={14} className="text-blue-500" />
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{current} / {max}</span>
-                      </div>
-                    </div>
-                    <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                      <p className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1.5">Households</p>
-                      <div className="flex items-center gap-2">
-                        <DoorOpen size={14} className="text-indigo-500" />
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{c.household_count ?? 0}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* FOOTER */}
-                <div className="px-5 py-3.5 bg-slate-50 dark:bg-slate-800/50/50 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center group-hover:bg-white dark:bg-slate-900 transition-colors">
-                  <div className="flex gap-3">
-                    {canEdit && (
-                      <button
-                        onClick={() => { setSelected(c); setModalOpen(true); }}
-                        className="text-[11px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-tight"
-                      >
-                        Edit
-                      </button>
-                    )}
-                    {canDelete && (
-                      <button
-                        onClick={() => { setSelected(c); setDeleteConfirmState({ isOpen: true, centerId: c.evacuation_center_id, isLoading: false }); }}
-                        className="text-[11px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-tight"
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </div>
-                  {/* Personnel: show Manage only for assigned center, note for others */}
-                  {personnelWithCenter && !isAssigned ? (
-                    <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 italic">
-                      <ShieldAlert size={12} className="text-slate-400" />
-                      View only — not assigned
-                    </span>
-                  ) : (
-                    <Link
-                      to={`/evacuation-centers/${c.evacuation_center_id}`}
-                      className="flex items-center gap-1 text-[11px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-tighter hover:text-blue-600"
-                    >
-                      Manage <ChevronRight size={14} />
-                    </Link>
-                  )}
-                </div>
-              </div>
-            );
-          })
-        ) : (
-          <div className="col-span-full py-16 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl p-8 space-y-3">
-            <AlertCircle className="mx-auto text-slate-300" size={32} />
-            <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">No evacuation centers found</h4>
-            <p className="text-xs text-slate-400">Try adjusting your filters or search terms.</p>
-          </div>
-        )}
-      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </tbody>
+        </Table>
+      </TableLayout>
 
       <CenterModal
         isOpen={modalOpen}
@@ -423,6 +313,17 @@ export default function EvacuationList() {
         onConfirm={handleConfirmSubmit}
         onClose={() => setSaveConfirmState({ isOpen: false, formData: null, isLoading: false })}
       />
+
+      {canCreate && (
+        <AnimatedFAB
+          icon={Plus}
+          label="Add Center"
+          onClick={() => {
+            setSelected(null);
+            setModalOpen(true);
+          }}
+        />
+      )}
     </div>
   );
 }

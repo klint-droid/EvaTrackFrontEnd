@@ -1,5 +1,5 @@
 import React from "react";
-import { Users, TrendingUp } from "lucide-react";
+import { Users, HeartPulse, UserCheck, ShieldAlert, Baby, Accessibility, Heart, Award } from "lucide-react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
 const AGE_COLORS = ["#3b82f6", "#06b6d4", "#10b981", "#8b5cf6"]; // Blue, Sky, Emerald, Purple
@@ -13,132 +13,176 @@ const STATUS_COLORS = {
 };
 
 export default function DemographicPanel({ analytics }) {
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* AGE & VULNERABILITIES */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-6 rounded-2xl shadow-sm dark:shadow-none flex flex-col justify-between">
-                <div>
-                    <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 tracking-tight mb-6 flex items-center gap-2">
-                        <Users size={18} className="text-purple-600" />
-                        Age Distribution & Vulnerability
-                    </h3>
+    const ageGroups = analytics?.demographics?.age_groups || [
+        { group: 'Children (0-12)', count: 0 },
+        { group: 'Youth (13-17)', count: 0 },
+        { group: 'Adults (18-59)', count: 0 },
+        { group: 'Elderly (60+)', count: 0 }
+    ];
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+    const genderData = analytics?.demographics?.gender || [
+        { gender: 'Male', count: 0 },
+        { gender: 'Female', count: 0 }
+    ];
+
+    const vulnerableGroups = analytics?.demographics?.vulnerable_groups || [];
+
+    const totalAgeCount = ageGroups.reduce((acc, curr) => acc + (curr.count || 0), 0);
+    const maleCount = genderData.find(g => g.gender?.toLowerCase() === 'male')?.count || genderData[0]?.count || 0;
+    const femaleCount = genderData.find(g => g.gender?.toLowerCase() === 'female')?.count || genderData[1]?.count || 0;
+    const totalGender = maleCount + femaleCount;
+    const malePct = totalGender > 0 ? Math.round((maleCount / totalGender) * 100) : 50;
+    const femalePct = totalGender > 0 ? 100 - malePct : 50;
+
+    return (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left">
+            {/* 1. AGE DISTRIBUTION & VULNERABILITIES */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-xs flex flex-col justify-between transition-colors">
+                <div>
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-2">
+                            <div className="p-2 bg-purple-50 dark:bg-purple-950/40 rounded-lg text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50">
+                                <Users size={18} />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                                    Age Distribution & Vulnerability
+                                </h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Demographic breakdown captured from verified evacuees</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
                         {/* Donut Chart */}
-                        <div className="h-48 flex justify-center items-center">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={analytics.demographics.age_groups}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={50}
-                                        outerRadius={70}
-                                        paddingAngle={3}
-                                        dataKey="count"
-                                    >
-                                        {analytics.demographics.age_groups.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={AGE_COLORS[index % AGE_COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip 
-                                        contentStyle={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0", borderRadius: "10px", color: "#1e293b" }}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
+                        <div className="h-44 flex justify-center items-center relative">
+                            {totalAgeCount > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={ageGroups}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={48}
+                                            outerRadius={68}
+                                            paddingAngle={3}
+                                            dataKey="count"
+                                        >
+                                            {ageGroups.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={AGE_COLORS[index % AGE_COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip 
+                                            contentStyle={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0", borderRadius: "10px", color: "#1e293b", fontSize: "12px" }}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="w-32 h-32 rounded-full border-4 border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-center p-2">
+                                    <span className="text-[11px] font-semibold text-slate-400">No Age Data</span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Donut Legends */}
-                        <div className="space-y-3">
-                            {analytics.demographics.age_groups.map((item, idx) => (
-                                <div key={item.group} className="flex items-center justify-between text-sm">
+                        <div className="space-y-2.5">
+                            {ageGroups.map((item, idx) => (
+                                <div key={item.group} className="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: AGE_COLORS[idx] }} />
-                                        <span className="text-slate-500 dark:text-slate-400 font-medium">{item.group}</span>
+                                        <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: AGE_COLORS[idx % AGE_COLORS.length] }} />
+                                        <span className="text-slate-600 dark:text-slate-300 font-medium">{item.group}</span>
                                     </div>
-                                    <span className="font-bold text-slate-800 dark:text-slate-100">{item.count}</span>
+                                    <span className="font-bold text-slate-900 dark:text-slate-100">{item.count}</span>
                                 </div>
                             ))}
                         </div>
                     </div>
                 </div>
 
-                {/* Vulnerable groups segment */}
-                <div className="mt-8 border-t border-slate-100 dark:border-slate-800 pt-6">
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
-                        Vulnerable Profiles & Care Lists
-                    </h4>
-                    {analytics.demographics.vulnerable_groups.length > 0 ? (
-                        <div className="grid grid-cols-2 gap-4">
-                            {analytics.demographics.vulnerable_groups.map((group) => (
-                                <div key={group.key} className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 p-3.5 rounded-xl flex items-center justify-between">
+                {/* Vulnerable profiles & care lists */}
+                <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-5">
+                    <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                            Vulnerable Profiles & Care Lists
+                        </h4>
+                        <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/50 px-2 py-0.5 rounded-md border border-purple-100 dark:border-purple-900/50">
+                            Priority Care
+                        </span>
+                    </div>
+
+                    {vulnerableGroups.length > 0 ? (
+                        <div className="grid grid-cols-2 gap-3">
+                            {vulnerableGroups.map((group) => (
+                                <div key={group.key} className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 p-3 rounded-lg flex items-center justify-between">
                                     <div>
-                                        <span className="text-xs text-slate-500 dark:text-slate-400 font-bold">{group.label}</span>
-                                        <h5 className="text-lg font-black text-slate-800 dark:text-slate-100 mt-0.5">{group.count}</h5>
+                                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 block">{group.label}</span>
+                                        <h5 className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-0.5">{group.count}</h5>
                                     </div>
-                                    <div className="text-[10px] text-indigo-600 font-bold px-2 py-0.5 bg-indigo-50 rounded-full border border-indigo-100">
-                                        Care List
-                                    </div>
+                                    <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/50 rounded-md border border-indigo-100 dark:border-indigo-900/50">
+                                        Tracked
+                                    </span>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 italic">No vulnerable individuals registered.</p>
+                        <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 rounded-lg p-3 text-center">
+                            <p className="text-xs text-slate-400 font-medium">No special vulnerable attributes recorded for current selection.</p>
+                        </div>
                     )}
                 </div>
             </div>
 
-            {/* GENDER & HOUSEHOLD STATUS DISTRIBUTION */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-6 rounded-2xl shadow-sm dark:shadow-none space-y-6">
+            {/* 2. GENDER & HOUSEHOLD EVACUATION PROFILE */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-xs flex flex-col justify-between transition-colors space-y-6">
                 <div>
-                    <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 tracking-tight mb-6 flex items-center gap-2">
-                        <TrendingUp size={18} className="text-emerald-600" />
-                        Gender & Household Status Profile
-                    </h3>
+                    <div className="flex items-center gap-2 mb-6">
+                        <div className="p-2 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50">
+                            <UserCheck size={18} />
+                        </div>
+                        <div>
+                            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                                Gender & Household Status Profile
+                            </h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Gender balance ratio and evacuation lifecycle progress</p>
+                        </div>
+                    </div>
 
                     <div className="space-y-6">
-                        {/* Gender Balance Progress Bars */}
+                        {/* Gender Balance Progress Bar */}
                         <div>
-                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
-                                Gender Balance Ratio
-                            </h4>
-                            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-bold mb-1.5">
-                                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Male ({analytics.demographics.gender[0]?.count || 0})</span>
-                                <span className="flex items-center gap-1.5">Female ({analytics.demographics.gender[1]?.count || 0}) <span className="w-2.5 h-2.5 rounded-full bg-pink-500" /></span>
+                            <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block" />
+                                    Male: <strong className="text-slate-900 dark:text-slate-100">{maleCount}</strong> ({malePct}%)
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    Female: <strong className="text-slate-900 dark:text-slate-100">{femaleCount}</strong> ({femalePct}%)
+                                    <span className="w-2.5 h-2.5 rounded-full bg-pink-500 inline-block" />
+                                </span>
                             </div>
                             
-                            {/* Progress Bar Component */}
-                            {(() => {
-                                const m = analytics.demographics.gender[0]?.count || 0;
-                                const f = analytics.demographics.gender[1]?.count || 0;
-                                const tot = m + f;
-                                const mPct = tot > 0 ? (m / tot) * 100 : 50;
-                                const fPct = tot > 0 ? (f / tot) * 100 : 50;
-                                return (
-                                    <div className="w-full h-3.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex border border-slate-200 dark:border-slate-700">
-                                        <div style={{ width: `${mPct}%` }} className="bg-blue-500 h-full transition-all duration-500" title="Male" />
-                                        <div style={{ width: `${fPct}%` }} className="bg-pink-500 h-full transition-all duration-500" title="Female" />
-                                    </div>
-                                );
-                            })()}
+                            <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex border border-slate-200 dark:border-slate-800">
+                                <div style={{ width: `${malePct}%` }} className="bg-blue-500 h-full transition-all duration-500" title={`Male: ${maleCount}`} />
+                                <div style={{ width: `${femalePct}%` }} className="bg-pink-500 h-full transition-all duration-500" title={`Female: ${femaleCount}`} />
+                            </div>
                         </div>
 
                         {/* Household Status Distribution Graph */}
                         <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
                                 Household Evacuation Lifecycle Statuses
                             </h4>
                             <div className="h-44 w-full">
-                                {analytics.status_distribution.length > 0 ? (
+                                {analytics?.status_distribution?.length > 0 ? (
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={analytics.status_distribution} layout="vertical" margin={{ top: 0, right: 10, left: 10, bottom: 0 }}>
+                                        <BarChart data={analytics.status_distribution} layout="vertical" margin={{ top: 0, right: 15, left: 5, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
                                             <XAxis type="number" stroke="#94a3b8" fontSize={10} tickLine={false} />
-                                            <YAxis dataKey="status_label" type="category" stroke="#94a3b8" fontSize={11} width={85} tickLine={false} />
+                                            <YAxis dataKey="status_label" type="category" stroke="#94a3b8" fontSize={11} width={90} tickLine={false} />
                                             <Tooltip 
-                                                contentStyle={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0", borderRadius: "10px", color: "#1e293b" }}
+                                                contentStyle={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0", borderRadius: "10px", color: "#1e293b", fontSize: "12px" }}
                                             />
-                                            <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={16}>
+                                            <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={18}>
                                                 {analytics.status_distribution.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.status_key] || "#3b82f6"} />
                                                 ))}
@@ -146,15 +190,16 @@ export default function DemographicPanel({ analytics }) {
                                         </BarChart>
                                     </ResponsiveContainer>
                                 ) : (
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 italic">No lifecycle status data found.</p>
+                                    <div className="h-full flex items-center justify-center text-xs text-slate-400 italic">
+                                        No lifecycle status distribution recorded.
+                                    </div>
                                 )}
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>
-
         </div>
     );
 }
+

@@ -8,11 +8,13 @@ import {
 import { getAlerts } from '../api/alerts/getAlerts';
 import { cancelAlert } from '../api/alerts/cancelAlert';
 import { getEvents } from '../api/events/getEvents';
-import { isAdmin, isPersonnel } from '../utils/roles';
+import { isAdmin, isPersonnel, isSuperAdmin } from '../utils/roles';
 import CreateAlertModal from '../components/alerts/CreateAlertModal';
 import AlertDetailModal from '../components/alerts/AlertDetailModal';
 import { useAlert } from '../context/AlertContext';
-import { Table, TableHeader, TableRow, TableHead, TableCell } from '../ui/Table';
+import { Table, TableHeader, TableRow, TableHead, TableCell, RowMenu, StatusBadge } from '../ui/Table';
+import { TableLayout } from '../components/ui/TableLayout';
+import Pagination from '../components/ui/Pagination';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import AnimatedFAB from "../components/ui/AnimatedFAB";
@@ -36,7 +38,7 @@ export default function EvacuationAlerts() {
     const [channelFilter, setChannelFilter] = useState('');
     const [showFilters, setShowFilters] = useState(false);
 
-    const canCreate = isAdmin() || isPersonnel();
+    const canCreate = isSuperAdmin() || isAdmin() || isPersonnel();
 
     const fetchAlerts = async (page = 1) => {
         setLoading(true);
@@ -59,20 +61,22 @@ export default function EvacuationAlerts() {
 
     const handleCancel = async (id) => {
         showConfirm(
-            'Cancel this scheduled alert?',
+            'Are you sure you want to delete this alert dispatch record?',
             async () => {
                 try {
                     await cancelAlert(id);
+                    showAlert('Alert record deleted successfully.', 'Success', 'success');
                     fetchAlerts(pagination.current_page);
                 } catch (err) {
-                    showAlert(err.response?.data?.message || 'Failed to cancel alert.', 'Error', 'danger');
+                    showAlert(err.response?.data?.message || 'Failed to delete alert record.', 'Error', 'danger');
                 }
             },
-            'Cancel Alert',
-            'warning',
-            'Cancel Schedule'
+            'Delete Alert Record',
+            'danger',
+            'Delete'
         );
     };
+
 
 
     const getUrgencyStyle = (key) => {
@@ -156,126 +160,84 @@ export default function EvacuationAlerts() {
                 </div>
             </div>
 
-            {/* ── Filter Toolbar & Table Container ── */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden mb-4">
-                <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 w-full lg:w-auto">
-                        <div className="w-full sm:max-w-[280px]">
-                            <Input
-                                icon={Search}
-                                placeholder="Search alerts..."
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex gap-2 relative w-full lg:w-auto justify-end">
-                        <div className="w-40">
-                            <Select
-                                value={statusFilter}
-                                onChange={e => setStatusFilter(e.target.value)}
-                                options={[
-                                    { value: '', label: 'All Statuses' },
-                                    { value: 'sent', label: 'Sent' },
-                                    { value: 'failed', label: 'Failed' },
-                                    { value: 'scheduled', label: 'Scheduled' },
-                                    { value: 'pending', label: 'Pending' },
-                                    { value: 'cancelled', label: 'Stopped' },
-                                ]}
-                            />
-                        </div>
-
-                        <button
-                            onClick={() => setShowFilters(!showFilters)}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all ${
-                                (urgencyFilter || selectedEvent || channelFilter) || showFilters
-                                    ? 'bg-blue-50 border-blue-200 text-blue-700'
-                                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:bg-slate-800/50'
-                            }`}
-                        >
-                            <Filter size={16} />
-                            <span className="hidden sm:inline">More Filters</span>
-                            {(urgencyFilter || selectedEvent || channelFilter) && (
-                                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-[10px]">
-                                    {(urgencyFilter ? 1 : 0) + (selectedEvent ? 1 : 0) + (channelFilter ? 1 : 0)}
-                                </span>
-                            )}
-                        </button>
-
-                        {showFilters && (
-                            <div className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-200 dark:border-slate-700 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Advanced Filters</h3>
-                                    {(urgencyFilter || selectedEvent || channelFilter) && (
-                                        <button 
-                                            onClick={() => {
-                                                setUrgencyFilter('');
-                                                setSelectedEvent('');
-                                                setChannelFilter('');
-                                            }}
-                                            className="text-xs font-bold text-blue-600 hover:text-blue-700"
-                                        >
-                                            Clear
-                                        </button>
-                                    )}
-                                </div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Urgency</label>
-                                        <Select
-                                            value={urgencyFilter}
-                                            onChange={e => setUrgencyFilter(e.target.value)}
-                                            options={[
-                                                { value: '', label: 'All Levels' },
-                                                { value: 'critical', label: 'Critical' },
-                                                { value: 'high', label: 'High' },
-                                                { value: 'medium', label: 'Medium' },
-                                                { value: 'low', label: 'Low' },
-                                            ]}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Event</label>
-                                        <Select
-                                            value={selectedEvent}
-                                            onChange={e => setSelectedEvent(e.target.value)}
-                                            options={[
-                                                { value: '', label: 'All Events' },
-                                                ...events.map(e => ({
-                                                    value: e.event_id,
-                                                    label: `${e.name}${e.ended_at ? ' (Ended)' : ''}`
-                                                }))
-                                            ]}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Channel</label>
-                                        <Select
-                                            value={channelFilter}
-                                            onChange={e => setChannelFilter(e.target.value)}
-                                            options={[
-                                                { value: '', label: 'All Channels' },
-                                                { value: 'sms', label: 'SMS' },
-                                                { value: 'push', label: 'Push' },
-                                                { value: 'both', label: 'Both' },
-                                            ]}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
+            <TableLayout
+                title="Evacuation Alerts"
+                badgeText={`${pagination.total || alerts.length} Dispatches`}
+                subtitle="Broadcast emergency warnings, SMS notifications, and disaster alerts"
+                onExport={() => {
+                  const csvHeader = "Notification ID,Message,Urgency,Recipients,Status,Timestamp\n";
+                  const csvRows = filteredAlerts
+                    .map((a) => `${a.notif_id},"${a.message || ''}",${a.urgency_level?.urgency_label || ''},${a.recipients_count || 0},${a.status || ''},"${a.created_at || ''}"`)
+                    .join("\n");
+                  const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
+                  const link = document.createElement("a");
+                  link.href = URL.createObjectURL(blob);
+                  link.setAttribute("download", "evacuation_alerts_report.csv");
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                onAdd={canCreate ? () => setCreateModal(true) : undefined}
+                addLabel="Broadcast Alert"
+                pagination={
+                    <Pagination
+                        currentPage={pagination.current_page || 1}
+                        totalPages={pagination.last_page || 1}
+                        totalEntries={pagination.total || alerts.length}
+                        perPage={pagination.per_page || 10}
+                        onPageChange={(page) => fetchAlerts(page)}
+                    />
+                }
+            >
                 <Table>
-                    <TableHeader className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
-                        <tr className="border-none">
-                            {['Broadcast Message', 'Event', 'Urgency', 'Target', 'Total Targets', 'Delivery Status', 'Timestamp', 'Command'].map(h => (
-                                <TableHead key={h} className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                    {h}
-                                </TableHead>
-                            ))}
+                    <TableHeader>
+                        <tr className="border-b border-slate-100 dark:border-slate-800">
+                            <TableHead
+                              filterable
+                              filterValue={searchTerm}
+                              onFilterChange={(v) => setSearchTerm(v)}
+                            >
+                              Broadcast Message
+                            </TableHead>
+                            <TableHead
+                              filterable
+                              filterValue={selectedEvent}
+                              onFilterChange={(v) => setSelectedEvent(v)}
+                              filterOptions={events.map(e => ({ value: e.event_id, label: e.name }))}
+                            >
+                              Event
+                            </TableHead>
+                            <TableHead
+                              filterable
+                              filterValue={urgencyFilter}
+                              onFilterChange={(v) => setUrgencyFilter(v)}
+                              filterOptions={[
+                                { value: 'critical', label: 'Critical' },
+                                { value: 'high', label: 'High' },
+                                { value: 'medium', label: 'Medium' },
+                                { value: 'low', label: 'Low' },
+                              ]}
+                            >
+                              Urgency
+                            </TableHead>
+                            <TableHead>Target</TableHead>
+                            <TableHead className="text-center">Recipients</TableHead>
+                            <TableHead
+                              filterable
+                              filterValue={statusFilter}
+                              onFilterChange={(v) => setStatusFilter(v)}
+                              filterOptions={[
+                                { value: 'sent', label: 'Sent' },
+                                { value: 'failed', label: 'Failed' },
+                                { value: 'scheduled', label: 'Scheduled' },
+                                { value: 'pending', label: 'Pending' },
+                                { value: 'cancelled', label: 'Stopped' },
+                              ]}
+                            >
+                              Delivery Status
+                            </TableHead>
+                            <TableHead>Timestamp</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </tr>
                     </TableHeader>
                         <tbody className="divide-y divide-slate-100">
@@ -306,9 +268,12 @@ export default function EvacuationAlerts() {
                                     </TableCell>
                                     <TableCell>
                                         {alert.event ? (
-                                            <span className="px-2.5 py-1 text-[8px] font-black uppercase tracking-widest rounded-full border bg-sky-500/10 border-sky-500/25 text-sky-600">
+                                            <a
+                                                href="/events"
+                                                className="px-2.5 py-1 text-[8px] font-black uppercase tracking-widest rounded-full border bg-sky-500/10 border-sky-500/25 text-sky-600 hover:underline inline-block"
+                                            >
                                                 {alert.event.name}
-                                            </span>
+                                            </a>
                                         ) : (
                                             <span className="text-[9px] text-slate-400 font-bold">—</span>
                                         )}
@@ -319,16 +284,23 @@ export default function EvacuationAlerts() {
                                         </span>
                                     </TableCell>
                                     <TableCell>
-                                        <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
-                                            {alert.center?.name || alert.evacuation_center?.name
-                                                ? (alert.center?.name || alert.evacuation_center?.name)
-                                                : alert.target_filter === 'evacuated'
+                                        {(alert.center?.evacuation_center_id || alert.evacuation_center_id) ? (
+                                            <a
+                                                href={`/evacuation-centers/${alert.center?.evacuation_center_id || alert.evacuation_center_id}`}
+                                                className="text-xs font-bold text-blue-600 hover:underline hover:text-blue-700"
+                                            >
+                                                {alert.center?.name || alert.evacuation_center?.name || 'Evacuation Center'}
+                                            </a>
+                                        ) : (
+                                            <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                                                {alert.target_filter === 'evacuated'
                                                     ? 'Evacuated Households'
                                                     : alert.target_filter === 'not_evacuated'
                                                         ? 'Non-Evacuated'
                                                         : 'Public Broadcast'
-                                            }
-                                        </span>
+                                                }
+                                            </span>
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-1.5">
@@ -366,6 +338,12 @@ export default function EvacuationAlerts() {
                                                     Failed
                                                 </span>
                                             )}
+                                            {alert.status === 'completed' && (
+                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-sky-600">
+                                                    <CheckCircle2 size={14} />
+                                                    Completed
+                                                </span>
+                                            )}
                                             {alert.status === 'cancelled' && (
                                                 <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
                                                     <XCircle size={14} />
@@ -374,11 +352,11 @@ export default function EvacuationAlerts() {
                                             )}
                                             {alert.is_recurring && (
                                                 <p className={`text-[8px] font-extrabold mt-1.5 flex items-center gap-1 ${
-                                                    alert.status === 'cancelled' || alert.status === 'failed'
+                                                    alert.status === 'cancelled' || alert.status === 'failed' || alert.status === 'completed'
                                                         ? 'text-slate-400'
                                                         : 'text-blue-600'
                                                 }`}>
-                                                    {alert.status !== 'cancelled' && alert.status !== 'failed' ? (
+                                                    {alert.status === 'scheduled' ? (
                                                         <RefreshCw size={8} className="animate-spin duration-1000" />
                                                     ) : (
                                                         <RefreshCw size={8} />
@@ -398,59 +376,22 @@ export default function EvacuationAlerts() {
                                             ? new Date(alert.created_at).toLocaleString()
                                             : '—'}
                                     </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                                            <button
-                                                onClick={() => setDetailId(alert.notif_id)}
-                                                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all  hover:shadow"
-                                                title="View Details & Logs"
-                                            >
-                                                <Eye size={14} />
-                                            </button>
-                                            {alert.status === 'scheduled' && canCreate && (
-                                                <button
-                                                    onClick={() => handleCancel(alert.notif_id)}
-                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all  hover:shadow"
-                                                    title="Cancel Dispatch"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            )}
-                                        </div>
-                                        <div className="group-hover:hidden text-slate-300">
-                                            <MoreHorizontal size={14} className="ml-auto" />
-                                        </div>
+                                    <TableCell className="text-right">
+                                        <RowMenu
+                                            onView={() => setDetailId(alert.notif_id)}
+                                            actions={
+                                                alert.is_recurring && alert.status === 'scheduled' && canCreate
+                                                    ? [{ label: "Stop Recurring Broadcast", danger: true, onClick: () => handleCancel(alert.notif_id) }]
+                                                    : []
+                                            }
+                                            onDelete={canCreate ? () => handleCancel(alert.notif_id) : undefined}
+                                        />
                                     </TableCell>
                                 </TableRow>
                             ))}
                         </tbody>
                     </Table>
-
-                {/* Pagination */}
-                <div className="px-6 py-3.5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                        Page {pagination.current_page || 1} of {pagination.last_page || 1}
-                        {' · '}
-                        {pagination.total || 0} total records
-                    </p>
-                    <div className="flex gap-2">
-                        <button
-                            disabled={!pagination.prev_page_url}
-                            onClick={() => fetchAlerts(pagination.current_page - 1)}
-                            className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg disabled:opacity-30 hover:bg-slate-50 dark:bg-slate-800/50 transition-all  active:scale-95"
-                        >
-                            <ChevronLeft size={14} />
-                        </button>
-                        <button
-                            disabled={!pagination.next_page_url}
-                            onClick={() => fetchAlerts(pagination.current_page + 1)}
-                            className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg disabled:opacity-30 hover:bg-slate-50 dark:bg-slate-800/50 transition-all  active:scale-95"
-                        >
-                            <ChevronRight size={14} />
-                        </button>
-                    </div>
-                </div>
-            </div>
+                </TableLayout>
 
             {/* Modals */}
             {createModal && (

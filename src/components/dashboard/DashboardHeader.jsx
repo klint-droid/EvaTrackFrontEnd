@@ -1,5 +1,21 @@
 import React from "react";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Radio, RefreshCwIcon } from "lucide-react";
+
+function RadarGraphic() {
+    return (
+        <svg viewBox="0 0 200 200" className="w-36 h-36 sm:w-44 sm:h-44 lg:w-48 lg:h-48 opacity-90">
+            <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" />
+            <circle cx="100" cy="100" r="65" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1.5" />
+            <circle cx="100" cy="100" r="40" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="1.5" />
+            <line x1="100" y1="10" x2="100" y2="190" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+            <line x1="10" y1="100" x2="190" y2="100" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+            <circle cx="132" cy="70" r="5" fill="#fbbf24" className="animate-ping opacity-75" />
+            <circle cx="132" cy="70" r="4" fill="#fbbf24" />
+            <circle cx="70" cy="130" r="3.5" fill="#fff" opacity="0.8" />
+            <circle cx="100" cy="100" r="3" fill="#fff" />
+        </svg>
+    );
+}
 
 export default function DashboardHeader({
     isPersonnel,
@@ -8,65 +24,95 @@ export default function DashboardHeader({
     user,
     selectedEventId,
     setSelectedEventId,
-    activeEvents,
+    activeEvents = [],
+    activeEvent = null,
+    recentAlerts = [],
     loadDashboard,
     lastUpdatedTime
 }) {
+    const todayFormatted = new Date().toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+    });
+
+    // 🔹 Dynamically resolve advisory label from backend data
+    const selectedEvt = activeEvents.find(e => String(e.event_id) === String(selectedEventId));
+    const currentEvent = (selectedEventId !== "all" && selectedEvt) 
+        ? selectedEvt 
+        : activeEvent || activeEvents.find(e => !e.ended_at) || activeEvents[0];
+
+    const advisoryLabel = currentEvent
+        ? `${currentEvent.primary_type?.type_name || 'Active Event'}: ${currentEvent.name}`
+        : recentAlerts && recentAlerts.length > 0
+            ? `Advisory: ${recentAlerts[0].title || recentAlerts[0].subject || recentAlerts[0].message || 'Emergency Update'}`
+            : "Status: No Active Disaster Advisories";
+
     return (
-        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 rounded-2xl sm:rounded-[2rem] p-5 sm:p-8 text-white relative overflow-hidden shadow-sm dark:shadow-none">
-            <div className="absolute right-0 bottom-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute right-12 top-4 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
-            
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-indigo-300">
-                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-                        {isPersonnel && assignedCenter ? `${assignedCenter.name} — Center Dashboard` : 'Operations Dashboard'}
-                    </div>
-                    <h1 className="text-xl sm:text-3xl font-black tracking-tight flex flex-wrap items-center gap-2">
-                        Welcome back, {loading ? <span className="inline-block w-40 h-8 bg-white dark:bg-slate-900/20 rounded-xl animate-pulse align-middle" /> : (user?.name || "Operator")}!
-                    </h1>
-                    <p className="text-[10px] sm:text-xs text-slate-300 max-w-xl font-medium leading-relaxed hidden sm:block">
-                        {isPersonnel && assignedCenter
-                            ? `Viewing real-time operations for ${assignedCenter.name}. Monitor capacity, track pending logistics, and manage evacuees for your assigned center.`
-                            : 'Here is your situational overview today. Easily monitor shelter capacity ratios, track pending relief dispatches, register evacuees, and broadcast warning logs.'
-                        }
-                    </p>
+        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 p-6 sm:p-8 flex items-center justify-between shadow-sm text-white">
+            {/* Background Accent Blur */}
+            <div className="absolute right-0 bottom-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 space-y-2 max-w-xl">
+                <div className="text-blue-200 text-xs sm:text-sm font-medium flex items-center gap-2">
+                    <span>{todayFormatted}</span>
+                    <span className="text-blue-400">•</span>
+                    <span className="text-blue-300 font-semibold uppercase text-[11px] tracking-wider">
+                        {isPersonnel && assignedCenter ? assignedCenter.name : "Command Overview"}
+                    </span>
                 </div>
 
-                <div className="flex items-center gap-3 self-start md:self-auto">
-                    {/* Active Event Filter Dropdown */}
-                    <select
-                        value={selectedEventId}
-                        onChange={(e) => setSelectedEventId(e.target.value)}
-                        className="px-4 py-2.5 bg-white dark:bg-slate-900/10 border border-white/10 hover:bg-white dark:bg-slate-900/15 transition-all text-white text-xs font-bold rounded-xl shadow-sm dark:shadow-none focus:outline-none cursor-pointer"
-                    >
-                        <option value="all" className="bg-slate-900 text-white">All Active Events</option>
-                        {activeEvents.filter(evt => !evt.ended_at).map(evt => (
-                            <option key={evt.event_id} value={evt.event_id} className="bg-slate-900 text-white">
-                                {evt.name}
-                            </option>
-                        ))}
-                    </select>
+                <h1 className="text-xl sm:text-3xl font-semibold text-white tracking-tight flex items-center gap-2">
+                    Welcome back, {loading ? <span className="inline-block w-36 h-7 bg-white/20 rounded-md animate-pulse" /> : (user?.name || "Operator")}
+                </h1>
 
-                    <button 
+                <p className="text-blue-100 text-xs sm:text-sm leading-relaxed max-w-md">
+                    {isPersonnel && assignedCenter
+                        ? `Monitoring real-time operational status for ${assignedCenter.name}.`
+                        : "Real-time monitoring across registered evacuation centers, emergency broadcasts, and field resources."
+                    }
+                </p>
+
+                {/* Event Selector & Advisory Pill */}
+                <div className="pt-2 flex flex-wrap items-center gap-3">
+                    <button className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white text-xs sm:text-sm font-medium rounded-full px-4 py-1.5 transition-colors">
+                        <Radio className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                        <span>{advisoryLabel}</span>
+                    </button>
+
+                    {/* Active Event Filter Selector */}
+                    {activeEvents.length > 0 && (
+                        <select
+                            value={selectedEventId}
+                            onChange={(e) => setSelectedEventId(e.target.value)}
+                            className="px-3 py-1.5 bg-slate-900/60 border border-white/20 text-white text-xs font-semibold rounded-full hover:bg-slate-900/80 transition-all focus:outline-none cursor-pointer"
+                        >
+                            <option value="all" className="bg-slate-900 text-white">All Active Events</option>
+                            {activeEvents.filter(evt => !evt.ended_at).map(evt => (
+                                <option key={evt.event_id} value={evt.event_id} className="bg-slate-900 text-white">
+                                    {evt.name}
+                                </option>
+                            ))}
+                        </select>
+                    )}
+
+                    {/* Manual Refresh Button */}
+                    <button
                         onClick={() => loadDashboard(true)}
                         disabled={loading}
-                        className="p-3 bg-white dark:bg-slate-900/10 border border-white/10 hover:bg-white dark:bg-slate-900/20 active:scale-95 transition-all text-white rounded-xl shadow-sm dark:shadow-none flex items-center justify-center disabled:opacity-50"
-                        title="Refresh Dashboard Data"
+                        className="p-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-full transition-all disabled:opacity-50"
+                        title="Refresh Dashboard"
                     >
-                        <RefreshCw size={15} className={`${loading ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
                     </button>
-                    
-                    <div className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900/10 backdrop-blur-md border border-white/20 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.1)] text-xs font-bold text-white transition-all hover:bg-white dark:bg-slate-900/20">
-                        <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
-                        </span>
-                        <span>Last Updated: {loading ? "..." : (lastUpdatedTime || "Just now")}</span>
-                    </div>
                 </div>
+            </div>
+
+            {/* Radar Graphic Right Decoration */}
+            <div className="hidden sm:block flex-shrink-0 relative z-10 pl-4">
+                <RadarGraphic />
             </div>
         </div>
     );
 }
+

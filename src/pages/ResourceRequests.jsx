@@ -29,6 +29,7 @@ export default function ResourceRequests() {
     canUpdateStatus, canCreate,
     displayedRequests,
     pendingCount, acknowledgedCount, deliveredCount,
+    criticalCount, highCount, mediumCount, lowCount,
     openModal, handleSubmit, handleStatusChange, handleDelete, fetchRequests,
     viewingRequest, setViewingRequest
   } = useResourceRequests();
@@ -80,6 +81,10 @@ export default function ResourceRequests() {
       approvedCount={approvedCount}
       rejectedCount={rejectedCount}
       deliveredCount={deliveredCount}
+      criticalCount={criticalCount}
+      highCount={highCount}
+      mediumCount={mediumCount}
+      lowCount={lowCount}
       loading={loading}
       requests={requests}
     />
@@ -117,8 +122,24 @@ export default function ResourceRequests() {
 
       <TableLayout
         title="Resource Requests"
+        badgeText={`${totalEntries} Requests`}
+        subtitle="Track incoming supply and personnel fulfillment requests"
+        onExport={() => {
+          const csvHeader = "Request ID,Resource,Type,Quantity,Urgency,Status,Center\n";
+          const csvRows = displayedRequests
+            .map((r) => `${r.request_id},"${r.resource_type || ''}",${r.request_type || ''},${r.quantity || 0},${r.urgency_level?.urgency_label || ''},${r.status?.status_label || ''},"${r.center?.name || ''}"`)
+            .join("\n");
+          const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.setAttribute("download", "resource_requests.csv");
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }}
+        onAdd={canCreate ? openModal : undefined}
+        addLabel="New Request"
         stats={stats}
-        tabs={tabs}
         pagination={
           <Pagination
             currentPage={currentPage}

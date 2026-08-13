@@ -17,6 +17,6 @@ export const updateUnit = async (
     unitId: number | string, 
     data: UpdateUnitPayload
 ): Promise<UpdateUnitResponse> => {
-    const response = await API.put<UpdateUnitResponse>(`/api/centers/${centerId}/units/${unitId}`, data);
+    const response = await API.patch<UpdateUnitResponse>(`/api/centers/${centerId}/units/${unitId}`, data);
     return response.data;
 };

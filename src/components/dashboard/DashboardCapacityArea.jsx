@@ -1,8 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { TrendingUp, MapPin, DoorOpen, ArrowRight } from "lucide-react";
+import { TrendingUp, ChevronRight } from "lucide-react";
 import CapacityChart from "./CapacityChart";
-import { Table, TableHeader, TableRow, TableHead, TableCell } from "../../ui/Table";
 
 const MOCK_BARS = [
     { height1: "65%", height2: "25%" },
@@ -13,6 +12,12 @@ const MOCK_BARS = [
     { height1: "50%", height2: "30%" }
 ];
 
+const statusDot = {
+    CRITICAL: "bg-rose-500",
+    WARNING: "bg-amber-500",
+    CAPABLE: "bg-emerald-500",
+};
+
 export default function DashboardCapacityArea({
     isPersonnel,
     assignedCenter,
@@ -22,18 +27,18 @@ export default function DashboardCapacityArea({
     return (
         <div className="lg:col-span-2 space-y-8">
             {/* Capacity Utilization Chart */}
-            <div className="bg-white dark:bg-slate-900/80 backdrop-blur-xl p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-slate-200 dark:border-slate-700/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-shadow duration-300">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-3">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300">
-                            <TrendingUp size={18} />
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 sm:p-6 rounded-xl shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-md text-slate-600 dark:text-slate-300">
+                            <TrendingUp className="w-4 h-4" />
                         </div>
                         <div>
-                            <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 tracking-tight">{isPersonnel ? 'Center Capacity' : 'Capacity Utilization'}</h3>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{isPersonnel && assignedCenter ? `${assignedCenter.name} occupancy` : 'Active shelter occupancy ratios'}</p>
+                            <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100">{isPersonnel ? 'Center Capacity' : 'Capacity Utilization'}</h3>
+                            <p className="text-xs text-slate-400 font-medium">{isPersonnel && assignedCenter ? `${assignedCenter.name} occupancy` : 'Active shelter occupancy ratios'}</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4 text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-4 text-xs font-medium text-slate-500 dark:text-slate-400">
                         <div className="flex items-center gap-1.5">
                             <span className="w-2.5 h-2.5 rounded bg-[#4472C4]" />
                             <span>Max Capacity</span>
@@ -51,15 +56,15 @@ export default function DashboardCapacityArea({
                             <div key={idx} className="w-14 flex flex-col items-center gap-3">
                                 <div className="w-full flex items-end gap-1.5 h-44">
                                     <div className="w-1/2 bg-slate-100 dark:bg-slate-800 rounded-t-md" style={{ height: bar.height1 }} />
-                                    <div className="w-1/2 bg-slate-200 rounded-t-md" style={{ height: bar.height2 }} />
+                                    <div className="w-1/2 bg-slate-200 dark:bg-slate-700 rounded-t-md" style={{ height: bar.height2 }} />
                                 </div>
                                 <div className="w-10 h-3 bg-slate-100 dark:bg-slate-800 rounded-sm" />
                             </div>
                         ))}
                     </div>
                 ) : chartData.length === 0 ? (
-                    <div className="h-[280px] flex items-center justify-center border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800/50/50">
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">No center capacity telemetry registered.</p>
+                    <div className="h-[280px] flex items-center justify-center border border-dashed border-slate-200 dark:border-slate-800 rounded-lg bg-slate-50/50 dark:bg-slate-800/20">
+                        <p className="text-xs text-slate-400 font-medium">No center capacity telemetry registered.</p>
                     </div>
                 ) : (
                     <div className="h-[220px] sm:h-[280px] w-full">
@@ -68,112 +73,63 @@ export default function DashboardCapacityArea({
                 )}
             </div>
 
-            {/* Shelters Breakdown list table */}
-            <div className="bg-white dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-700/60 rounded-2xl sm:rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
-                <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 dark:border-slate-800/50 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                            <MapPin size={18} />
-                        </div>
-                        <div>
-                            <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 tracking-tight">{isPersonnel ? 'Your Center Status' : 'Center Breakdown'}</h3>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">{isPersonnel && assignedCenter ? `${assignedCenter.name} deployment status` : 'Current deployment status by location'}</p>
-                        </div>
-                    </div>
+            {/* Shelter Status List */}
+            <div>
+                <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                        {isPersonnel ? 'Your Center Status' : 'Shelter status'}
+                    </h2>
                     {!isPersonnel && (
-                        <Link to="/evacuation-centers" className="text-[10px] font-black text-indigo-600 hover:text-indigo-700 tracking-widest uppercase flex items-center gap-1">
-                            View Centers
-                            <ArrowRight size={12} />
+                        <Link to="/evacuation-centers" className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 flex items-center gap-1 font-medium">
+                            View all centers <ChevronRight className="w-3.5 h-3.5" />
                         </Link>
                     )}
                 </div>
 
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="bg-slate-50 dark:bg-slate-800/50/50">
-                                <TableHead className="px-6 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Center Name</TableHead>
-                                <TableHead className="px-6 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Occupancy Load</TableHead>
-                                <TableHead className="px-6 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Households</TableHead>
-                                <TableHead className="px-6 py-3.5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Operational Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <tbody className="divide-y divide-slate-50">
-                            {loading ? (
-                                [1, 2, 3].map((row) => (
-                                    <TableRow key={row} className="animate-pulse">
-                                        <TableCell className="px-6 py-4.5">
-                                            <div className="w-36 h-3.5 bg-slate-200 rounded-md" />
-                                            <div className="w-24 h-2 bg-slate-100 dark:bg-slate-800 rounded-sm mt-1.5" />
-                                        </TableCell>
-                                        <TableCell className="px-6 py-4.5">
-                                            <div className="w-24 h-4 bg-slate-100 dark:bg-slate-800 rounded-md mx-auto" />
-                                        </TableCell>
-                                        <TableCell className="px-6 py-4.5 text-center">
-                                            <div className="w-12 h-4 bg-slate-100 dark:bg-slate-800 rounded-md mx-auto" />
-                                        </TableCell>
-                                        <TableCell className="px-6 py-4.5 text-right">
-                                            <div className="w-16 h-5 bg-slate-100 dark:bg-slate-800 rounded-full ml-auto" />
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            ) : chartData.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan="4" className="py-12 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">
-                                        No center deployment records registered.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                chartData.map((c, index) => {
-                                    const percent = c.max ? (c.current / c.max) * 100 : 0;
-                                    const isCritical = percent >= 90;
-                                    const isWarning = percent >= 60;
+                <div className="border border-slate-200 dark:border-slate-800 rounded-lg divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+                    {loading ? (
+                        [1, 2, 3, 4].map((row) => (
+                            <div key={row} className="flex items-center gap-4 px-4 py-3.5 animate-pulse">
+                                <div className="w-2 h-2 rounded-full bg-slate-200 dark:bg-slate-700" />
+                                <div className="flex-1 space-y-1">
+                                    <div className="w-36 h-3 bg-slate-200 dark:bg-slate-700 rounded" />
+                                    <div className="w-24 h-2 bg-slate-100 dark:bg-slate-800 rounded" />
+                                </div>
+                                <div className="w-32 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full" />
+                            </div>
+                        ))
+                    ) : chartData.length === 0 ? (
+                        <div className="py-8 text-center text-slate-400 text-xs font-medium">
+                            No center deployment records registered.
+                        </div>
+                    ) : (
+                        chartData.map((c, index) => {
+                            const pct = c.max ? Math.round((c.current / c.max) * 100) : 0;
+                            const status = pct >= 90 ? "CRITICAL" : pct >= 60 ? "WARNING" : "CAPABLE";
 
-                                    return (
-                                        <TableRow key={index} className="hover:bg-slate-50 dark:bg-slate-800/50/40 transition-colors">
-                                            <TableCell className="px-6 py-4.5">
-                                                <span className="text-xs font-bold text-slate-800 dark:text-slate-100 block truncate max-w-[200px]">{c.name}</span>
-                                                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5">Limit: {c.max} Slots</span>
-                                            </TableCell>
-                                            <TableCell className="px-6 py-4.5">
-                                                <div className="flex flex-col items-center gap-1.5 max-w-[140px] mx-auto">
-                                                    <div className="flex justify-between w-full text-[9px] font-mono font-bold text-slate-400">
-                                                        <span>{c.current} occupied</span>
-                                                        <span>{Math.round(percent)}%</span>
-                                                    </div>
-                                                    <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                                        <div 
-                                                            className={`h-full rounded-full transition-all duration-1000 ${
-                                                                isCritical ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-emerald-500'
-                                                            }`}
-                                                            style={{ width: `${percent}%` }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="px-6 py-4.5 text-center">
-                                                <div className="flex items-center justify-center gap-1.5">
-                                                    <DoorOpen size={13} className="text-purple-400" />
-                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{c.households}</span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="px-6 py-4.5 text-right">
-                                                <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                                                    isCritical ? 'bg-red-50 text-red-600 border-red-100' : 
-                                                    isWarning ? 'bg-amber-50 text-amber-600 border-amber-100' : 
-                                                    'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                                }`}>
-                                                    {isCritical ? 'CRITICAL' : isWarning ? 'WARNING' : 'CAPABLE'}
-                                                </span>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })
-                            )}
-                        </tbody>
-                    </Table>
+                            return (
+                                <div key={index} className="flex items-center gap-4 px-4 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot[status]}`} />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{c.name}</div>
+                                        <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">{c.current} / {c.max} evacuees</div>
+                                    </div>
+                                    <div className="w-32 hidden sm:block">
+                                        <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                            <div 
+                                                className={`h-full ${statusDot[status]} transition-all duration-700`}
+                                                style={{ width: `${Math.min(pct, 100)}%` }} 
+                                            />
+                                        </div>
+                                    </div>
+                                    <span className="text-xs font-mono text-slate-500 dark:text-slate-400 w-10 text-right">{pct}%</span>
+                                </div>
+                            );
+                        })
+                    )}
                 </div>
             </div>
         </div>
     );
 }
+

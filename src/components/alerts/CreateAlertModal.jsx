@@ -194,13 +194,13 @@ export default function CreateAlertModal({ onClose, onSent }) {
                             <textarea
                                 rows={5}
                                 value={form.message}
-                                onChange={e => setForm({ ...form, message: e.target.value.slice(0, 300) })}
+                                onChange={e => setForm({ ...form, message: e.target.value.slice(0, 500) })}
                                 placeholder="Enter official directive or situational update..."
                                 className="w-full p-4 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all resize-none text-slate-700 dark:text-slate-200 font-medium placeholder-slate-400"
                             />
                             <div className="flex justify-between items-center text-xs text-slate-500 dark:text-slate-400 font-medium px-1">
-                                <span>Supports clear, concise formatting.</span>
-                                <span className="font-mono">{form.message.length} / 300</span>
+                                <span>Structured Event, Center & URL link are automatically attached.</span>
+                                <span className="font-mono">{form.message.length} / 500</span>
                             </div>
                         </div>
 
@@ -375,8 +375,46 @@ export default function CreateAlertModal({ onClose, onSent }) {
                                     <p className="text-xs text-slate-700 dark:text-slate-200 font-medium leading-relaxed break-words whitespace-pre-wrap">
                                         {form.message || <span className="text-slate-400">Enter official directive or situational update...</span>}
                                     </p>
-                                    
-                                    <p className="text-[9px] font-bold text-slate-400 text-right mt-3">Just now</p>
+                                     
+                                    {/* Calculated structured details preview */}
+                                    {(() => {
+                                        const selectedTarget = selectedTargets[0];
+                                        const targetCenter = selectedTarget?.type === 'center' ? centers.find(c => String(c.evacuation_center_id) === String(selectedTarget.id)) : null;
+                                        const targetEvent = selectedTarget?.type === 'event' ? events.find(e => String(e.event_id) === String(selectedTarget.id)) : (events[0] || null);
+                                        
+                                        const computedUrl = targetCenter 
+                                            ? `http://100.73.14.100:5173/evacuation-centers/${targetCenter.evacuation_center_id}` 
+                                            : `http://100.73.14.100:5173/public`;
+
+                                        const nowStr = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+
+                                        return (
+                                            <div className="mt-1 pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-1 text-[10px]">
+                                                <span className="font-extrabold text-slate-700 dark:text-slate-200">
+                                                    As of {nowStr} Announcement
+                                                </span>
+                                                <span className="font-bold text-slate-500">
+                                                    Event: <span className="text-slate-800 dark:text-slate-100 font-extrabold">{targetEvent?.name || 'General Emergency Alert'}</span>
+                                                </span>
+                                                <span className="font-bold text-slate-500">
+                                                    {targetCenter ? 'Center: ' : 'Centers: '}
+                                                    <span className="text-slate-800 dark:text-slate-100 font-extrabold">
+                                                        {targetCenter ? targetCenter.name : 'All Evacuation Centers'}
+                                                    </span>
+                                                </span>
+                                                <a 
+                                                    href={computedUrl}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="font-bold text-blue-600 underline truncate block mt-0.5 hover:text-blue-700"
+                                                >
+                                                    {computedUrl}
+                                                </a>
+                                            </div>
+                                        );
+                                    })()}
+
+                                    <p className="text-[9px] font-bold text-slate-400 text-right mt-2">Just now</p>
                                 </div>
 
                             </div>

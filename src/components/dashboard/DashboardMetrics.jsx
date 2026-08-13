@@ -18,8 +18,7 @@ export default function DashboardMetrics({
             label: isPersonnel ? "Available Slots" : "Active Shelters", 
             val: isPersonnel ? displayAvailableSlots : displayTotalCenters, 
             icon: isPersonnel ? DoorOpen : Home, 
-            border: "border-l-4 border-indigo-500",
-            color: "text-indigo-600",
+            color: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border-blue-100 dark:border-blue-900/50",
             sub: isPersonnel && assignedCenter 
                 ? `${displayAvailableSlots.toLocaleString()} slots available` 
                 : "Fully Operational"
@@ -28,48 +27,51 @@ export default function DashboardMetrics({
             label: isPersonnel ? "Center Occupancy" : "Total Occupancy", 
             val: displayTotalOccupied, 
             icon: Users, 
-            border: "border-l-4 border-violet-500",
-            color: "text-violet-600",
+            color: "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 border-purple-100 dark:border-purple-900/50",
             sub: displayTotalCapacity > 0 ? `${displayTotalOccupied.toLocaleString()} / ${displayTotalCapacity.toLocaleString()} registered (${occupancyRate}%)` : "No slots registered"
         },
         { 
             label: isPersonnel ? "Center Concerns" : "Active Concerns", 
             val: displayOpenIssues, 
             icon: AlertTriangle, 
-            border: displayOpenIssues > 0 ? "border-l-4 border-rose-500 animate-pulse" : "border-l-4 border-emerald-500",
-            color: displayOpenIssues > 0 ? "text-rose-600" : "text-emerald-600",
+            color: displayOpenIssues > 0 
+                ? "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border-rose-100 dark:border-rose-900/50" 
+                : "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-100 dark:border-emerald-900/50",
             sub: displayOpenIssues > 0 ? "Field Action Required" : "All Systems Clear"
         },
         { 
             label: isPersonnel ? "Center Logistics" : "Pending Logistics", 
             val: displayPendingRequests, 
             icon: Package, 
-            border: displayPendingRequests > 0 ? "border-l-4 border-amber-500" : "border-l-4 border-emerald-500",
-            color: displayPendingRequests > 0 ? "text-amber-600" : "text-emerald-600",
+            color: displayPendingRequests > 0 
+                ? "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-100 dark:border-amber-900/50" 
+                : "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-100 dark:border-emerald-900/50",
             sub: displayPendingRequests > 0 ? `${displayPendingRequests} items awaiting dispatch` : "Fully Supplied"
         },
     ];
 
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {metrics.map((item, i) => {
                 const Icon = item.icon;
                 return (
-                    <div key={i} className={`bg-white dark:bg-slate-900/80 backdrop-blur-xl p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700/60 ${item.border} shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 group flex flex-col justify-between h-28 sm:h-32`}>
+                    <div key={i} className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between h-28 sm:h-32">
                         <div className="flex justify-between items-start">
-                            <span className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
-                            <Icon size={18} className={item.color} />
+                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{item.label}</span>
+                            <div className={`p-1.5 rounded-md border ${item.color}`}>
+                                <Icon className="w-4 h-4" />
+                            </div>
                         </div>
                         <div>
                             {loading ? (
-                                <div className="w-16 h-7 bg-slate-200/50 rounded-md animate-pulse animate-duration-1000" />
+                                <div className="w-16 h-6 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
                             ) : (
-                                <h2 className="text-lg sm:text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{item.val.toLocaleString()}</h2>
+                                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{item.val.toLocaleString()}</h2>
                             )}
                             {loading ? (
-                                <div className="w-28 h-3 bg-slate-100 dark:bg-slate-800 rounded-sm animate-pulse mt-2.5" />
+                                <div className="w-24 h-2.5 bg-slate-100 dark:bg-slate-800 rounded animate-pulse mt-2" />
                             ) : (
-                                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold mt-1 tracking-tight truncate">{item.sub}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5 truncate">{item.sub}</p>
                             )}
                         </div>
                     </div>
@@ -78,3 +80,4 @@ export default function DashboardMetrics({
         </div>
     );
 }
+

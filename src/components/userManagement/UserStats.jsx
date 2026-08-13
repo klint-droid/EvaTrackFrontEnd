@@ -3,7 +3,7 @@ import { StatCard } from "../ui/StatCard";
 
 export default function UserStats({ totalUsers, adminCount, personnelCount, assignedCount }) {
     return (
-        <>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <StatCard 
                 title="Total Users" 
                 value={totalUsers} 
@@ -24,7 +24,7 @@ export default function UserStats({ totalUsers, adminCount, personnelCount, assi
                 value={assignedCount} 
                 dotColor="#ef4444" // red-500
             />
-        </>
+        </div>
     );
 }
 

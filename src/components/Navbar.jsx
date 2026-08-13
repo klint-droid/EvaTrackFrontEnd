@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LogIn, Home, Radio } from "lucide-react";
+import { LogIn, Radio } from "lucide-react";
 import Logo from "../assets/evatrack_logo_horizontal.svg";
 
 const Navbar = () => {
@@ -7,7 +7,6 @@ const Navbar = () => {
   const currentPath = location.pathname;
 
   const navLinks = [
-    { to: "/", label: "Home", icon: Home },
     { to: "/portal", label: "Live Map", icon: Radio },
     { to: "/login", label: "Responder Login", icon: LogIn },
   ];
@@ -31,10 +30,10 @@ const Navbar = () => {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${
                     isActive
-                      ? "bg-white dark:bg-slate-900/[0.08] text-white"
-                      : "text-slate-400 hover:text-white hover:bg-white dark:bg-slate-900/[0.04]"
+                      ? "bg-white/10 text-white font-semibold border border-white/10 shadow-sm"
+                      : "text-slate-300 hover:text-white hover:bg-white/5"
                   }`}
                 >
                   <Icon size={14} strokeWidth={2} />

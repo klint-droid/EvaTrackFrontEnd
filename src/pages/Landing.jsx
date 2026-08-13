@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet"
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import API from "../api";
+import Logo from "../assets/evatrack_logo_horizontal.svg";
 import {
   AlertTriangle,
   MapPin,
@@ -158,7 +159,7 @@ const Landing = () => {
           <div className="max-w-7xl mx-auto px-5 sm:px-8 py-2.5 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 relative">
             {activeEvents.map((evt) => (
               <div key={evt.event_id} className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-white dark:bg-slate-900/20 flex items-center justify-center flex-shrink-0 animate-pulse">
+                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 animate-pulse">
                   <AlertTriangle size={12} className="text-white" />
                 </div>
                 <span className="text-[13px] font-semibold text-white/95 tracking-wide uppercase">
@@ -173,7 +174,7 @@ const Landing = () => {
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiBmaWxsPSJ0cmFuc3BhcmVudCIvPjxjaXJjbGUgY3g9IjEwIiBjeT0iMTAiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNikiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IGZpbGw9InVybCgjZykiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiLz48L3N2Zz4=')] opacity-30" />
           <div className="max-w-7xl mx-auto px-5 sm:px-8 py-2 flex items-center justify-center gap-3 relative">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-white dark:bg-slate-900/20 flex items-center justify-center flex-shrink-0">
+              <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
                 <Shield size={10} className="text-white" />
               </div>
               <span className="text-[11.5px] font-semibold text-white/90 tracking-wider uppercase">
@@ -190,27 +191,27 @@ const Landing = () => {
         <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-blue-600/[0.07] rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-indigo-500/[0.05] rounded-full blur-[100px] pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 py-16 sm:py-20 lg:py-24 relative">
-          <div className="grid lg:grid-cols-[1fr_1.15fr] gap-12 lg:gap-16 items-center">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10 sm:py-12 lg:py-14 relative">
+          <div className="grid lg:grid-cols-[1fr_1.15fr] gap-10 lg:gap-12 items-center">
 
             {/* Left: Text Content */}
-            <div className="space-y-7">
+            <div className="space-y-5">
               {/* Official badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 to-amber-600/10 border border-amber-500/20">
-                <Shield size={13} className="text-amber-400" />
-                <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-amber-300/90">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/15 to-amber-600/10 border border-amber-500/20">
+                <Shield size={12} className="text-amber-400" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-300/90">
                   Official Government System
                 </span>
               </div>
 
-              <div className="space-y-4">
-                <h1 className="text-4xl sm:text-5xl lg:text-[54px] font-extrabold leading-[1.05] tracking-tight text-white">
+              <div className="space-y-3">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight tracking-tight text-white">
                   Disaster Readiness &{" "}
                   <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                     Response Pipeline
                   </span>
                 </h1>
-                <p className="text-[15px] leading-relaxed text-slate-400 max-w-lg">
+                <p className="text-xs sm:text-sm leading-relaxed text-slate-400 max-w-lg">
                   Real-time situational awareness, resource allocation, and victim registry
                   for active crisis management zones.
                 </p>
@@ -228,7 +229,7 @@ const Landing = () => {
                 </Link>
                 <Link
                   to="/login"
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-white dark:bg-slate-900/[0.06] text-slate-300 text-sm font-semibold border border-white/[0.08] hover:bg-white dark:bg-slate-900/[0.1] hover:text-white hover:border-white/[0.15] transition-all duration-200"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-white/10 text-white text-sm font-semibold border border-white/15 hover:bg-white/15 hover:border-white/25 transition-all duration-200 shadow-sm"
                 >
                   <LogIn size={16} />
                   Responder Login
@@ -560,15 +561,9 @@ const Landing = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             {/* Left: Brand */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                  <MapPin size={14} className="text-white" strokeWidth={2.5} />
-                </div>
-                <div className="flex items-baseline">
-                  <span className="text-sm font-extrabold text-white">Eva</span>
-                  <span className="text-sm font-extrabold text-blue-400">Track</span>
-                </div>
-              </div>
+              <Link to="/" className="inline-block hover:opacity-90 transition-opacity">
+                <img src={Logo} alt="EvaTrack Logo" className="h-10 w-auto" />
+              </Link>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Philippine Disaster Management Authority
               </p>

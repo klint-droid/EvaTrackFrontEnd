@@ -1,6 +1,6 @@
-import React from 'react';
-import { Truck, Search, Filter, Package, Users, Trash2, Eye, MoreHorizontal } from 'lucide-react';
-import { Table, TableHeader, TableRow, TableHead, TableCell } from '../../ui/Table';
+import React, { useState, useMemo } from 'react';
+import { Truck, Search, Filter, Package, Users } from 'lucide-react';
+import { Table, TableHeader, TableRow, TableHead, TableCell, StatusBadge, RowMenu } from '../../ui/Table';
 import { Input } from '../../ui/Input';
 import { Select } from '../../ui/Select';
 
@@ -14,254 +14,197 @@ export default function RequestsTable({
   showFilters, setShowFilters,
   typeFilter, setTypeFilter,
   selectedEventId, setSelectedEventId,
-  activeEvents, loading, displayedRequests,
+  activeEvents = [], loading, displayedRequests = [],
   canUpdateStatus, handleStatusChange,
   getStatusClass, getUrgencyClass, formatDateTime,
   handleDelete, setViewingRequest
 }) {
+  const [colFilters, setColFilters] = useState({
+    resource: '',
+    type: '',
+    urgency: '',
+    status: '',
+    center: '',
+  });
+
+  const filteredRequests = useMemo(() => {
+    return displayedRequests.filter((req) => {
+      const resName = String(req.resource_type || '').toLowerCase();
+      const type = String(req.request_type || '').toLowerCase();
+      const urgency = String(req.urgency_level?.urgency_key || '').toLowerCase();
+      const status = String(req.status?.status_key || '').toLowerCase();
+      const center = String(req.center?.name || '').toLowerCase();
+
+      if (colFilters.resource && !resName.includes(colFilters.resource.toLowerCase())) return false;
+      if (colFilters.type && type !== colFilters.type.toLowerCase()) return false;
+      if (colFilters.urgency && urgency !== colFilters.urgency.toLowerCase()) return false;
+      if (colFilters.status && status !== colFilters.status.toLowerCase()) return false;
+      if (colFilters.center && !center.includes(colFilters.center.toLowerCase())) return false;
+
+      return true;
+    });
+  }, [displayedRequests, colFilters]);
+
   return (
     <>
-      <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 flex items-center gap-2">
-            <Truck size={17} className="text-blue-500" />
-            Resource Tracking
-          </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Monitor incoming requests and fulfillment status.
-          </p>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-2 w-full lg:w-auto">
-          <div className="w-full lg:w-64 group">
-            <Input
-              icon={Search}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') fetchRequests();
-              }}
-              placeholder="Search resources..."
-            />
-          </div>
-
-          <div className="flex gap-2 relative">
-
-            <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all ${
-                    (typeFilter || selectedEventId !== "all") || showFilters
-                        ? 'bg-blue-50 border-blue-200 text-blue-700'
-                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:bg-slate-800/50'
-                }`}
-            >
-                <Filter size={16} />
-                <span className="hidden sm:inline">More Filters</span>
-                {(typeFilter || selectedEventId !== "all") && (
-                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-[10px]">
-                        {(typeFilter ? 1 : 0) + (selectedEventId !== "all" ? 1 : 0)}
-                    </span>
-                )}
-            </button>
-
-            {showFilters && (
-                <div className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-200 dark:border-slate-700 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Advanced Filters</h3>
-                        {(typeFilter || selectedEventId !== "all") && (
-                            <button 
-                                onClick={() => {
-                                    setTypeFilter('');
-                                    setSelectedEventId('all');
-                                }}
-                                className="text-xs font-bold text-blue-600 hover:text-blue-700"
-                            >
-                                Clear
-                            </button>
-                        )}
-                    </div>
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Type</label>
-                            <Select
-                                value={typeFilter}
-                                onChange={(e) => setTypeFilter(e.target.value)}
-                                options={[
-                                    { value: '', label: 'All Types' },
-                                    { value: 'resource', label: 'Resources' },
-                                    { value: 'personnel', label: 'Personnel' },
-                                ]}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Event</label>
-                            <Select
-                                value={selectedEventId}
-                                onChange={(e) => setSelectedEventId(e.target.value)}
-                                options={[
-                                    { value: 'all', label: 'All Active Events' },
-                                    { value: 'all_history', label: 'All Events (Including Ended)' },
-                                    ...activeEvents.map(event => ({
-                                        value: event.event_id,
-                                        label: `${event.name} ${event.ended_at ? '(Ended)' : '(Active)'}`
-                                    }))
-                                ]}
-                            />
-                        </div>
-                    </div>
-                </div>
-            )}
-          </div>
-        </div>
-      </div>
 
       <Table>
-          <TableHeader>
-            <tr className="border-none">
-              {['Resource', 'Type', 'Qty', 'Urgency', 'Status', 'Center', 'Date', 'Command'].map((header, i) => (
-                <TableHead 
-                  key={header} 
-                  className={`text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ${
-                    header === 'Qty' ? 'text-center justify-center' : ''
-                  } ${
-                    header === 'Command' ? 'text-right' : ''
-                  }`}
-                >
-                  {header}
-                </TableHead>
-              ))}
-            </tr>
-          </TableHeader>
+        <TableHeader>
+          <tr className="border-b border-gray-100 dark:border-slate-800">
+            <TableHead
+              filterable
+              filterValue={colFilters.resource}
+              onFilterChange={(v) => setColFilters((prev) => ({ ...prev, resource: v }))}
+            >
+              Resource
+            </TableHead>
+            <TableHead
+              filterable
+              filterValue={colFilters.type}
+              onFilterChange={(v) => setColFilters((prev) => ({ ...prev, type: v }))}
+              filterOptions={[
+                { value: 'resource', label: 'Resource' },
+                { value: 'personnel', label: 'Personnel' },
+              ]}
+            >
+              Type
+            </TableHead>
+            <TableHead className="text-center">Qty</TableHead>
+            <TableHead
+              filterable
+              filterValue={colFilters.urgency}
+              onFilterChange={(v) => setColFilters((prev) => ({ ...prev, urgency: v }))}
+              filterOptions={[
+                { value: 'low', label: 'Low' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'high', label: 'High' },
+                { value: 'critical', label: 'Critical' },
+              ]}
+            >
+              Urgency
+            </TableHead>
+            <TableHead
+              filterable
+              filterValue={colFilters.status}
+              onFilterChange={(v) => setColFilters((prev) => ({ ...prev, status: v }))}
+              filterOptions={STATUS_OPTIONS.map((s) => ({ value: s, label: s }))}
+            >
+              Status
+            </TableHead>
+            <TableHead
+              filterable
+              filterValue={colFilters.center}
+              onFilterChange={(v) => setColFilters((prev) => ({ ...prev, center: v }))}
+            >
+              Center
+            </TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </tr>
+        </TableHeader>
 
-          <tbody>
-            {loading ? (
-              Array.from({ length: 5 }).map((_, index) => (
-                <TableRow key={index} className="animate-pulse">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex-shrink-0" />
-                      <div className="space-y-2">
-                        <div className="h-4 bg-slate-200 rounded w-28"></div>
-                        <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-16"></div>
-                      </div>
+        <tbody>
+          {loading ? (
+            Array.from({ length: 5 }).map((_, index) => (
+              <TableRow key={index} className="animate-pulse">
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-800 flex-shrink-0" />
+                    <div className="space-y-2">
+                      <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-28"></div>
+                      <div className="h-3 bg-gray-100 dark:bg-slate-800 rounded w-16"></div>
                     </div>
-                  </TableCell>
-                  <TableCell><div className="h-5 bg-slate-200 rounded-lg w-20"></div></TableCell>
-                  <TableCell className="text-center"><div className="h-4 bg-slate-200 rounded w-8 mx-auto"></div></TableCell>
-                  <TableCell><div className="h-5 bg-slate-200 rounded-lg w-16"></div></TableCell>
-                  <TableCell><div className="h-6 bg-slate-200 rounded-lg w-24"></div></TableCell>
-                  <TableCell><div className="h-4 bg-slate-200 rounded w-24"></div></TableCell>
-                  <TableCell><div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-32"></div></TableCell>
-                  <TableCell className="text-right"><div className="h-5 bg-slate-200 rounded w-16 ml-auto"></div></TableCell>
-                </TableRow>
-              ))
-            ) : displayedRequests.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan="8" className="py-14 text-center text-slate-400 font-bold">
-                  No resource requests found.
+                  </div>
+                </TableCell>
+                <TableCell><div className="h-5 bg-gray-200 dark:bg-slate-700 rounded-lg w-20"></div></TableCell>
+                <TableCell className="text-center"><div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-8 mx-auto"></div></TableCell>
+                <TableCell><div className="h-5 bg-gray-200 dark:bg-slate-700 rounded-lg w-16"></div></TableCell>
+                <TableCell><div className="h-6 bg-gray-200 dark:bg-slate-700 rounded-lg w-24"></div></TableCell>
+                <TableCell><div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-24"></div></TableCell>
+                <TableCell><div className="h-4 bg-gray-100 dark:bg-slate-800 rounded w-32"></div></TableCell>
+                <TableCell className="text-right"><div className="h-5 bg-gray-200 dark:bg-slate-700 rounded w-16 ml-auto"></div></TableCell>
+              </TableRow>
+            ))
+          ) : filteredRequests.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan="8" className="py-14 text-center text-gray-400 font-medium">
+                No resource requests found.
+              </TableCell>
+            </TableRow>
+          ) : (
+            filteredRequests.map(req => (
+              <TableRow key={req.request_id}>
+                <TableCell className="whitespace-normal min-w-[200px]">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-700 flex-shrink-0">
+                      {req.request_type === 'personnel' ? <Users size={14} /> : <Package size={14} />}
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-900 dark:text-slate-100 leading-tight">{req.resource_type}</p>
+                      <p className="text-[10px] text-gray-400 font-mono leading-none">{req.request_id}</p>
+                    </div>
+                  </div>
+                </TableCell>
+
+                <TableCell>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300">
+                    {req.request_type === 'personnel' ? <Users size={12} /> : <Package size={12} />}
+                    {req.request_type}
+                  </span>
+                </TableCell>
+
+                <TableCell className="text-center text-sm font-semibold text-gray-700 dark:text-slate-200">{req.quantity}</TableCell>
+
+                <TableCell>
+                  <StatusBadge 
+                    value={req.urgency_level?.urgency_label || '—'} 
+                    color={
+                      req.urgency_level?.urgency_key === 'critical' || req.urgency_level?.urgency_key === 'high'
+                        ? 'red'
+                        : req.urgency_level?.urgency_key === 'medium'
+                        ? 'orange'
+                        : 'green'
+                    } 
+                  />
+                </TableCell>
+
+                <TableCell>
+                  {canUpdateStatus ? (
+                    <select
+                      value={req.status?.status_key || ''}
+                      onChange={(e) => handleStatusChange(req.request_id, e.target.value)}
+                      className={`px-2.5 py-1 text-xs font-medium rounded-full border outline-none cursor-pointer ${
+                        getStatusClass(req.status?.status_key)
+                      }`}
+                    >
+                      {STATUS_OPTIONS.map(status => (
+                        <option key={status} value={status}>{status}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <StatusBadge value={req.status?.status_label || '—'} />
+                  )}
+                </TableCell>
+
+                <TableCell className="text-xs font-medium text-gray-500 dark:text-slate-400 min-w-[140px] max-w-[200px]" title={req.center?.name}>
+                  <span className="block truncate">{req.center?.name || '—'}</span>
+                </TableCell>
+
+                <TableCell className="text-xs text-gray-500 dark:text-slate-400 whitespace-nowrap">
+                  {formatDateTime(req.created_at)}
+                </TableCell>
+
+                <TableCell className="text-right">
+                  <RowMenu 
+                    onView={() => setViewingRequest(req)}
+                    onDelete={req.status?.status_key === 'pending' ? () => handleDelete(req.request_id) : undefined}
+                  />
                 </TableCell>
               </TableRow>
-            ) : (
-              displayedRequests.map(req => (
-                <TableRow key={req.request_id} className="group">
-                  <TableCell className="whitespace-normal min-w-[220px]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 group-hover:bg-white dark:bg-slate-900 transition-colors flex-shrink-0">
-                        {req.request_type === 'personnel' ? <Users size={16} /> : <Package size={16} />}
-                      </div>
-                      <div>
-                        <p className="text-sm font-black text-slate-800 dark:text-slate-100 mb-0.5 leading-tight">{req.resource_type}</p>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">{req.request_id}</p>
-                        {req.description && (
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 max-w-[250px]">{req.description}</p>
-                        )}
-                      </div>
-                    </div>
-                  </TableCell>
-
-                  <TableCell>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[9px] font-black rounded-full border bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 uppercase tracking-widest">
-                      {req.request_type === 'personnel' ? <Users size={12} /> : <Package size={12} />}
-                      {req.request_type}
-                    </span>
-                  </TableCell>
-
-                  <TableCell className="text-center text-sm font-bold text-slate-700 dark:text-slate-200">{req.quantity}</TableCell>
-
-                  <TableCell>
-                    <span className={`px-2.5 py-1 text-[9px] font-black rounded-full border uppercase tracking-widest ${
-                      getUrgencyClass(req.urgency_level?.urgency_key)
-                    }`}>
-                      {req.urgency_level?.urgency_label || '—'}
-                    </span>
-                  </TableCell>
-
-                  <TableCell>
-                    {canUpdateStatus ? (
-                      <select
-                        value={req.status?.status_key || ''}
-                        onChange={(e) => handleStatusChange(req.request_id, e.target.value)}
-                        className={`px-2.5 py-1 text-[9px] font-black rounded-full border uppercase tracking-widest outline-none ${
-                          getStatusClass(req.status?.status_key)
-                        }`}
-                      >
-                        {STATUS_OPTIONS.map(status => (
-                          <option key={status} value={status}>{status}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <span className={`px-2.5 py-1 text-[9px] font-black rounded-full border uppercase tracking-widest ${
-                        getStatusClass(req.status?.status_key)
-                      }`}>
-                        {req.status?.status_label || '—'}
-                      </span>
-                    )}
-                  </TableCell>
-
-                  <TableCell className="text-[10px] font-bold text-slate-500 dark:text-slate-400 min-w-[140px] max-w-[200px]" title={req.center?.name}>
-                    <span className="block truncate">{req.center?.name || '—'}</span>
-                  </TableCell>
-
-                  <TableCell className="text-[10px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                    {formatDateTime(req.created_at)}
-                  </TableCell>
-
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <button
-                        onClick={() => setViewingRequest(req)}
-                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
-                        title="View Details"
-                      >
-                        <Eye size={16} />
-                      </button>
-                      {req.status?.status_key === 'pending' ? (
-                        <button
-                          onClick={() => handleDelete(req.request_id)}
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
-                          title="Delete"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      ) : (
-                        <button
-                          disabled
-                          className="p-1.5 text-slate-300 dark:text-slate-800 cursor-not-allowed opacity-30"
-                          title="Only pending requests can be deleted"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      )}
-                      <button className="p-1.5 text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 rounded-lg transition-all">
-                        <MoreHorizontal size={16} />
-                      </button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </tbody>
-        </Table>
+            ))
+          )}
+        </tbody>
+      </Table>
     </>
   );
 }
