@@ -48,7 +48,7 @@ const DashboardLayout = () => {
     const location = useLocation();
     const user = useUserStore(state => state.user) || {};
     const setUser = useUserStore(state => state.setUser);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -90,7 +90,15 @@ const DashboardLayout = () => {
 
                     {/* SIDEBAR PANEL TOGGLE ICON */}
                     <button
-                        onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                        onClick={() => {
+                            if (window.innerWidth < 1024) {
+                                // Mobile: open/close the drawer
+                                setIsSidebarOpen(prev => !prev);
+                            } else {
+                                // Desktop: collapse/expand the inline sidebar
+                                setIsSidebarCollapsed(prev => !prev);
+                            }
+                        }}
                         className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors ml-1"
                         aria-label="Toggle navigation menu"
                         title="Toggle Navigation"
