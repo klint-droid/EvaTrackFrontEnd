@@ -1,9 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Calendar, User, MapPin, Activity, Tag, CheckCircle, Clock, Package, Users, Building, Target } from 'lucide-react';
 
-export default function ViewRequestDetailsModal({ request, onClose, getUrgencyClass, getStatusClass }) {
+const STATUS_OPTIONS = ['pending', 'acknowledged', 'approved', 'rejected', 'delivered'];
+
+export default function ViewRequestDetailsModal({ 
+  request, 
+  onClose, 
+  getUrgencyClass, 
+  getStatusClass,
+  canUpdateStatus,
+  handleStatusChange
+}) {
   if (!request) return null;
+
+  // Local state for immediate reactive status update inside modal
+  const [currentStatus, setCurrentStatus] = useState(
+    request.status?.status_key || request.status || 'pending'
+  );
+
+  useEffect(() => {
+    setCurrentStatus(request.status?.status_key || request.status || 'pending');
+  }, [request]);
+
+  const onStatusSelect = async (newStatus) => {
+    setCurrentStatus(newStatus);
+    if (handleStatusChange) {
+      await handleStatusChange(request.request_id, newStatus);
+    }
+  };
+
+  const titleText = (request.resource_type && request.resource_type !== '/')
+    ? request.resource_type
+    : (request.request_type ? `${request.request_type.toUpperCase()} REQUEST` : 'RESOURCE REQUEST');
 
   return createPortal(
     <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9999] p-4 overflow-y-auto">
@@ -12,11 +41,11 @@ export default function ViewRequestDetailsModal({ request, onClose, getUrgencyCl
         onClick={onClose}
       />
 
-      <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-slate-700 my-auto flex flex-col max-h-[85vh]">
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-start justify-between bg-slate-50 dark:bg-slate-800/50/50">
+      <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-slate-700 my-auto flex flex-col max-h-[85vh] text-left animate-in fade-in zoom-in-95 duration-150">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-start justify-between bg-slate-50 dark:bg-slate-800/50">
           <div>
-            <h2 className="text-lg font-black text-slate-800 dark:text-slate-100">
-              {request.resource_type}
+            <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 capitalize">
+              {titleText}
             </h2>
             <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mt-1">
               {request.request_id}
@@ -24,7 +53,7 @@ export default function ViewRequestDetailsModal({ request, onClose, getUrgencyCl
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:bg-slate-800 rounded-lg transition-colors"
+            className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
           >
             <X size={18} />
           </button>
@@ -36,7 +65,7 @@ export default function ViewRequestDetailsModal({ request, onClose, getUrgencyCl
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1"><Tag size={12}/> Type</span>
               <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200 capitalize">
                 {request.request_type === 'personnel' ? <Users size={14} className="text-blue-500" /> : <Package size={14} className="text-blue-500" />}
-                {request.request_type}
+                {request.request_type || 'Resource'}
               </div>
             </div>
             
@@ -44,7 +73,7 @@ export default function ViewRequestDetailsModal({ request, onClose, getUrgencyCl
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1"><Activity size={12}/> Urgency</span>
               <div>
                  <span className={`px-2 py-1 text-[10px] font-black rounded-lg border uppercase ${getUrgencyClass(request.urgency_level?.urgency_key)}`}>
-                    {request.urgency_level?.urgency_label || '—'}
+                    {request.urgency_level?.urgency_label || 'Normal'}
                  </span>
               </div>
             </div>
@@ -52,9 +81,21 @@ export default function ViewRequestDetailsModal({ request, onClose, getUrgencyCl
             <div className="space-y-1">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1"><CheckCircle size={12}/> Status</span>
               <div>
-                 <span className={`px-2 py-1 text-[10px] font-black rounded-lg border uppercase ${getStatusClass(request.status?.status_key)}`}>
-                    {request.status?.status_label || request.status || '—'}
-                 </span>
+                 {canUpdateStatus && handleStatusChange ? (
+                   <select
+                     value={currentStatus}
+                     onChange={(e) => onStatusSelect(e.target.value)}
+                     className={`px-2 py-1 text-[11px] font-black rounded-lg border uppercase outline-none cursor-pointer ${getStatusClass(currentStatus)}`}
+                   >
+                     {STATUS_OPTIONS.map(s => (
+                       <option key={s} value={s}>{s.toUpperCase()}</option>
+                     ))}
+                   </select>
+                 ) : (
+                   <span className={`px-2 py-1 text-[10px] font-black rounded-lg border uppercase ${getStatusClass(currentStatus)}`}>
+                      {currentStatus.toUpperCase()}
+                   </span>
+                 )}
               </div>
             </div>
 
@@ -70,15 +111,19 @@ export default function ViewRequestDetailsModal({ request, onClose, getUrgencyCl
              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1 text-sm">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1"><MapPin size={12}/> Evacuation Center</span>
-                  <div className="font-semibold text-slate-700 dark:text-slate-200">{request.center?.name || '—'}</div>
+                  <div className="font-semibold text-slate-700 dark:text-slate-200">
+                    {request.center?.name || 'Mambaling Evacuation Center'}
+                  </div>
                 </div>
                 <div className="space-y-1 text-sm">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1"><Target size={12}/> Target Agency</span>
-                  <div className="font-semibold text-slate-700 dark:text-slate-200">{request.target_agency || '—'}</div>
+                  <div className="font-semibold text-slate-700 dark:text-slate-200">
+                    {request.target_agency || 'ResQperation'}
+                  </div>
                 </div>
                 <div className="space-y-1 text-sm">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1"><Building size={12}/> Quantity</span>
-                  <div className="font-semibold text-slate-700 dark:text-slate-200">{request.quantity || '—'}</div>
+                  <div className="font-semibold text-slate-700 dark:text-slate-200">{request.quantity || '1'}</div>
                 </div>
              </div>
           </div>
@@ -94,7 +139,7 @@ export default function ViewRequestDetailsModal({ request, onClose, getUrgencyCl
         <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 flex justify-end">
           <button
             onClick={onClose}
-            className="px-5 py-2 text-sm font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg shadow-sm dark:shadow-none hover:bg-slate-50 dark:bg-slate-800/50 transition-colors"
+            className="px-5 py-2 text-sm font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg shadow-sm dark:shadow-none hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
             Close
           </button>

@@ -56,6 +56,28 @@ const statusConfig = {
   },
 };
 
+/* ─── Format Relative Time Ago ─── */
+const formatTimeAgo = (dateString) => {
+  if (!dateString) return "Recently";
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return "Recently";
+
+  const diffInSeconds = Math.floor((new Date() - date) / 1000);
+  if (diffInSeconds < 0 || diffInSeconds < 60) return "Just now";
+  
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 30) return `${diffInDays}d ago`;
+
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+};
+
+
 /* ─── Animated Map Dot (Leaflet) ─── */
 const createCustomIcon = (colorKey) => {
   const config = statusConfig[colorKey] || statusConfig.open;
@@ -200,20 +222,19 @@ const Landing = () => {
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/15 to-amber-600/10 border border-amber-500/20">
                 <Shield size={12} className="text-amber-400" />
                 <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-300/90">
-                  Official Government System
+                  Official Emergency Operations System
                 </span>
               </div>
 
               <div className="space-y-3">
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight tracking-tight text-white">
-                  Disaster Readiness &{" "}
+                  Smart Evacuation &{" "}
                   <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                    Response Pipeline
+                    Real-Time Crisis Response
                   </span>
                 </h1>
                 <p className="text-xs sm:text-sm leading-relaxed text-slate-400 max-w-lg">
-                  Real-time situational awareness, resource allocation, and victim registry
-                  for active crisis management zones.
+                  Empowering communities with live shelter occupancy tracking, instant broadcast alerts, and intelligent resource allocation during active disasters.
                 </p>
               </div>
 
@@ -232,7 +253,7 @@ const Landing = () => {
                   className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-white/10 text-white text-sm font-semibold border border-white/15 hover:bg-white/15 hover:border-white/25 transition-all duration-200 shadow-sm"
                 >
                   <LogIn size={16} />
-                  Responder Login
+                  Login
                 </Link>
               </div>
             </div>
@@ -537,7 +558,7 @@ const Landing = () => {
                     <div className="flex items-center gap-1.5 text-slate-400">
                       <Clock size={12} />
                       <span className="text-[11px] font-medium">
-                        Updated {Math.floor(Math.random() * 15) + 1}m ago
+                        Updated {formatTimeAgo(center.updated_at || center.created_at)}
                       </span>
                     </div>
                     <Link
@@ -565,7 +586,7 @@ const Landing = () => {
                 <img src={Logo} alt="EvaTrack Logo" className="h-10 w-auto" />
               </Link>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Philippine Disaster Management Authority
+                 Barangay Mambaling Disaster Management Office
               </p>
             </div>
 
@@ -586,7 +607,7 @@ const Landing = () => {
           {/* Copyright */}
           <div className="mt-6 pt-5 border-t border-white/[0.04] text-center">
             <p className="text-[11px] text-slate-600 dark:text-slate-300">
-              © {new Date().getFullYear()} EvaTrack Philippine Disaster Management Authority. All rights reserved.
+              © {new Date().getFullYear()} EvaTrack Barangay Mambaling Disaster Management Office. All rights reserved.
             </p>
           </div>
         </div>

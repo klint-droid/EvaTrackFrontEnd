@@ -1,10 +1,11 @@
-import { AlertCircle, CheckCircle2, Plus } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Plus, Inbox } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import RequestsSummaryCards from '../components/resourceRequests/RequestsSummaryCards';
 import RequestsTable from '../components/resourceRequests/RequestsTable';
 import RequestModal from '../components/resourceRequests/RequestModal';
 import { useResourceRequests } from '../hooks/useResourceRequests';
 import ViewRequestDetailsModal from '../components/resourceRequests/ViewRequestDetailsModal';
+import IncomingRequestsModal from '../components/resourceRequests/IncomingRequestsModal';
 import { TableLayout } from '../components/ui/TableLayout';
 import { TableTabs } from '../components/ui/TableTabs';
 import { Pagination } from '../components/ui/Pagination';
@@ -35,6 +36,7 @@ export default function ResourceRequests() {
   } = useResourceRequests();
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [incomingModalOpen, setIncomingModalOpen] = useState(false);
   const perPage = 10;
 
   useEffect(() => {
@@ -124,10 +126,26 @@ export default function ResourceRequests() {
         title="Resource Requests"
         badgeText={`${totalEntries} Requests`}
         subtitle="Track incoming supply and personnel fulfillment requests"
+        actions={
+          <button
+            type="button"
+            onClick={() => setIncomingModalOpen(true)}
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-all shadow-xs"
+            title="Open incoming requests modal list"
+          >
+            <Inbox size={15} className="text-amber-500 animate-pulse" />
+            <span>Incoming Requests</span>
+            {pendingCount > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white">
+                {pendingCount}
+              </span>
+            )}
+          </button>
+        }
         onExport={() => {
-          const csvHeader = "Request ID,Resource,Type,Quantity,Urgency,Status,Center\n";
+          const csvHeader = "Request ID,Resource,Type,Quantity,Urgency,Status,Center,Created At\n";
           const csvRows = displayedRequests
-            .map((r) => `${r.request_id},"${r.resource_type || ''}",${r.request_type || ''},${r.quantity || 0},${r.urgency_level?.urgency_label || ''},${r.status?.status_label || ''},"${r.center?.name || ''}"`)
+            .map((r) => `${r.request_id},"${r.resource_type || ''}",${r.request_type || ''},${r.quantity || 0},${r.urgency_level?.urgency_label || ''},${r.status?.status_label || ''},"${r.center?.name || ''}","${r.created_at || ''}"`)
             .join("\n");
           const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
           const link = document.createElement("a");
@@ -140,6 +158,7 @@ export default function ResourceRequests() {
         onAdd={canCreate ? openModal : undefined}
         addLabel="New Request"
         stats={stats}
+        tabs={tabs}
         pagination={
           <Pagination
             currentPage={currentPage}
@@ -175,6 +194,19 @@ export default function ResourceRequests() {
         />
       </TableLayout>
 
+      {/* ─── Incoming Requests List Modal ─── */}
+      <IncomingRequestsModal
+        isOpen={incomingModalOpen}
+        onClose={() => setIncomingModalOpen(false)}
+        requests={requests}
+        getUrgencyClass={getUrgencyClass}
+        getStatusClass={getStatusClass}
+        onSelectRequest={(req) => {
+          setViewingRequest(req);
+        }}
+      />
+
+      {/* ─── Create Request Modal ─── */}
       <RequestModal 
         modalOpen={modalOpen}
         setModalOpen={setModalOpen}
@@ -187,11 +219,14 @@ export default function ResourceRequests() {
         saving={saving}
       />
 
+      {/* ─── View & Update Details Modal ─── */}
       <ViewRequestDetailsModal 
         request={viewingRequest}
         onClose={() => setViewingRequest(null)}
         getUrgencyClass={getUrgencyClass}
         getStatusClass={getStatusClass}
+        canUpdateStatus={canUpdateStatus}
+        handleStatusChange={handleStatusChange}
       />
 
       {/* ─── Floating Action Button ─── */}

@@ -79,7 +79,7 @@ function Login() {
               Sign In
             </h1>
             <div className="flex items-center gap-2 mt-2">
-              <div className="h-[2px] w-6 bg-[#0B1530] rounded"></div>
+              <div className="h-[2px] w-6 bg-blue-600 dark:bg-blue-400 rounded"></div>
               <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wide">
                 Official Personnel Access
               </span>
@@ -133,23 +133,14 @@ function Login() {
             </div>
 
             {/* Options Row */}
-            <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center gap-2.5 cursor-pointer group select-none">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-[#0B1530] focus:ring-[#0B1530] transition cursor-pointer"
-                />
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:text-slate-200 transition">
-                  Remember me
-                </span>
-              </label>
+            <div className="flex items-center justify-start pt-1">
               <a 
                 href="#" 
                 onClick={(e) => {
                   e.preventDefault();
                   showAlert("Please contact your municipal system administrator to reset credentials.", "Reset Credentials", "info");
                 }} 
-                className="text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:text-slate-100 transition"
+                className="text-[11px] font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition"
               >
                 Forgot Password?
               </a>
@@ -160,10 +151,10 @@ function Login() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold text-white shadow-lg dark:shadow-none transition-all active:scale-[0.98] ${
+                className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold text-white shadow-lg shadow-blue-600/20 dark:shadow-none transition-all active:scale-[0.98] ${
                   isLoading
-                    ? "cursor-not-allowed bg-[#0B1530]/70"
-                    : "bg-[#0B1530] hover:bg-slate-800 shadow-slate-900/10 focus:outline-none focus:ring-4 focus:ring-slate-200"
+                    ? "cursor-not-allowed bg-blue-600/70"
+                    : "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/40"
                 }`}
               >
                 {isLoading ? (
@@ -175,10 +166,7 @@ function Login() {
                     Signing In...
                   </span>
                 ) : (
-                  <span className="flex items-center gap-2">
-                    Sign In to Command
-                    <span className="text-lg">→</span>
-                  </span>
+                  <span>Sign In</span>
                 )}
               </button>
             </div>

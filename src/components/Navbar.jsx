@@ -8,7 +8,7 @@ const Navbar = () => {
 
   const navLinks = [
     { to: "/portal", label: "Live Map", icon: Radio },
-    { to: "/login", label: "Responder Login", icon: LogIn },
+    { to: "/login", label: "Login", icon: LogIn },
   ];
 
   return (
