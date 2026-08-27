@@ -3,7 +3,7 @@ import { ShieldAlert, MapPin, Clock, Timer, Building2, CheckCircle2, AlertTriang
 import SeverityBadge from './SeverityBadge';
 import EndEventButton from './EndEventButton';
 
-export default function ActiveEventsList({ activeEvents, setAssigningEvent, fetchEvents }) {
+export default function ActiveEventsList({ activeEvents, fetchEvents }) {
   return (
     <div className="mb-8">
       <div className="flex items-center gap-2 mb-4">
@@ -102,13 +102,6 @@ export default function ActiveEventsList({ activeEvents, setAssigningEvent, fetc
                   )}
 
                   <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <button
-                      onClick={() => setAssigningEvent(event)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white transition-colors"
-                    >
-                      <Building2 className="w-3.5 h-3.5" />
-                      Manage
-                    </button>
                     <EndEventButton
                       eventId={event.event_id}
                       onEnded={fetchEvents}

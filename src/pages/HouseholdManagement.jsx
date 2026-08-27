@@ -339,7 +339,9 @@ export default function HouseholdManagement() {
                                     <div className="flex items-center justify-center gap-1">
                                         <Users size={12} className="text-blue-400" />
                                         <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                                            {h.current_evacuation ? h.current_evacuation.evacuated_count : h.members_count}
+                                            {h.current_evacuation
+                                                ? <><span className="text-green-600 dark:text-green-400 font-bold">{h.current_evacuation.evacuated_count}</span> <span className="text-slate-400">/</span> {h.member_count || h.members_count || '?'}</>
+                                                : (h.members_count || h.member_count || 0)}
                                         </span>
                                     </div>
                                 </TableCell>
@@ -347,10 +349,8 @@ export default function HouseholdManagement() {
                                     <StatusBadge
                                         value={getStatusLabel(h)}
                                         color={
-                                            h.current_evacuation
-                                            ? "green"
-                                            : h.evacuation_status === "not_evacuated"
-                                            ? "blue"
+                                            getStatusLabel(h) === 'Evacuated' ? "green"
+                                            : getStatusLabel(h) === 'Returned' ? "blue"
                                             : "orange"
                                         }
                                     />

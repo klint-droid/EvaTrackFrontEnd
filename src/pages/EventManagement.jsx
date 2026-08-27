@@ -1,5 +1,4 @@
 import EventModal from '../components/events/EventModal';
-import AssignCentersModal from '../components/events/AssignCentersModal';
 import EventDetailsModal from '../components/events/EventDetailsModal';
 import EventHeader from '../components/events/EventHeader';
 import EventStatsCards from '../components/events/EventStatsCards';
@@ -17,7 +16,6 @@ export default function EventManagement() {
     loading,
     showModal, setShowModal,
     showFilters, setShowFilters,
-    assigningEvent, setAssigningEvent,
     viewingEvent, setViewingEvent,
     activeEvents,
     activeCount,
@@ -47,7 +45,6 @@ export default function EventManagement() {
         <>
           <ActiveEventsList 
             activeEvents={activeEvents}
-            setAssigningEvent={setAssigningEvent}
             fetchEvents={fetchEvents}
           />
 
@@ -73,13 +70,7 @@ export default function EventManagement() {
         />
       )}
 
-      {assigningEvent && (
-        <AssignCentersModal
-          event={assigningEvent}
-          onClose={() => setAssigningEvent(null)}
-          onSaved={fetchEvents}
-        />
-      )}
+
 
       {viewingEvent && (
         <EventDetailsModal

@@ -248,13 +248,6 @@ const Landing = () => {
                   Find Center
                   <ArrowRight size={14} className="opacity-60 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
-                <Link
-                  to="/login"
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-white/10 text-white text-sm font-semibold border border-white/15 hover:bg-white/15 hover:border-white/25 transition-all duration-200 shadow-sm"
-                >
-                  <LogIn size={16} />
-                  Login
-                </Link>
               </div>
             </div>
 
