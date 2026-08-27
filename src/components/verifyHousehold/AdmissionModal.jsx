@@ -228,7 +228,9 @@ export default function AdmissionModal({
                                                             }
                                                         }}
                                                         className={`px-4 py-3 flex items-center justify-between transition-colors ${
-                                                            isDisabled ? "bg-rose-50/30 opacity-75 cursor-not-allowed" : "hover:bg-slate-50 dark:bg-slate-800/50/50 cursor-pointer"
+                                                            isDisabled 
+                                                                ? "bg-slate-100/70 dark:bg-slate-800/50 opacity-65 cursor-not-allowed border-l-2 border-l-emerald-500" 
+                                                                : "hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
                                                         }`}
                                                     >
                                                         {/* Left Checkbox & Name info */}
@@ -238,19 +240,19 @@ export default function AdmissionModal({
                                                                 checked={isChecked}
                                                                 disabled={isDisabled}
                                                                 readOnly
-                                                                className="mt-0.5 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 disabled:opacity-50 pointer-events-none"
+                                                                className="mt-0.5 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 disabled:opacity-40 pointer-events-none"
                                                             />
                                                             <div>
-                                                                <p className="text-xs font-bold text-slate-700 dark:text-slate-200 leading-tight">
+                                                                <p className={`text-xs font-bold leading-tight ${isDisabled ? "text-slate-500 dark:text-slate-400 line-through" : "text-slate-800 dark:text-slate-100"}`}>
                                                                     {member.first_name} {member.last_name}
                                                                 </p>
                                                                 <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
                                                                     {member.relationshipDetail?.relationship_name || member.relationship?.relationship_label || member.relationship?.label || "Family Member"}
                                                                 </p>
                                                                 {activeEvac && (
-                                                                    <div className="text-[9px] text-rose-600 font-black uppercase mt-1 flex items-center gap-1">
-                                                                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                                                                        Evacuated to: {activeEvac.evacuation_record?.center?.name || activeEvac.evacuation_record?.center?.center_name || activeEvac.evacuationRecord?.center?.name || activeEvac.evacuationRecord?.center?.center_name || activeEvac.evacuation_record?.center_id || activeEvac.evacuationRecord?.center_id || 'Unknown Center'}
+                                                                    <div className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold uppercase mt-1 flex items-center gap-1">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                                                        Already Evacuated ({activeEvac.evacuation_record?.center?.name || activeEvac.evacuation_record?.center?.center_name || activeEvac.evacuationRecord?.center?.name || activeEvac.evacuationRecord?.center?.center_name || 'Sheltered'})
                                                                     </div>
                                                                 )}
                                                             </div>
