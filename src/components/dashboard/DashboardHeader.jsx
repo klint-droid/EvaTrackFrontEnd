@@ -85,14 +85,30 @@ export default function DashboardHeader({
                         <select
                             value={selectedEventId}
                             onChange={(e) => setSelectedEventId(e.target.value)}
-                            className="px-3 py-1.5 bg-slate-900/60 border border-white/20 text-white text-xs font-semibold rounded-full hover:bg-slate-900/80 transition-all focus:outline-none cursor-pointer"
+                            className="px-3.5 py-1.5 bg-slate-900/80 border border-white/20 text-white text-xs font-semibold rounded-full hover:bg-slate-900 transition-all focus:outline-none cursor-pointer"
                         >
-                            <option value="all" className="bg-slate-900 text-white">All Active Events</option>
-                            {activeEvents.filter(evt => !evt.ended_at).map(evt => (
-                                <option key={evt.event_id} value={evt.event_id} className="bg-slate-900 text-white">
-                                    {evt.name}
-                                </option>
-                            ))}
+                            {activeEvents.some(evt => !evt.ended_at) && (
+                                <optgroup label="Ongoing Disaster Event">
+                                    {activeEvents.filter(evt => !evt.ended_at).map(evt => (
+                                        <option key={evt.event_id} value={evt.event_id} className="bg-slate-900 text-white">
+                                            🔴 {evt.name} (Current)
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            )}
+                            <optgroup label="Overview Filters">
+                                <option value="all" className="bg-slate-900 text-white">All Active Shelters</option>
+                                <option value="all_history" className="bg-slate-900 text-white">All Centers (Historical)</option>
+                            </optgroup>
+                            {activeEvents.some(evt => evt.ended_at) && (
+                                <optgroup label="Past Events">
+                                    {activeEvents.filter(evt => evt.ended_at).map(evt => (
+                                        <option key={evt.event_id} value={evt.event_id} className="bg-slate-900 text-white">
+                                            ⚪ {evt.name} (Concluded)
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            )}
                         </select>
                     )}
 

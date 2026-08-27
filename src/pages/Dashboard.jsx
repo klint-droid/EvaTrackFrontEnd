@@ -121,6 +121,16 @@ const Dashboard = () => {
             }
             setActiveEvent(primaryActiveEvt);
 
+            // Default dropdown to the current active event
+            if (primaryActiveEvt?.event_id) {
+                setSelectedEventId(String(primaryActiveEvt.event_id));
+            } else {
+                const ongoing = eventsList.find(e => !e.ended_at);
+                if (ongoing?.event_id) {
+                    setSelectedEventId(String(ongoing.event_id));
+                }
+            }
+
             const capacities = centersList.map(c => ({
                 name: c.name,
                 current: Number(c.current_occupancy) || 0,
