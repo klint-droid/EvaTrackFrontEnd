@@ -304,18 +304,29 @@ export function TableHead({
                 horizontal: "left",
               }}
               PaperProps={{
+                className: "bg-white dark:bg-[#1c2128] text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700/80 shadow-2xl rounded-xl p-3 font-sans",
                 style: {
                   borderRadius: "12px",
-                  boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
-                  border: "1px solid rgba(226, 232, 240, 0.8)",
                   padding: "12px",
                   width: "240px",
                 },
               }}
+              sx={{
+                "& .MuiPaper-root": {
+                  backgroundColor: "#ffffff",
+                  color: "#1e293b",
+                  borderColor: "rgba(226, 232, 240, 0.8)",
+                  ".dark &": {
+                    backgroundColor: "#1c2128 !important",
+                    color: "#f1f5f9 !important",
+                    borderColor: "rgba(51, 65, 85, 0.8) !important",
+                  },
+                },
+              }}
             >
-              <div className="space-y-3 font-sans">
-                <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-200">
+              <div className="space-y-3 font-sans text-left">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700/80 pb-2">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-800 dark:text-slate-100">
                     Filter {columnLabel}
                   </span>
                   {isFilterActive && (
@@ -325,7 +336,7 @@ export function TableHead({
                         onFilterChange?.("");
                         handleFilterClose();
                       }}
-                      className="flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                      className="flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400"
                     >
                       <X size={12} /> Clear
                     </button>
@@ -342,8 +353,8 @@ export function TableHead({
                       }}
                       className={`block w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                         !filterValue
-                          ? "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 font-bold"
-                          : "text-gray-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                          ? "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 font-bold border border-blue-100 dark:border-blue-800/40"
+                          : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-[#2d333b]"
                       }`}
                     >
                       All ({columnLabel})
@@ -363,8 +374,8 @@ export function TableHead({
                           }}
                           className={`block w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                             isSelected
-                              ? "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 font-bold"
-                              : "text-gray-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                              ? "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 font-bold border border-blue-100 dark:border-blue-800/40"
+                              : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-[#2d333b]"
                           }`}
                         >
                           {lbl}
@@ -379,7 +390,7 @@ export function TableHead({
                       value={filterValue || ""}
                       onChange={(e) => onFilterChange?.(e.target.value)}
                       placeholder={filterPlaceholder || `Search ${columnLabel}...`}
-                      className="w-full rounded-lg border border-gray-200 dark:border-slate-700 px-3 py-1.5 text-xs text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 bg-slate-50 dark:bg-[#161b22] placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-colors"
                       autoFocus
                     />
                   </div>
