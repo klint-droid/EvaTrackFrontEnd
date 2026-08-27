@@ -221,148 +221,29 @@ const Dashboard = () => {
     };
 
     const activeEventsList = activeEvents.filter(e => !e.ended_at);
+    const hasActiveEvent = activeEventsList.length > 0;
 
-    const filteredCenters = selectedEventId === "all_history"
-        ? centers
-        : selectedEventId === "all"
-            ? centers.filter(c => c.current_event_id !== null)
-            : centers.filter(c => String(c.current_event_id) === String(selectedEventId));
+    // Since disaster events auto-assign all centers, active shelters represent all operational/available centers
+    const filteredCenters = hasActiveEvent
+        ? centers.filter(c => c.status_id === 1 || c.status_id === "1" || c.status === "active" || c.current_event_id !== null || !c.status_id)
+        : centers;
 
     const chartData = filteredCenters.map(c => ({
-        name: c.name,
+        name: c.name || c.center_name,
         current: Number(c.current_occupancy) || 0,
         max: Number(c.capacity) || 0,
         households: Number(c.household_count) || 0,
     }));
 
-    const displayRequests = selectedEventId === "all_history"
-        ? recentRequests.filter(r => r.status?.status_key === 'pending' || r.status === 'pending').slice(0, 3)
-        : selectedEventId === "all"
-            ? recentRequests.filter(r => {
-                    if (r.status?.status_key !== 'pending' && r.status !== 'pending') return false;
-                    const isCenterAssignedToActiveEvent = r.center?.current_event_id &&
-                        activeEventsList.some(evt => String(evt.event_id) === String(r.center.current_event_id));
-                    if (isCenterAssignedToActiveEvent) return true;
-
-                    const reqTime = new Date(r.created_at).getTime();
-                    return activeEventsList.some(evt => {
-                        const startTime = new Date(evt.started_at).getTime();
-                        const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
-                        return reqTime >= startTime && reqTime <= endTime;
-                    });
-                }).slice(0, 3)
-            : recentRequests.filter(r => {
-                    if (r.status?.status_key !== 'pending' && r.status !== 'pending') return false;
-                    const evt = activeEvents.find(e => String(e.event_id) === String(selectedEventId));
-                    if (!evt) return false;
-
-                    if (!evt.ended_at) {
-                        return String(r.center?.current_event_id) === String(selectedEventId);
-                    }
-
-                    const reqTime = new Date(r.created_at).getTime();
-                    const startTime = new Date(evt.started_at).getTime();
-                    const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
-                    return reqTime >= startTime && reqTime <= endTime;
-                }).slice(0, 3);
-
-    const displayIssues = selectedEventId === "all_history"
-        ? recentIssues.filter(i => i.status === 'open').slice(0, 3)
-        : selectedEventId === "all"
-            ? recentIssues.filter(i => {
-                    if (i.status !== 'open') return false;
-                    const isCenterAssignedToActiveEvent = i.center?.current_event_id &&
-                        activeEventsList.some(evt => String(evt.event_id) === String(i.center.current_event_id));
-                    if (isCenterAssignedToActiveEvent) return true;
-
-                    const issueTime = new Date(i.created_at).getTime();
-                    return activeEventsList.some(evt => {
-                        const startTime = new Date(evt.started_at).getTime();
-                        const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
-                        return issueTime >= startTime && issueTime <= endTime;
-                    });
-                }).slice(0, 3)
-            : recentIssues.filter(i => {
-                    if (i.status !== 'open') return false;
-                    const evt = activeEvents.find(e => String(e.event_id) === String(selectedEventId));
-                    if (!evt) return false;
-
-                    if (!evt.ended_at) {
-                        return String(i.center?.current_event_id) === String(selectedEventId);
-                    }
-
-                    const issueTime = new Date(i.created_at).getTime();
-                    const startTime = new Date(evt.started_at).getTime();
-                    const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
-                    return issueTime >= startTime && issueTime <= endTime;
-                }).slice(0, 3);
+    const displayRequests = recentRequests.filter(r => r.status?.status_key === 'pending' || r.status === 'pending').slice(0, 3);
+    const displayIssues = recentIssues.filter(i => i.status === 'open').slice(0, 3);
 
     const displayTotalCenters = filteredCenters.length;
     const displayTotalCapacity = chartData.reduce((sum, c) => sum + c.max, 0);
     const displayTotalOccupied = chartData.reduce((sum, c) => sum + c.current, 0);
 
-
-    const displayPendingRequests = selectedEventId === "all_history"
-        ? stats.pendingRequests
-        : selectedEventId === "all"
-            ? recentRequests.filter(r => {
-                    if (r.status?.status_key !== 'pending' && r.status !== 'pending') return false;
-                    const isCenterAssignedToActiveEvent = r.center?.current_event_id &&
-                        activeEventsList.some(evt => evt.event_id === r.center.current_event_id);
-                    if (isCenterAssignedToActiveEvent) return true;
-
-                    const reqTime = new Date(r.created_at).getTime();
-                    return activeEventsList.some(evt => {
-                        const startTime = new Date(evt.started_at).getTime();
-                        const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
-                        return reqTime >= startTime && reqTime <= endTime;
-                    });
-                }).length
-            : recentRequests.filter(r => {
-                    if (r.status?.status_key !== 'pending' && r.status !== 'pending') return false;
-                    const evt = activeEvents.find(e => e.event_id === selectedEventId);
-                    if (!evt) return false;
-
-                    if (!evt.ended_at) {
-                        return r.center?.current_event_id === selectedEventId;
-                    }
-
-                    const reqTime = new Date(r.created_at).getTime();
-                    const startTime = new Date(evt.started_at).getTime();
-                    const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
-                    return reqTime >= startTime && reqTime <= endTime;
-                }).length;
-
-    const displayOpenIssues = selectedEventId === "all_history"
-        ? stats.openIssues
-        : selectedEventId === "all"
-            ? recentIssues.filter(i => {
-                    if (i.status !== 'open') return false;
-                    const isCenterAssignedToActiveEvent = i.center?.current_event_id &&
-                        activeEventsList.some(evt => evt.event_id === i.center.current_event_id);
-                    if (isCenterAssignedToActiveEvent) return true;
-
-                    const issueTime = new Date(i.created_at).getTime();
-                    return activeEventsList.some(evt => {
-                        const startTime = new Date(evt.started_at).getTime();
-                        const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
-                        return issueTime >= startTime && issueTime <= endTime;
-                    });
-                }).length
-            : recentIssues.filter(i => {
-                    if (i.status !== 'open') return false;
-                    const evt = activeEvents.find(e => e.event_id === selectedEventId);
-                    if (!evt) return false;
-
-                    if (!evt.ended_at) {
-                        return i.center?.current_event_id === selectedEventId;
-                    }
-
-                    const issueTime = new Date(i.created_at).getTime();
-                    const startTime = new Date(evt.started_at).getTime();
-                    const endTime = evt.ended_at ? new Date(evt.ended_at).getTime() : Infinity;
-                    return issueTime >= startTime && issueTime <= endTime;
-                }).length;
+    const displayPendingRequests = stats.pendingRequests || recentRequests.filter(r => r.status?.status_key === 'pending' || r.status === 'pending').length;
+    const displayOpenIssues = stats.openIssues || recentIssues.filter(i => i.status === 'open').length;
 
     const displayAvailableSlots = Math.max(displayTotalCapacity - displayTotalOccupied, 0);
     const occupancyRate = displayTotalCapacity > 0 ? Math.round((displayTotalOccupied / displayTotalCapacity) * 100) : 0;

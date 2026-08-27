@@ -73,43 +73,32 @@ export default function DashboardHeader({
                     }
                 </p>
 
-                {/* Event Selector & Advisory Pill */}
+                {/* Active Event Display & Refresh */}
                 <div className="pt-2 flex flex-wrap items-center gap-3">
-                    <button className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white text-xs sm:text-sm font-medium rounded-full px-4 py-1.5 transition-colors">
-                        <Radio className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                        <span>{advisoryLabel}</span>
-                    </button>
-
-                    {/* Active Event Filter Selector */}
-                    {activeEvents.length > 0 && (
-                        <select
-                            value={selectedEventId}
-                            onChange={(e) => setSelectedEventId(e.target.value)}
-                            className="px-3.5 py-1.5 bg-slate-900/80 border border-white/20 text-white text-xs font-semibold rounded-full hover:bg-slate-900 transition-all focus:outline-none cursor-pointer"
-                        >
-                            {activeEvents.some(evt => !evt.ended_at) && (
-                                <optgroup label="Ongoing Disaster Event">
-                                    {activeEvents.filter(evt => !evt.ended_at).map(evt => (
-                                        <option key={evt.event_id} value={evt.event_id} className="bg-slate-900 text-white">
-                                            🔴 {evt.name} (Current)
-                                        </option>
-                                    ))}
-                                </optgroup>
-                            )}
-                            <optgroup label="Overview Filters">
-                                <option value="all" className="bg-slate-900 text-white">All Active Shelters</option>
-                                <option value="all_history" className="bg-slate-900 text-white">All Centers (Historical)</option>
-                            </optgroup>
-                            {activeEvents.some(evt => evt.ended_at) && (
-                                <optgroup label="Past Events">
-                                    {activeEvents.filter(evt => evt.ended_at).map(evt => (
-                                        <option key={evt.event_id} value={evt.event_id} className="bg-slate-900 text-white">
-                                            ⚪ {evt.name} (Concluded)
-                                        </option>
-                                    ))}
-                                </optgroup>
-                            )}
-                        </select>
+                    {activeEvents.filter(evt => !evt.ended_at).length > 0 ? (
+                        activeEvents.filter(evt => !evt.ended_at).length === 1 ? (
+                            <div className="inline-flex items-center gap-2 bg-rose-500/25 border border-rose-400/40 text-rose-100 text-xs sm:text-sm font-semibold rounded-full px-4 py-1.5 shadow-sm">
+                                <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
+                                <span>Active Event: {activeEvents.filter(evt => !evt.ended_at)[0].name}</span>
+                            </div>
+                        ) : (
+                            <select
+                                value={selectedEventId}
+                                onChange={(e) => setSelectedEventId(e.target.value)}
+                                className="px-3.5 py-1.5 bg-slate-900/80 border border-white/20 text-white text-xs font-semibold rounded-full hover:bg-slate-900 transition-all focus:outline-none cursor-pointer"
+                            >
+                                {activeEvents.filter(evt => !evt.ended_at).map(evt => (
+                                    <option key={evt.event_id} value={evt.event_id} className="bg-slate-900 text-white">
+                                        🔴 Active Event: {evt.name}
+                                    </option>
+                                ))}
+                            </select>
+                        )
+                    ) : (
+                        <div className="inline-flex items-center gap-2 bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 text-xs sm:text-sm font-medium rounded-full px-4 py-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                            <span>No Active Disaster Event</span>
+                        </div>
                     )}
 
                     {/* Manual Refresh Button */}
