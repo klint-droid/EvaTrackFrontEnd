@@ -226,13 +226,14 @@ export const useVerifyHousehold = () => {
   };
 
   const handleSearch = async () => {
-    if (!query.trim()) {
-      showMessage("Please enter household name or ID.", "error");
+    const trimmed = query.trim();
+    if (!trimmed || trimmed.length < 2) {
+      showMessage("Please enter at least 2 characters to search.", "error");
       return;
     }
     setLoading(true);
     try {
-      const data = await searchHousehold(query);
+      const data = await searchHousehold(trimmed);
       setResults(data);
     } catch (err: any) {
       showMessage(err.response?.data?.message || "Search failed.", "error");
