@@ -187,7 +187,7 @@ export default function ReportModal({
           </div>
         </div>
 
-        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50/80 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
+        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
           <button
             onClick={() => setModalOpen(false)}
             className="px-5 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:text-slate-50 transition-colors bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm dark:shadow-none"

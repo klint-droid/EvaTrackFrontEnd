@@ -15,7 +15,7 @@ export default function ViewDetailsModal({ report, onClose, getCategoryIcon, get
       />
 
       <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-slate-700 my-auto flex flex-col max-h-[85vh]">
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-start justify-between bg-slate-50 dark:bg-slate-800/50/50">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-start justify-between bg-slate-50 dark:bg-slate-800/60">
           <div>
             <h2 className="text-lg font-black text-slate-800 dark:text-slate-100">
               {report.title}

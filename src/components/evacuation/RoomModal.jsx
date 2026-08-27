@@ -59,7 +59,7 @@ export default function RoomModal({ centerId, onClose, onSuccess }) {
       <div className="relative bg-white dark:bg-slate-900 rounded-[1.5rem] shadow-2xl w-full max-w-[320px] overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-700">
         
         {/* HEADER */}
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50/50">
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/60">
           <h2 className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
             <DoorOpen size={16} className="text-blue-600" /> Add New Room
           </h2>

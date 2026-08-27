@@ -200,26 +200,22 @@ export default function EvacueeList({
 
         return (
             <Table>
-                    <TableHeader className="bg-slate-50 dark:bg-slate-800/50/50 border-b border-slate-100 dark:border-slate-800">
+                    <TableHeader className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800">
                         <tr>
-                            {[
-                                'Name',
-                                'Age',
-                                'Gender',
-                                'Relation',
-                                'Civil Status',
-                                'Vulnerable Groups',
-                                ...(showStatus ? ['Verified At', 'Status'] : []),
-                                ''
-                            ].map(h => (
-                                <TableHead key={h} className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                    {h}
-                                </TableHead>
-                            ))}
+                            <TableHead className="w-12 text-center">#</TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead className="text-center">Age</TableHead>
+                            <TableHead>Gender</TableHead>
+                            <TableHead>Relation</TableHead>
+                            <TableHead>Civil Status</TableHead>
+                            <TableHead>Vulnerable Groups</TableHead>
+                            {showStatus && <TableHead>Verified At</TableHead>}
+                            {showStatus && <TableHead className="text-center">Status</TableHead>}
+                            {canEdit && <TableHead className="w-10"></TableHead>}
                         </tr>
                     </TableHeader>
 
-                    <tbody className="divide-y divide-slate-50">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                         {members.map(member => renderMemberRow(member, showStatus, context))}
                     </tbody>
                 </Table>
@@ -227,9 +223,9 @@ export default function EvacueeList({
     };
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none overflow-hidden">
             {/* Section Header */}
-            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
+            <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
                 <div className="flex-1">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                         Members ({household.members?.length || 0})
@@ -267,7 +263,7 @@ export default function EvacueeList({
 
             {/* Evacuation Center Tabs */}
             {isEvacuated && allActiveEvacuations.length > 0 && (
-                <div className="border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50/30">
+                <div className="border-b border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/50">
                     <nav className="flex px-5 gap-1 overflow-x-auto" aria-label="Evacuation center tabs">
                         {allActiveEvacuations.map(evac => {
                             const cId = evac.center_id || evac.center?.evacuation_center_id;
@@ -282,19 +278,19 @@ export default function EvacueeList({
                                     onClick={() => setActiveEvacTab(cId)}
                                     className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
                                         isActive
-                                            ? 'border-blue-600 text-blue-600 bg-white dark:bg-slate-900'
-                                            : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:border-slate-600'
+                                            ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-900 shadow-xs'
+                                            : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600'
                                     }`}
                                 >
                                     <Building size={13} />
                                     <span>{cName}</span>
                                     <span className={`px-1.5 py-0.5 text-[9px] font-black rounded-full ${
-                                        isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                                        isActive ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                                     }`}>
                                         {memberCount}
                                     </span>
                                     {isMine && isPersonnelUser && (
-                                        <span className="px-1.5 py-0.5 text-[8px] font-black rounded-full bg-green-100 text-green-700 uppercase tracking-wider">
+                                        <span className="px-1.5 py-0.5 text-[8px] font-black rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 uppercase tracking-wider">
                                             Your Center
                                         </span>
                                     )}
@@ -311,14 +307,14 @@ export default function EvacueeList({
                                 onClick={() => setActiveEvacTab('unverified')}
                                 className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
                                     activeEvacTab === 'unverified'
-                                        ? 'border-amber-500 text-amber-600 bg-white dark:bg-slate-900'
-                                        : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:border-slate-600'
+                                        ? 'border-amber-500 text-amber-600 dark:text-amber-400 bg-white dark:bg-slate-900 shadow-xs'
+                                        : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600'
                                 }`}
                             >
                                 <AlertCircle size={13} />
                                 <span>Unverified</span>
                                 <span className={`px-1.5 py-0.5 text-[9px] font-black rounded-full ${
-                                    activeEvacTab === 'unverified' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                                    activeEvacTab === 'unverified' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                                 }`}>
                                     {unverifiedMembers.length}
                                 </span>
@@ -334,8 +330,8 @@ export default function EvacueeList({
                     {activeEvacTab === 'unverified' ? (
                         <>
                             {/* Info banner for unverified */}
-                            <div className="mx-5 mt-4 mb-2 flex items-start gap-3 p-3 bg-amber-50 border border-amber-100 rounded-xl text-amber-800">
-                                <AlertCircle className="w-4 h-4 mt-0.5 text-amber-600 flex-shrink-0" />
+                            <div className="mx-5 mt-4 mb-2 flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 rounded-xl text-amber-800 dark:text-amber-200">
+                                <AlertCircle className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
                                 <p className="text-[11px]">
                                     These members have not been verified at any evacuation center yet.
                                     {isPersonnelUser && ' You can check them in to your assigned center.'}
@@ -347,7 +343,7 @@ export default function EvacueeList({
                         <>
                             {/* Info banner for other center's tab */}
                             {isPersonnelUser && !isMyCenter(activeEvacTab) && (
-                                <div className="mx-5 mt-4 mb-2 flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300">
+                                <div className="mx-5 mt-4 mb-2 flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300">
                                     <Shield className="w-4 h-4 mt-0.5 text-slate-400 flex-shrink-0" />
                                     <p className="text-[11px]">
                                         <strong>Read-only view.</strong> These members were verified by personnel at <strong>{activeTabEvacuation?.center?.name}</strong>. Only personnel assigned there can modify them.

@@ -127,7 +127,7 @@ export default function RegistrySearch({
             {/* Search Registry Results Box */}
             <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
                 {results === undefined ? (
-                    <div className="py-12 text-center border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800/50/30 flex flex-col items-center justify-center space-y-2">
+                    <div className="py-12 text-center border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800/40 flex flex-col items-center justify-center space-y-2">
                         <Search className="text-slate-300" size={24} />
                         <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Awaiting query database sync...</p>
                         <p className="text-[10px] text-slate-400">Type family head credentials above or trigger live scan</p>

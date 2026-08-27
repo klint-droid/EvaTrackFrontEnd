@@ -30,7 +30,7 @@ export default function RequestModal({
           
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-700 dark:text-slate-200">Request Type</label>
-            <div className="flex border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-800/50/50 p-1 gap-1">
+            <div className="flex border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-800/60 p-1 gap-1">
               <button
                 onClick={() => setForm({ ...form, request_type: 'resource' })}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-md transition-all ${
@@ -143,7 +143,7 @@ export default function RequestModal({
 
         </div>
 
-        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50/80 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
+        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
           <button onClick={() => setModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:text-slate-50 transition-colors bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm dark:shadow-none">
             Cancel
           </button>

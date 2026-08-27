@@ -379,7 +379,7 @@ export default function AdmissionModal({
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+                <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
                     <button
                         onClick={closeAdmissionModal}
                         className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:bg-slate-800/50 rounded-lg text-xs font-semibold transition-all cursor-pointer"

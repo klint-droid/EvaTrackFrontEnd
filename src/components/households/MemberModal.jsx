@@ -97,7 +97,7 @@ export default function MemberModal({ open, onClose, onSave, editingMember }) {
             <div className="relative bg-white dark:bg-slate-900 rounded-[1.5rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-700">
 
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50/50">
+                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/60">
                     <h2 className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-tight">
                         {editingMember ? 'Edit Member' : 'Add Member'}
                     </h2>
@@ -235,7 +235,7 @@ export default function MemberModal({ open, onClose, onSave, editingMember }) {
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+                <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
                     <button
                         onClick={onClose}
                         className="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
