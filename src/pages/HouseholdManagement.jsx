@@ -173,24 +173,58 @@ export default function HouseholdManagement() {
             'Delete'
         );
     };
-    const getStatusBadge = (household) => {
+    const getEvacuationProgress = (household) => {
         const currentEvac = household.current_evacuation || household.currentEvacuation;
         const isEvacuated = currentEvac && (currentEvac.household_status_id === 2 || currentEvac.household_status_id === "2");
         const isReturned = currentEvac && (currentEvac.household_status_id === 6 || currentEvac.household_status_id === "6");
+        const total = Number(household.member_count || household.members_count || 0);
+        const evacuated = isEvacuated ? Number(currentEvac.evacuated_count || 0) : 0;
+        const pct = total > 0 ? Math.min(100, Math.round((evacuated / total) * 100)) : 0;
 
-        if (isEvacuated) return 'bg-green-50 text-green-600 border-green-100';
-        if (isReturned) return 'bg-blue-50 text-blue-600 border-blue-100';
-        return 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-800';
-    };
+        if (isReturned) {
+            return {
+                status: 'returned',
+                label: 'Returned Home',
+                evacuated,
+                total,
+                pct: 100,
+                badgeClass: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/50',
+                dotClass: 'bg-blue-500',
+            };
+        }
 
-    const getStatusLabel = (household) => {
-        const currentEvac = household.current_evacuation || household.currentEvacuation;
-        const isEvacuated = currentEvac && (currentEvac.household_status_id === 2 || currentEvac.household_status_id === "2");
-        const isReturned = currentEvac && (currentEvac.household_status_id === 6 || currentEvac.household_status_id === "6");
+        if (isEvacuated) {
+            if (evacuated >= total && total > 0) {
+                return {
+                    status: 'full',
+                    label: `${evacuated} of ${total} Evacuated (100%)`,
+                    evacuated,
+                    total,
+                    pct: 100,
+                    badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50',
+                    dotClass: 'bg-emerald-500',
+                };
+            }
+            return {
+                status: 'partial',
+                label: `${evacuated} of ${total} Evacuated (${pct}%)`,
+                evacuated,
+                total,
+                pct,
+                badgeClass: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50',
+                dotClass: 'bg-amber-500',
+            };
+        }
 
-        if (isEvacuated) return 'Evacuated';
-        if (isReturned) return 'Returned';
-        return 'Not Evacuated';
+        return {
+            status: 'not_evacuated',
+            label: `0 of ${total} Evacuated (0%)`,
+            evacuated: 0,
+            total,
+            pct: 0,
+            badgeClass: 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-700',
+            dotClass: 'bg-slate-400',
+        };
     };
 
     // ─── Computed Stats ───
@@ -233,9 +267,12 @@ export default function HouseholdManagement() {
                 badgeText={`${pagination.total || households.length} Households`}
                 subtitle="Manage registered family units, contact info, and evacuation statuses"
                 onExport={() => {
-                  const csvHeader = "Household ID,Household Name,Contact Number,Members Count,Status,Center\n";
+                  const csvHeader = "Household ID,Household Name,Contact Number,Evacuated Members,Total Members,Status,Center,Unit\n";
                   const csvRows = households
-                    .map((h) => `${h.household_id},"${h.household_name || ''}",${h.contact_number || ''},${h.current_evacuation ? h.current_evacuation.evacuated_count : h.members_count},${getStatusLabel(h)},"${h.current_evacuation?.center?.name || ''}"`)
+                    .map((h) => {
+                      const prog = getEvacuationProgress(h);
+                      return `"${h.household_id}","${h.household_name || ''}","${h.contact_number || ''}",${prog.evacuated},${prog.total},"${prog.label}","${h.current_evacuation?.center?.name || ''}","${h.current_evacuation?.unit_allocation?.unit?.name || ''}"`;
+                    })
                     .join("\n");
                   const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
                   const link = document.createElement("a");
@@ -265,18 +302,16 @@ export default function HouseholdManagement() {
                               Household
                             </TableHead>
                             <TableHead>Contact</TableHead>
-                            <TableHead className="text-center">Members</TableHead>
                             <TableHead
                               filterable
                               filterValue={filters.status}
                               onFilterChange={(val) => handleFilterChange('status', val)}
                               filterOptions={[
                                 { value: "evacuated", label: "Evacuated" },
-                                { value: "not_evacuated", label: "Home / Safe" },
-                                { value: "unverified", label: "Unverified" },
+                                { value: "not_evacuated", label: "Not Evacuated" },
                               ]}
                             >
-                              Status
+                              Evacuation Progress
                             </TableHead>
                             <TableHead
                               filterable
@@ -303,81 +338,69 @@ export default function HouseholdManagement() {
                                         </div>
                                     </TableCell>
                                     <TableCell><div className="w-24 h-3 bg-slate-100 dark:bg-slate-800 rounded" /></TableCell>
-                                    <TableCell className="text-center"><div className="w-8 h-3 bg-slate-100 dark:bg-slate-800 rounded mx-auto" /></TableCell>
-                                    <TableCell className="text-center"><div className="w-20 h-5 bg-slate-100 dark:bg-slate-800 rounded-full mx-auto" /></TableCell>
+                                    <TableCell><div className="w-36 h-6 bg-slate-100 dark:bg-slate-800 rounded-full" /></TableCell>
                                     <TableCell><div className="w-28 h-3 bg-slate-100 dark:bg-slate-800 rounded" /></TableCell>
                                     <TableCell className="text-right"><div className="w-12 h-4 bg-slate-100 dark:bg-slate-800 rounded ml-auto" /></TableCell>
                                 </TableRow>
                             ))
                         ) : households.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan="6" className="py-14 text-center text-slate-400 text-xs">
+                                <TableCell colSpan="5" className="py-14 text-center text-slate-400 text-xs">
                                     No households found.
                                 </TableCell>
                             </TableRow>
-                        ) : households.map(h => (
-                            <TableRow key={h.household_id} className="group">
-                                <TableCell>
-                                    <div className="flex items-center gap-2.5">
-                                        <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 flex-shrink-0">
-                                            <Home size={14} />
+                        ) : households.map(h => {
+                            const prog = getEvacuationProgress(h);
+                            return (
+                                <TableRow key={h.household_id} className="group">
+                                    <TableCell>
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 flex-shrink-0">
+                                                <Home size={14} />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 leading-tight">
+                                                    {h.household_name}
+                                                </p>
+                                                <p className="text-[10px] text-slate-400 font-mono leading-none">
+                                                    {h.household_id}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 leading-tight">
-                                                {h.household_name}
-                                            </p>
-                                            <p className="text-[10px] text-slate-400 font-mono leading-none">
-                                                {h.household_id}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-xs text-slate-600 dark:text-slate-300">
-                                    {h.contact_number || '—'}
-                                </TableCell>
-                                <TableCell className="text-center">
-                                    <div className="flex items-center justify-center gap-1">
-                                        <Users size={12} className="text-blue-400" />
-                                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                                            {h.current_evacuation
-                                                ? <><span className="text-green-600 dark:text-green-400 font-bold">{h.current_evacuation.evacuated_count}</span> <span className="text-slate-400">/</span> {h.member_count || h.members_count || '?'}</>
-                                                : (h.members_count || h.member_count || 0)}
+                                    </TableCell>
+                                    <TableCell className="text-xs text-slate-600 dark:text-slate-300">
+                                        {h.contact_number || '—'}
+                                    </TableCell>
+                                    <TableCell>
+                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${prog.badgeClass}`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${prog.dotClass}`} />
+                                            {prog.label}
                                         </span>
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-center">
-                                    <StatusBadge
-                                        value={getStatusLabel(h)}
-                                        color={
-                                            getStatusLabel(h) === 'Evacuated' ? "green"
-                                            : getStatusLabel(h) === 'Returned' ? "blue"
-                                            : "orange"
-                                        }
-                                    />
-                                </TableCell>
-                                <TableCell className="text-xs">
-                                    {h.current_evacuation ? (
-                                        <div>
-                                            <p className="font-medium text-slate-700 dark:text-slate-200 leading-tight">
-                                                {h.current_evacuation.center?.name || '—'}
-                                            </p>
-                                            <p className="text-[10px] text-slate-400 leading-none">
-                                                {h.current_evacuation.unit_allocation?.unit?.name || 'No unit assigned'}
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <span className="text-slate-400 text-xs">—</span>
-                                    )}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <RowMenu
-                                        onView={() => navigate(`/households/${h.household_id}`)}
-                                        onEdit={canEditHousehold(h) && h.household_id?.startsWith('NHH-') ? () => setEditingHousehold({ ...h }) : undefined}
-                                        onDelete={canDeleteHousehold && h.household_id?.startsWith('NHH-') ? () => handleDelete(h.household_id) : undefined}
-                                    />
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                                    </TableCell>
+                                    <TableCell className="text-xs">
+                                        {h.current_evacuation ? (
+                                            <div>
+                                                <p className="font-medium text-slate-700 dark:text-slate-200 leading-tight">
+                                                    {h.current_evacuation.center?.name || '—'}
+                                                </p>
+                                                <p className="text-[10px] text-slate-400 leading-none">
+                                                    {h.current_evacuation.unit_allocation?.unit?.name || 'No unit assigned'}
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <span className="text-slate-400 text-xs">—</span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <RowMenu
+                                            onView={() => navigate(`/households/${h.household_id}`)}
+                                            onEdit={canEditHousehold(h) && h.household_id?.startsWith('NHH-') ? () => setEditingHousehold({ ...h }) : undefined}
+                                            onDelete={canDeleteHousehold && h.household_id?.startsWith('NHH-') ? () => handleDelete(h.household_id) : undefined}
+                                        />
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
                     </tbody>
                 </Table>
             </TableLayout>
