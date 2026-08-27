@@ -2,6 +2,64 @@ import React from "react";
 import { createPortal } from "react-dom";
 import { UserCheck, X, AlertCircle, MapPin, CheckCircle2, Loader2 } from "lucide-react";
 
+const getEvacuationProgress = (h) => {
+    if (!h) return null;
+    const currentEvac = h.current_evacuation || h.currentEvacuation;
+    const isEvacuated = currentEvac && (currentEvac.household_status_id === 2 || currentEvac.household_status_id === "2") && !currentEvac.event?.ended_at;
+    const isReturned = currentEvac && (currentEvac.household_status_id === 6 || currentEvac.household_status_id === "6");
+
+    const evacuated = isEvacuated ? Number(currentEvac.evacuated_count || 0) : 0;
+    const total = Math.max(
+        Number(h.members_count || 0),
+        Number(h.member_count || 0),
+        Number(h.members?.length || 0),
+        evacuated
+    );
+    const pct = total > 0 ? Math.min(100, Math.round((evacuated / total) * 100)) : 0;
+
+    if (isReturned) {
+        return {
+            status: 'returned',
+            label: 'Returned Home',
+            badgeClass: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/50',
+            dotClass: 'bg-blue-500',
+        };
+    }
+
+    if (total === 0) {
+        return {
+            status: 'empty',
+            label: 'No members registered',
+            badgeClass: 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-700',
+            dotClass: 'bg-slate-400',
+        };
+    }
+
+    if (isEvacuated) {
+        if (evacuated >= total) {
+            return {
+                status: 'full',
+                label: `${evacuated} of ${total} Evacuated (100%)`,
+                badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50',
+                dotClass: 'bg-emerald-500',
+            };
+        }
+        return {
+            status: 'partial',
+            label: `${evacuated} of ${total} Evacuated (${pct}%)`,
+            badgeClass: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50',
+            dotClass: 'bg-amber-500',
+        };
+    }
+
+    return {
+        status: 'not_evacuated',
+        label: `0 of ${total} Evacuated (0%)`,
+        badgeClass: 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-700',
+        dotClass: 'bg-slate-400',
+    };
+};
+
 export default function AdmissionModal({
     assignmentModal,
     closeAdmissionModal,
@@ -23,6 +81,7 @@ export default function AdmissionModal({
     setActiveCenterId
 }) {
     if (!assignmentModal) return null;
+    const prog = getEvacuationProgress(scannedData?.household);
 
     return createPortal(
         <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9999] p-4">
@@ -67,9 +126,17 @@ export default function AdmissionModal({
 
                     {/* HOUSEHOLD SUMMARY */}
                     <div className="space-y-2">
-                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
-                            Household Summary
-                        </h4>
+                        <div className="flex items-center justify-between px-1">
+                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                Household Summary
+                            </h4>
+                            {prog && (
+                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${prog.badgeClass}`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${prog.dotClass}`} />
+                                    {prog.label}
+                                </span>
+                            )}
+                        </div>
                         
                         <div className="bg-slate-50 dark:bg-slate-800/50/50 border border-slate-205 border-l-[4px] border-l-blue-600 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-0.5">

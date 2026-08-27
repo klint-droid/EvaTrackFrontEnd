@@ -1,6 +1,68 @@
 import React from "react";
 import { Search, SearchIcon, QrCode, Loader2, AlertCircle, User, Users, MapPin } from "lucide-react";
 
+const getEvacuationProgress = (h) => {
+    const currentEvac = h.current_evacuation || h.currentEvacuation;
+    const isEvacuated = currentEvac && (currentEvac.household_status_id === 2 || currentEvac.household_status_id === "2") && !currentEvac.event?.ended_at;
+    const isReturned = currentEvac && (currentEvac.household_status_id === 6 || currentEvac.household_status_id === "6");
+
+    const evacuated = isEvacuated ? Number(currentEvac.evacuated_count || 0) : 0;
+    const total = Math.max(
+        Number(h.members_count || 0),
+        Number(h.member_count || 0),
+        Number(h.members?.length || 0),
+        evacuated
+    );
+    const pct = total > 0 ? Math.min(100, Math.round((evacuated / total) * 100)) : 0;
+
+    if (isReturned) {
+        return {
+            status: 'returned',
+            label: 'Returned Home',
+            badgeClass: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/50',
+            dotClass: 'bg-blue-500',
+            centerName: currentEvac.center?.name || currentEvac.center_id
+        };
+    }
+
+    if (total === 0) {
+        return {
+            status: 'empty',
+            label: 'No members registered',
+            badgeClass: 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-700',
+            dotClass: 'bg-slate-400',
+            centerName: null
+        };
+    }
+
+    if (isEvacuated) {
+        if (evacuated >= total) {
+            return {
+                status: 'full',
+                label: `${evacuated} of ${total} Evacuated (100%)`,
+                badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50',
+                dotClass: 'bg-emerald-500',
+                centerName: currentEvac.center?.name || currentEvac.center?.center_name || currentEvac.center_id
+            };
+        }
+        return {
+            status: 'partial',
+            label: `${evacuated} of ${total} Evacuated (${pct}%)`,
+            badgeClass: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50',
+            dotClass: 'bg-amber-500',
+            centerName: currentEvac.center?.name || currentEvac.center?.center_name || currentEvac.center_id
+        };
+    }
+
+    return {
+        status: 'not_evacuated',
+        label: `0 of ${total} Evacuated (0%)`,
+        badgeClass: 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-700',
+        dotClass: 'bg-slate-400',
+        centerName: null
+    };
+};
+
 export default function RegistrySearch({
     query,
     setQuery,
@@ -78,7 +140,12 @@ export default function RegistrySearch({
                 ) : (
                     records.map((h) => {
                         const currentEvac = h.current_evacuation || h.currentEvacuation;
-                        const isEvacuated = currentEvac && !currentEvac.event?.ended_at && (currentEvac.household_status_id === 2 || currentEvac.household_status_id === "2");
+                        const prog = getEvacuationProgress(h);
+                        const totalMembersCount = Math.max(
+                            Number(h.members_count || 0),
+                            Number(h.member_count || 0),
+                            Number(h.members?.length || 0)
+                        );
                         return (
                             <div
                                 key={h.household_id}
@@ -101,34 +168,28 @@ export default function RegistrySearch({
                                         </span>
                                         <span className="flex items-center gap-1.5">
                                             <Users size={14} className="text-slate-400" />
-                                            <span>{h.member_count || h.members?.length || 0} Members</span>
+                                            <span>{totalMembersCount} Members</span>
                                         </span>
                                     </div>
 
                                     {/* Evacuation Status Section */}
                                     <div className="mt-3.5 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2 text-xs">
-                                        {isEvacuated ? (
-                                            <>
-                                                <span className="inline-flex items-center px-2 py-0.5 bg-rose-50 text-rose-600 font-semibold rounded text-[10px] border border-rose-100 uppercase tracking-wider">
-                                                    Evacuated
-                                                </span>
-                                                <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                                                    <MapPin size={12} className="text-rose-500" />
-                                                    Evacuated to <strong className="text-slate-700 dark:text-slate-200 font-bold">{currentEvac.center?.name || currentEvac.center?.center_name || currentEvac.center_id || 'Unknown Center'}</strong>
-                                                    {currentEvac.event?.name && (
-                                                        <span className="text-slate-400 font-normal ml-1">
-                                                            (Event: {currentEvac.event.name})
-                                                        </span>
-                                                    )}
-                                                </span>
-                                            </>
+                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${prog.badgeClass}`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${prog.dotClass}`} />
+                                            {prog.label}
+                                        </span>
+                                        {prog.centerName ? (
+                                            <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                                <MapPin size={12} className="text-emerald-500" />
+                                                Sheltered at <strong className="text-slate-700 dark:text-slate-200 font-bold">{prog.centerName}</strong>
+                                                {currentEvac?.event?.name && (
+                                                    <span className="text-slate-400 font-normal ml-1">
+                                                        (Event: {currentEvac.event.name})
+                                                    </span>
+                                                )}
+                                            </span>
                                         ) : (
-                                            <>
-                                                <span className="inline-flex items-center px-2 py-0.5 bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-semibold rounded text-[10px] border border-slate-200 dark:border-slate-700 uppercase tracking-wider">
-                                                    Not Evacuated
-                                                </span>
-                                                <span className="text-slate-400">Ready for check-in</span>
-                                            </>
+                                            <span className="text-slate-400">Ready for check-in</span>
                                         )}
                                     </div>
                                 </div>
