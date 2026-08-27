@@ -13,6 +13,8 @@ import {
     Users,
     BarChart3,
     User,
+    UserCog,
+    UserCircle,
     ChevronLeft,
     ChevronRight,
     LogOut,
@@ -53,8 +55,8 @@ const Sidebar = ({ isOpen, onClose, isCollapsed: externalIsCollapsed }) => {
         { icon: Users, label: "Household Verification", path: "/household-verification", roles: ["evac_personnel", "evac_admin", "super_admin"] },
         { icon: Home, label: "Households", path: "/households", roles: ["evac_admin", "evac_personnel", "super_admin"] },
         { icon: BarChart3, label: "Reports & Analytics", path: "/analytics", roles: ["evac_personnel", "evac_admin", "super_admin"] },
-        { icon: User, label: "User Management", path: "/user-management", roles: ["evac_admin", "super_admin"] },
-        { icon: User, label: "My Profile", path: "/profile", roles: ["evac_personnel", "evac_admin", "super_admin"] },
+        { icon: UserCog, label: "User Management", path: "/user-management", roles: ["evac_admin", "super_admin"] },
+        { icon: UserCircle, label: "My Profile", path: "/profile", roles: ["evac_personnel", "evac_admin", "super_admin"] },
     ];
 
     const handleNavClick = () => {
