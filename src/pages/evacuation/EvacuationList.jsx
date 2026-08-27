@@ -29,7 +29,7 @@ export default function EvacuationList() {
   const [deleteConfirmState, setDeleteConfirmState] = useState({ isOpen: false, centerId: null, isLoading: false });
   const [saveConfirmState, setSaveConfirmState] = useState({ isOpen: false, formData: null, isLoading: false });
   const [selected, setSelected]       = useState(null);
-  const [colFilters, setColFilters]   = useState({ name: '', event: '' });
+  const [colFilters, setColFilters]   = useState({ name: '' });
   const { showAlert } = useAlert();
 
   const canCreate = isAdmin() || isSuperAdmin();
@@ -61,29 +61,30 @@ export default function EvacuationList() {
     try {
       if (selected) {
         await updateCenter(selected.evacuation_center_id, formData);
+        showAlert("Evacuation Center updated successfully!", "Success", "success");
       } else {
         await createCenter(formData);
+        showAlert("Evacuation Center created successfully!", "Success", "success");
       }
       setModalOpen(false);
+      setSelected(null);
       setSaveConfirmState({ isOpen: false, formData: null, isLoading: false });
       fetchCenters();
     } catch (err) {
-      showAlert(err.response?.data?.message || "Operation failed", "Error", "danger");
+      showAlert(err.response?.data?.message || "Failed to save evacuation center.", "Error", "danger");
       setSaveConfirmState(prev => ({ ...prev, isLoading: false }));
     }
   };
 
-  const handleDelete = async () => {
-    const { centerId } = deleteConfirmState;
-    if (!centerId) return;
-
+  const handleDelete = async (id) => {
     setDeleteConfirmState(prev => ({ ...prev, isLoading: true }));
     try {
-      await deleteCenter(centerId);
+      await deleteCenter(id);
+      showAlert("Evacuation Center deleted successfully!", "Success", "success");
       setDeleteConfirmState({ isOpen: false, centerId: null, isLoading: false });
       fetchCenters();
     } catch (err) {
-      showAlert(err.response?.data?.message || "Delete failed", "Error", "danger");
+      showAlert(err.response?.data?.message || "Failed to delete evacuation center.", "Error", "danger");
       setDeleteConfirmState(prev => ({ ...prev, isLoading: false }));
     }
   };
@@ -107,9 +108,7 @@ export default function EvacuationList() {
 
   const filteredCenters = centers.filter((c) => {
     const addrStr = (c.osm_address || "").toLowerCase();
-    const nameMatch = `${c.name} ${addrStr}`.toLowerCase().includes((colFilters.name || search).toLowerCase());
-    const eventMatch = !colFilters.event || (c.current_event?.name || "").toLowerCase().includes(colFilters.event.toLowerCase());
-    return nameMatch && eventMatch;
+    return `${c.name} ${addrStr}`.toLowerCase().includes((colFilters.name || search).toLowerCase());
   });
 
   return (
@@ -119,9 +118,9 @@ export default function EvacuationList() {
         badgeText={`${centers.length} Shelters`}
         subtitle="Real-time shelter capacity, occupancy monitoring, and evacuation unit management"
         onExport={() => {
-          const csvHeader = "Center ID,Name,Address,Occupancy,Capacity,Households,Current Event\n";
+          const csvHeader = "Center ID,Name,Address,Occupancy,Capacity,Households\n";
           const csvRows = filteredCenters
-            .map((c) => `${c.evacuation_center_id},"${c.name || ''}","${c.osm_address || ''}",${c.current_occupancy || 0},${c.capacity || 0},${c.household_count || 0},"${c.current_event?.name || 'None'}"`)
+            .map((c) => `${c.evacuation_center_id},"${c.name || ''}","${c.osm_address || ''}",${c.current_occupancy || 0},${c.capacity || 0},${c.household_count || 0}`)
             .join("\n");
           const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
           const link = document.createElement("a");
@@ -145,13 +144,6 @@ export default function EvacuationList() {
               >
                 Evacuation Center
               </TableHead>
-              <TableHead
-                filterable
-                filterValue={colFilters.event}
-                onFilterChange={(v) => setColFilters((prev) => ({ ...prev, event: v }))}
-              >
-                Active Incident / Event
-              </TableHead>
               <TableHead className="text-center">Occupancy Rate</TableHead>
               <TableHead className="text-center">Evacuees</TableHead>
               <TableHead className="text-center">Households</TableHead>
@@ -171,7 +163,6 @@ export default function EvacuationList() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell><div className="w-24 h-5 bg-slate-100 dark:bg-slate-800 rounded-full" /></TableCell>
                   <TableCell><div className="w-28 h-2.5 bg-slate-100 dark:bg-slate-800 rounded mx-auto" /></TableCell>
                   <TableCell className="text-center"><div className="w-12 h-3 bg-slate-100 dark:bg-slate-800 rounded mx-auto" /></TableCell>
                   <TableCell className="text-center"><div className="w-8 h-3 bg-slate-100 dark:bg-slate-800 rounded mx-auto" /></TableCell>
@@ -180,7 +171,7 @@ export default function EvacuationList() {
               ))
             ) : filteredCenters.length === 0 ? (
               <TableRow>
-                <TableCell colSpan="6" className="py-14 text-center text-slate-400 text-xs font-medium">
+                <TableCell colSpan="5" className="py-14 text-center text-slate-400 text-xs font-medium">
                   No evacuation centers found.
                 </TableCell>
               </TableRow>
@@ -222,17 +213,6 @@ export default function EvacuationList() {
                           </p>
                         </div>
                       </div>
-                    </TableCell>
-
-                    <TableCell>
-                      {c.current_event ? (
-                        <StatusBadge
-                          value={c.current_event.name}
-                          color="red"
-                        />
-                      ) : (
-                        <span className="text-[10px] font-semibold text-slate-400">No Active Event</span>
-                      )}
                     </TableCell>
 
                     <TableCell className="text-center min-w-[140px]">
