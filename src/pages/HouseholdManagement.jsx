@@ -177,8 +177,14 @@ export default function HouseholdManagement() {
         const currentEvac = household.current_evacuation || household.currentEvacuation;
         const isEvacuated = currentEvac && (currentEvac.household_status_id === 2 || currentEvac.household_status_id === "2");
         const isReturned = currentEvac && (currentEvac.household_status_id === 6 || currentEvac.household_status_id === "6");
-        const total = Number(household.member_count || household.members_count || 0);
+        
         const evacuated = isEvacuated ? Number(currentEvac.evacuated_count || 0) : 0;
+        // Accurately resolve total members from actual registered members count, declared count, or evacuated count
+        const total = Math.max(
+            Number(household.members_count || 0),
+            Number(household.member_count || 0),
+            evacuated
+        );
         const pct = total > 0 ? Math.min(100, Math.round((evacuated / total) * 100)) : 0;
 
         if (isReturned) {
@@ -193,8 +199,20 @@ export default function HouseholdManagement() {
             };
         }
 
+        if (total === 0) {
+            return {
+                status: 'empty',
+                label: 'No members registered',
+                evacuated: 0,
+                total: 0,
+                pct: 0,
+                badgeClass: 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-700',
+                dotClass: 'bg-slate-400',
+            };
+        }
+
         if (isEvacuated) {
-            if (evacuated >= total && total > 0) {
+            if (evacuated >= total) {
                 return {
                     status: 'full',
                     label: `${evacuated} of ${total} Evacuated (100%)`,
