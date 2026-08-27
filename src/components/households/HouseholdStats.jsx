@@ -2,9 +2,11 @@ import React from "react";
 import { Users, Phone, MapPin, AlertCircle, Building, DoorOpen, CheckCircle, XCircle } from "lucide-react";
 
 export default function HouseholdStats({ household, isEvacuated, isScattered, allActiveEvacuations, primaryEvacuation, allEvacuatedMemberIds }) {
-    const evacCount = primaryEvacuation?.evacuated_count || primaryEvacuation?.evacuated_members?.length || 0;
-    const totalMemberCount = Math.max(household.member_count || 0, household.members?.length || 0, evacCount);
-    const verifiedCount = Math.max(allEvacuatedMemberIds?.size || 0, primaryEvacuation?.evacuated_members?.length || 0, evacCount);
+    const hasRegisteredMembers = (household.members?.length || 0) > 0;
+    const verifiedCount = hasRegisteredMembers
+        ? (allEvacuatedMemberIds?.size || 0)
+        : Number(primaryEvacuation?.evacuated_count || 0);
+    const totalMemberCount = Math.max(household.member_count || 0, household.members?.length || 0, verifiedCount);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
