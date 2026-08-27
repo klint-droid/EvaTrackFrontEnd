@@ -12,6 +12,7 @@ import { updateCenter }  from "../../api/evacuation/updateCenter";
 import { isAdmin, isSuperAdmin, isPersonnel, getAssignedCenterId } from "../../utils/roles";
 
 import CenterModal  from "../../components/evacuation/CenterModal";
+import AssignPersonnelModal from "../../components/evacuation/AssignPersonnelModal";
 import AlertConfirmModal from "../../components/AlertConfirmModal";
 import { useAlert } from "../../context/AlertContext";
 
@@ -26,6 +27,7 @@ export default function EvacuationList() {
   const [loading, setLoading]         = useState(true);
   const [search, setSearch]           = useState("");
   const [modalOpen, setModalOpen]     = useState(false);
+  const [assigningCenter, setAssigningCenter] = useState(null);
   const [deleteConfirmState, setDeleteConfirmState] = useState({ isOpen: false, centerId: null, isLoading: false });
   const [saveConfirmState, setSaveConfirmState] = useState({ isOpen: false, formData: null, isLoading: false });
   const [selected, setSelected]       = useState(null);
@@ -253,6 +255,9 @@ export default function EvacuationList() {
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <RowMenu
                         onView={() => navigate(`/evacuation-centers/${c.evacuation_center_id}`)}
+                        actions={[
+                          ...(canEdit ? [{ label: "Assign Personnel", onClick: () => setAssigningCenter(c) }] : [])
+                        ]}
                         onEdit={canEdit ? () => { setSelected(c); setModalOpen(true); } : undefined}
                         onDelete={canDelete ? () => { setSelected(c); setDeleteConfirmState({ isOpen: true, centerId: c.evacuation_center_id, isLoading: false }); } : undefined}
                       />
@@ -264,6 +269,14 @@ export default function EvacuationList() {
           </tbody>
         </Table>
       </TableLayout>
+
+      {assigningCenter && (
+        <AssignPersonnelModal
+          center={assigningCenter}
+          onClose={() => setAssigningCenter(null)}
+          onSaved={fetchCenters}
+        />
+      )}
 
       <CenterModal
         isOpen={modalOpen}
