@@ -298,11 +298,6 @@ export const useVerifyHousehold = () => {
       setModalError("You must select an active evacuation center.");
       return;
     }
-    const centerObj = activeCenter || centers.find(c => (c.evacuation_center_id || c.center_id) === activeCenterId);
-    if (centerObj && !centerObj.current_event_id) {
-      setModalError("This evacuation center has no active event assigned. Please contact your admin.");
-      return;
-    }
     if (!scannedData?.household?.household_id) {
       setModalError("No household selected.");
       return;

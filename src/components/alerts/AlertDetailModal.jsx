@@ -71,8 +71,8 @@ export default function AlertDetailModal({ notifId, onClose }) {
                                 <Badge variant={statusStyle(alert.status)}>
                                     {alert.status === 'cancelled' ? 'stopped' : alert.status}
                                 </Badge>
-                                <Badge variant={urgencyStyle(alert.urgency_level?.urgency_key)}>
-                                    {alert.urgency_level?.urgency_label}
+                                <Badge variant="danger">
+                                    🚨 EVACUATION ALERT
                                 </Badge>
                                 <Badge variant="default">
                                     {alert.channel?.toUpperCase()}

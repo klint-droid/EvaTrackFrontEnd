@@ -1,8 +1,23 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { X, Wrench, HeartPulse, Shield, FileWarning, UploadCloud, Loader2, Send } from 'lucide-react';
+import { 
+  X, Wrench, HeartPulse, Shield, FileWarning, AlertTriangle, 
+  MapPin, UploadCloud, Loader2, Send 
+} from 'lucide-react';
 
-const SEVERITY_OPTIONS = ['low', 'medium', 'high', 'critical'];
+const CATEGORY_ITEMS = [
+  { value: 'facility_issue', label: 'Facility', icon: Wrench },
+  { value: 'health_issue',   label: 'Health',   icon: HeartPulse },
+  { value: 'safety_issue',   label: 'Safety',   icon: Shield },
+  { value: 'incident',       label: 'Incident', icon: FileWarning },
+];
+
+const SEVERITY_ITEMS = [
+  { value: 'low',      label: 'Low',      color: 'border-slate-300 dark:border-slate-600 text-slate-500' },
+  { value: 'medium',   label: 'Medium',   color: 'border-amber-400 bg-amber-50 dark:bg-amber-950/40 text-amber-600 font-bold' },
+  { value: 'high',     label: 'High',     color: 'border-orange-400 bg-orange-50 dark:bg-orange-950/40 text-orange-600 font-bold' },
+  { value: 'critical', label: 'Critical', color: 'border-rose-400 bg-rose-50 dark:bg-rose-950/40 text-rose-600 font-bold' },
+];
 
 export default function ReportModal({
   modalOpen, setModalOpen,
@@ -13,199 +28,169 @@ export default function ReportModal({
   if (!modalOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9999] p-4 overflow-y-auto">
-      <div
-        className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm fixed"
-        onClick={() => setModalOpen(false)}
-      />
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setModalOpen(false)} />
 
-      <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-slate-700 my-auto">
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700/60 flex items-start justify-between bg-white dark:bg-slate-900">
+      <div className="relative bg-white dark:bg-[#0f1623] border border-slate-200 dark:border-[#1e2a3d] rounded-xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-[#1e2a3d]">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
-              {editingReport ? 'Update Center Issue' : 'Report Center Issue'}
+            <h2 className="text-sm font-black text-slate-900 dark:text-white">
+              {editingReport ? 'Update Issue Report' : 'Report Center Issue'}
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Identify facility, health, or safety concerns for immediate resolution.
-            </p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Identify concerns for immediate response</p>
           </div>
-          <button
-            onClick={() => setModalOpen(false)}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:bg-slate-800 rounded-lg transition-all"
+          <button 
+            onClick={() => setModalOpen(false)} 
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1e2a3d] transition-colors"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
-        <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto text-left">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
-              Issue Category
+        {/* Body */}
+        <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+
+          {/* Category Toggle */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+              Category
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { value: 'facility_issue', label: 'Facility', icon: Wrench },
-                { value: 'health_issue', label: 'Health', icon: HeartPulse },
-                { value: 'safety_issue', label: 'Safety', icon: Shield },
-                { value: 'incident', label: 'Incident', icon: FileWarning },
-              ].map((cat) => {
-                const Icon = cat.icon;
-                const isSelected = form.category === cat.value;
+            <div className="grid grid-cols-4 gap-2">
+              {CATEGORY_ITEMS.map(({ value, label, icon: Icon }) => {
+                const isSelected = form.category === value;
                 return (
-                  <div
-                    key={cat.value}
-                    onClick={() => setForm({ ...form, category: cat.value })}
-                    className={`flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer transition-all ${
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setForm({ ...form, category: value })}
+                    className={`flex flex-col items-center py-2.5 border rounded-lg cursor-pointer transition-all text-center ${
                       isSelected
-                        ? 'border-blue-500 bg-blue-50/30 shadow-[0_0_0_1px_rgba(59,130,246,1)] text-blue-700'
-                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300'
+                        ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-black shadow-xs'
+                        : 'border-slate-200 dark:border-[#263047] text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:bg-[#1e2a3d]'
                     }`}
                   >
-                    <Icon size={22} className={isSelected ? "text-blue-600" : "text-slate-400"} strokeWidth={isSelected ? 2.5 : 2} />
-                    <span className="mt-2 text-xs font-semibold">{cat.label}</span>
-                  </div>
+                    <Icon size={16} className="mb-1" />
+                    <span className="text-[10px] font-bold">{label}</span>
+                  </button>
                 );
               })}
             </div>
           </div>
 
-          {canChooseCenter && (
+          {/* Center (Admin only) */}
+          {canChooseCenter && centers?.length > 0 && (
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                Target Center
+              <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide flex items-center gap-1">
+                <MapPin size={11} /> Evacuation Center
               </label>
               <select
                 value={form.evacuation_center_id}
                 onChange={(e) => setForm({ ...form, evacuation_center_id: e.target.value })}
-                className="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 transition-all cursor-pointer"
+                className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#1e2a3d] border border-slate-200 dark:border-[#263047] text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 transition-all cursor-pointer"
               >
-                <option value="">Select an evacuation center...</option>
-                {centers.map(center => (
-                  <option key={center.evacuation_center_id} value={center.evacuation_center_id}>
-                    {center.name}
+                <option value="">Select Center</option>
+                {centers.map(c => (
+                  <option key={c.evacuation_center_id} value={c.evacuation_center_id}>
+                    {c.name}
                   </option>
                 ))}
               </select>
             </div>
           )}
 
+          {/* Title */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
-              Severity Level
-            </label>
-            <div className="flex border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-              {SEVERITY_OPTIONS.map((sev) => {
-                const isSelected = form.severity === sev;
-                return (
-                  <div
-                    key={sev}
-                    onClick={() => setForm({ ...form, severity: sev })}
-                    className={`flex-1 text-center py-2.5 text-xs font-semibold cursor-pointer transition-colors capitalize ${
-                      isSelected
-                        ? 'bg-slate-200 text-slate-900 dark:text-slate-50 shadow-inner'
-                        : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:bg-slate-800/50'
-                    } ${sev !== SEVERITY_OPTIONS[0] ? 'border-l border-slate-200 dark:border-slate-700' : ''}`}
-                  >
-                    {sev}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
+            <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
               Issue Title
             </label>
             <input
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="Brief summary of the issue..."
-              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 transition-all"
+              placeholder="e.g. Water pipe leakage in Hall B"
+              className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#1e2a3d] border border-slate-200 dark:border-[#263047] text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-all"
             />
           </div>
 
+          {/* Description */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
-              Detailed Description
+            <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+              Description
             </label>
             <textarea
               rows="3"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Provide specific context, individuals involved, or immediate needs..."
-              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 resize-none transition-all"
+              placeholder="Provide specific details or immediate assistance required..."
+              className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#1e2a3d] border border-slate-200 dark:border-[#263047] text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 resize-none transition-all"
             />
           </div>
 
+          {/* Photo Attachment */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
-              Attach Photo (Optional)
+            <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+              Photo / Document (Optional)
             </label>
-            <div 
-              className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 dark:bg-slate-800/50 transition-colors relative"
-              onClick={() => document.getElementById('issue-attachment')?.click()}
+            <div
+              onClick={() => document.getElementById('report-photo-input')?.click()}
+              className="border border-dashed border-slate-300 dark:border-[#263047] rounded-lg p-3 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-[#1e2a3d] transition-colors"
             >
-              <input 
-                id="issue-attachment"
-                type="file" 
-                className="hidden" 
-                accept=".jpg,.jpeg,.png,.pdf" 
+              <input
+                id="report-photo-input"
+                type="file"
+                className="hidden"
+                accept=".jpg,.jpeg,.png,.pdf"
                 onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setForm({ ...form, attachment: file });
-                  }
+                  const f = e.target.files?.[0];
+                  if (f) setForm({ ...form, attachment: f });
                 }}
               />
               {form.attachment ? (
-                <div className="flex flex-col items-center">
-                  <div className="p-3 bg-blue-50 text-blue-600 rounded-full mb-2">
-                    <UploadCloud size={24} />
-                  </div>
-                  <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{form.attachment.name}</p>
-                  <button 
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-blue-600 dark:text-blue-400 truncate max-w-[240px]">
+                    {form.attachment.name}
+                  </span>
+                  <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       setForm({ ...form, attachment: null });
-                      const input = document.getElementById('issue-attachment');
-                      if (input) input.value = '';
+                      const inp = document.getElementById('report-photo-input');
+                      if (inp) inp.value = '';
                     }}
-                    className="text-xs font-medium text-red-500 mt-2 hover:underline"
+                    className="text-rose-500 hover:underline font-bold text-[10px]"
                   >
-                    Remove File
+                    Remove
                   </button>
                 </div>
               ) : (
-                <>
-                  <UploadCloud size={28} className="text-slate-400 mb-3" />
-                  <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">Click to upload or drag and drop</p>
-                  <p className="text-[10px] text-slate-400 mt-1 font-bold tracking-widest uppercase">PNG, JPG, or PDF up to 5MB</p>
-                </>
+                <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
+                  <UploadCloud size={16} />
+                  <span>Click to attach photo or file</span>
+                </div>
               )}
             </div>
           </div>
         </div>
 
-        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2.5 px-5 py-3.5 border-t border-slate-100 dark:border-[#1e2a3d]">
           <button
+            type="button"
             onClick={() => setModalOpen(false)}
-            className="px-5 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:text-slate-50 transition-colors bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm dark:shadow-none"
+            className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-[#1e2a3d] hover:bg-slate-200 dark:hover:bg-[#263047] rounded-lg transition-all"
           >
             Cancel
           </button>
-
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={saving}
-            className="px-6 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-lg shadow-sm dark:shadow-none hover:bg-slate-800 transition-all disabled:opacity-50 flex items-center gap-2"
+            className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {saving ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <Send size={16} />
-            )}
-            {editingReport ? 'Save Changes' : 'Submit Report'}
+            {saving ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+            {editingReport ? 'Save Changes' : 'Submit Issue'}
           </button>
         </div>
       </div>

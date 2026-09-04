@@ -101,11 +101,23 @@ const MapBoundsManager = ({ centers }) => {
   useEffect(() => {
     if (!centers || centers.length === 0) return;
 
-    const validCenters = centers.filter(c => c.latitude && c.longitude);
+    const validCenters = centers.filter(c => {
+      const lat = parseFloat(c.latitude);
+      const lng = parseFloat(c.longitude);
+      return !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
+    });
+
     if (validCenters.length === 0) return;
 
+    if (validCenters.length === 1) {
+      const lat = parseFloat(validCenters[0].latitude);
+      const lng = parseFloat(validCenters[0].longitude);
+      map.setView([lat, lng], 15, { animate: true });
+      return;
+    }
+
     const bounds = L.latLngBounds(validCenters.map(c => [parseFloat(c.latitude), parseFloat(c.longitude)]));
-    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+    map.fitBounds(bounds, { padding: [35, 35], maxZoom: 16, animate: true });
   }, [centers, map]);
 
   return null;
@@ -258,14 +270,15 @@ const Landing = () => {
                 <div className="relative h-[340px] sm:h-[380px] z-10 bg-[#0F1A2E]">
                   <MapContainer
                     center={[10.3157, 123.8854]}
-                    zoom={12}
-                    scrollWheelZoom={false}
+                    zoom={14}
+                    scrollWheelZoom={true}
                     className="h-full w-full bg-[#0F1A2E]"
                     zoomControl={false}
                   >
                     <TileLayer
-                      url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                      attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+                      url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+                      attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
+                      maxZoom={16}
                     />
                     <MapBoundsManager centers={centers} />
                     {centers.map((center) => {

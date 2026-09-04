@@ -42,7 +42,14 @@ export default function CreateAlertModal({ onClose, onSent }) {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        getUrgencyLevels().then(res => setUrgencyLevels(res.data || []));
+        getUrgencyLevels().then(res => {
+            const list = res.data || [];
+            setUrgencyLevels(list);
+            const crit = list.find(u => u.urgency_key === 'critical') || list[0];
+            if (crit) {
+                setForm(prev => ({ ...prev, urgency_level_id: crit.urgency_id }));
+            }
+        });
         getCenters().then(res => setCenters(Array.isArray(res) ? res : (res?.data ?? [])));
         getEvents().then(res => setEvents((res.data || []).filter(e => !e.ended_at)));
     }, []);
@@ -54,8 +61,8 @@ export default function CreateAlertModal({ onClose, onSent }) {
     ];
 
     const handleSubmit = async () => {
-        if (!form.message || !form.urgency_level_id) {
-            setError('Message and urgency level are required.');
+        if (!form.message) {
+            setError('Alert message is required.');
             return;
         }
         
@@ -63,13 +70,18 @@ export default function CreateAlertModal({ onClose, onSent }) {
         if (channels.sms && !channels.push) channelVal = 'sms';
         if (!channels.sms && channels.push) channelVal = 'push';
 
+        const defaultUrgencyId = form.urgency_level_id 
+            || urgencyLevels.find(u => u.urgency_key === 'critical')?.urgency_id 
+            || urgencyLevels[0]?.urgency_id 
+            || 1;
+
         setLoading(true);
         setError(null);
         try {
             const promises = selectedTargets.map(target => {
                 const payload = { 
                     message: form.message,
-                    urgency_level_id: form.urgency_level_id,
+                    urgency_level_id: defaultUrgencyId,
                     channel: channelVal,
                     target_filter: 'all', 
                     evacuation_center_id: target.type === 'center' ? target.id : undefined,
@@ -155,36 +167,6 @@ export default function CreateAlertModal({ onClose, onSent }) {
                                 {error}
                             </div>
                         )}
-
-                        {/* Urgency */}
-                        <div className="space-y-3">
-                            <label className="text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-1">
-                                Urgency Level <span className="text-red-500">*</span>
-                            </label>
-                            <div className="grid grid-cols-4 gap-3">
-                                {urgencyLevels.map(u => {
-                                    const isSelected = form.urgency_level_id === u.urgency_id;
-                                    const conf = URGENCY_CONFIG[u.urgency_key] || URGENCY_CONFIG.low;
-                                    const IconObj = conf.icon;
-                                    return (
-                                        <button
-                                            key={u.urgency_id}
-                                            onClick={() => setForm({ ...form, urgency_level_id: u.urgency_id })}
-                                            className={`flex flex-col items-center justify-center py-4 rounded-xl border-2 transition-all active:scale-[0.98] ${
-                                                isSelected 
-                                                    ? `${conf.activeBorder} ${conf.activeBg}` 
-                                                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900'
-                                            }`}
-                                        >
-                                            <IconObj size={24} className={isSelected ? conf.text : 'text-slate-400'} strokeWidth={2.5} />
-                                            <span className={`text-[12px] font-bold mt-2 ${isSelected ? conf.text : 'text-slate-600 dark:text-slate-300'}`}>
-                                                {u.urgency_label}
-                                            </span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
 
                         {/* Message */}
                         <div className="space-y-3">
@@ -330,7 +312,7 @@ export default function CreateAlertModal({ onClose, onSent }) {
                         </button>
                         <button
                             onClick={handleSubmit}
-                            disabled={loading || !form.message || !form.urgency_level_id}
+                            disabled={loading || !form.message}
                             className="px-6 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl shadow-md dark:shadow-none shadow-blue-600/20 hover:bg-blue-700 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Shield size={16} strokeWidth={2.5} />

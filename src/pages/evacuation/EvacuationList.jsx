@@ -79,9 +79,12 @@ export default function EvacuationList() {
   };
 
   const handleDelete = async (id) => {
+    const targetId = typeof id === "string" || typeof id === "number" ? id : deleteConfirmState.centerId;
+    if (!targetId) return;
+
     setDeleteConfirmState(prev => ({ ...prev, isLoading: true }));
     try {
-      await deleteCenter(id);
+      await deleteCenter(targetId);
       showAlert("Evacuation Center deleted successfully!", "Success", "success");
       setDeleteConfirmState({ isOpen: false, centerId: null, isLoading: false });
       fetchCenters();
@@ -292,7 +295,7 @@ export default function EvacuationList() {
         cancelText="Cancel"
         type="danger"
         isLoading={deleteConfirmState.isLoading}
-        onConfirm={handleDelete}
+        onConfirm={() => handleDelete(deleteConfirmState.centerId)}
         onClose={() => setDeleteConfirmState({ isOpen: false, centerId: null, isLoading: false })}
       />
       <AlertConfirmModal

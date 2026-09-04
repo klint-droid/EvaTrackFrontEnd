@@ -4,6 +4,7 @@ import AnimatedFAB from "../components/ui/AnimatedFAB";
 import AlertConfirmModal from "../components/AlertConfirmModal";
 import UserStats from "../components/userManagement/UserStats";
 import UserTable from "../components/userManagement/UserTable";
+import UserDetailsDrawer from "../components/userManagement/UserDetailsDrawer";
 import UserModal from "../components/userManagement/UserModal";
 import { useUserManagement } from "../hooks/useUserManagement";
 import { TableLayout } from "../components/ui/TableLayout";
@@ -13,6 +14,7 @@ import { Pagination } from "../components/ui/Pagination";
 
 const UserManagement = () => {
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [viewingUser, setViewingUser] = useState(null);
   
   const {
     users, centers, pagination,
@@ -45,6 +47,11 @@ const UserManagement = () => {
     
     totalUsers, personnelCount, adminCount, assignedCount
   } = useUserManagement();
+
+  // Keep drawer in sync: re-derive from live users list after any update
+  const viewingUserFresh = viewingUser
+    ? (users.find((u) => u.user_id === viewingUser.user_id) ?? viewingUser)
+    : null;
 
 
   const stats = (
@@ -126,6 +133,7 @@ const UserManagement = () => {
         onAdd={(isSuperAdminUser || isAdminUser) ? () => setShowCreateModal(true) : undefined}
         addLabel="Add Personnel"
         stats={stats}
+        tabs={tabs}
         pagination={paginationComponent}
       >
 
@@ -147,8 +155,27 @@ const UserManagement = () => {
           getRoleLabel={getRoleLabel}
           selectedUsers={selectedUsers}
           setSelectedUsers={setSelectedUsers}
+          onView={(user) => setViewingUser(user)}
         />
       </TableLayout>
+
+      {/* ─── Details Drawer ─── */}
+      {viewingUserFresh && (
+        <UserDetailsDrawer
+          user={viewingUserFresh}
+          centers={centers}
+          onClose={() => setViewingUser(null)}
+          canEdit={canEdit}
+          canDelete={canDelete}
+          canAssign={canAssign}
+          onEdit={(user) => { setViewingUser(null); setEditingUser(user); }}
+          onDelete={(id) => { setViewingUser(null); triggerDeleteUser(id); }}
+          triggerAssignCenter={triggerAssignCenter}
+          assigningUserId={assigningUserId}
+          getRoleLabel={getRoleLabel}
+          formatPhone={formatPhone}
+        />
+      )}
 
       <UserModal 
         isOpen={showCreateModal}

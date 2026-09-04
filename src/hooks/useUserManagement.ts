@@ -19,6 +19,12 @@ interface UserFormState {
 }
 
 export const useUserManagement = () => {
+  // Normalize assigned_center_id to string so <Select> option values match
+  const normalizeUser = (u: any) => ({
+    ...u,
+    assigned_center_id: u.assigned_center_id != null ? String(u.assigned_center_id) : null,
+  });
+
   const [users, setUsers] = useState<any[]>([]);
   const [centers, setCenters] = useState<any[]>([]);
   const [pagination, setPagination] = useState<any>({});
@@ -80,7 +86,7 @@ export const useUserManagement = () => {
     try {
       setLoading(true);
       const res: any = await getUsers(page, searchQuery, role);
-      setUsers(res.data);
+      setUsers((res.data || []).map(normalizeUser));
       setPagination(res);
     } catch (err) {
       console.error(err);
@@ -135,7 +141,7 @@ export const useUserManagement = () => {
       }
 
       if(pagination.current_page === 1) {
-        setUsers((prev) => [createdUser, ...prev]);
+        setUsers((prev) => [normalizeUser(createdUser), ...prev]);
       }
       setShowCreateModal(false);
       setNewUser({ first_name: "", last_name: "", email: "", password: "", role: "evac_personnel", contact_number: "", assigned_center_id: "" });
@@ -187,7 +193,7 @@ export const useUserManagement = () => {
       }
 
       setUsers((prev) =>
-        prev.map(u => u.user_id === updatedUser.user_id ? updatedUser : u)
+        prev.map(u => u.user_id === updatedUser.user_id ? normalizeUser(updatedUser) : u)
       );
 
       setEditingUser(null);
@@ -229,10 +235,10 @@ export const useUserManagement = () => {
     setAssigningUserId(userId);
     
     try{
-      const res = await assignCenter(userId, centerId || null);
+      const res = await assignCenter(userId, (centerId !== "" && centerId !== null && centerId !== undefined) ? centerId : null);
       const updatedUser = res.data;
       setUsers(prev => prev.map(
-          u => u.user_id === userId ? updatedUser : u
+          u => u.user_id === userId ? normalizeUser(updatedUser) : u
         )
       );
       setAssignConfirmState({ isOpen: false, userId: null, centerId: null, isLoading: false });

@@ -1,17 +1,22 @@
-import { AlertCircle, CheckCircle2, Plus, Inbox } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import RequestsSummaryCards from '../components/resourceRequests/RequestsSummaryCards';
-import RequestsTable from '../components/resourceRequests/RequestsTable';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  AlertCircle, CheckCircle2, Plus, Inbox, Kanban, List as ListIcon,
+  Search, SlidersHorizontal, Building2, Droplet, Utensils, HeartPulse, 
+  Download, RefreshCw, AlertTriangle, MapPin, Layers, ChevronDown, X
+} from 'lucide-react';
+import JiraListView from '../components/resourceRequests/JiraListView';
 import RequestModal from '../components/resourceRequests/RequestModal';
+import KanbanBoard from '../components/resourceRequests/KanbanBoard';
 import { useResourceRequests } from '../hooks/useResourceRequests';
 import ViewRequestDetailsModal from '../components/resourceRequests/ViewRequestDetailsModal';
 import IncomingRequestsModal from '../components/resourceRequests/IncomingRequestsModal';
-import { TableLayout } from '../components/ui/TableLayout';
-import { TableTabs } from '../components/ui/TableTabs';
-import { Pagination } from '../components/ui/Pagination';
 import AnimatedFAB from '../components/ui/AnimatedFAB';
+import { useUserStore } from '../store/useUserStore';
 
 export default function ResourceRequests() {
+  const user = useUserStore((state) => state.user);
+  const isPersonnel = useUserStore((state) => state.isPersonnel());
+
   const {
     requests,
     urgencyLevels,
@@ -35,36 +40,115 @@ export default function ResourceRequests() {
     viewingRequest, setViewingRequest
   } = useResourceRequests();
 
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('rr_view_mode') || 'kanban');
+  const [selectedCenterFilter, setSelectedCenterFilter] = useState('all');
+  const [quickFilter, setQuickFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [incomingModalOpen, setIncomingModalOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [centerOpen, setCenterOpen] = useState(false);
+  const [selectedUserFilter, setSelectedUserFilter] = useState('all');
+  const filterRef = useRef(null);
+  const centerRef = useRef(null);
   const perPage = 10;
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (filterRef.current && !filterRef.current.contains(e.target)) setFilterOpen(false);
+      if (centerRef.current && !centerRef.current.contains(e.target)) setCenterOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Unique requesters for avatar bubbles
+  const uniqueRequesters = Array.from(
+    new Map(
+      displayedRequests
+        .filter(r => r.requester?.name || r.requester?.first_name)
+        .map(r => [
+          r.requester?.user_id || r.requested_by,
+          {
+            id: String(r.requester?.user_id || r.requested_by),
+            name: r.requester?.name || `${r.requester?.first_name || ''} ${r.requester?.last_name || ''}`.trim(),
+            initials: (r.requester?.first_name?.[0] || r.requester?.name?.[0] || 'U').toUpperCase()
+          }
+        ])
+    ).values()
+  );
+
+  const AVATAR_COLORS = [
+    'bg-cyan-600', 'bg-blue-600', 'bg-indigo-600',
+    'bg-purple-600', 'bg-emerald-600', 'bg-amber-600'
+  ];
+
+  useEffect(() => {
+    localStorage.setItem('rr_view_mode', viewMode);
+  }, [viewMode]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, typeFilter, search, selectedEventId]);
+  }, [statusFilter, typeFilter, search, selectedEventId, selectedCenterFilter, quickFilter]);
 
-  const totalEntries = displayedRequests.length;
+  // Center-filtered, User-filtered, and Quick-filtered requests
+  const filteredRequests = displayedRequests.filter((req) => {
+    // Search filter
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      const title = (req.resource_type || '').toLowerCase();
+      const desc = (req.description || '').toLowerCase();
+      const id = (req.request_id || '').toLowerCase();
+      const centerName = (req.center?.name || '').toLowerCase();
+      if (!title.includes(q) && !desc.includes(q) && !id.includes(q) && !centerName.includes(q)) {
+        return false;
+      }
+    }
+
+    // Center Filter
+    if (selectedCenterFilter !== 'all') {
+      const centerId = req.evacuation_center_id || req.center?.evacuation_center_id;
+      if (String(centerId) !== String(selectedCenterFilter)) return false;
+    }
+
+    // User / Requester Filter
+    if (selectedUserFilter !== 'all') {
+      const uid = String(req.requester?.user_id || req.requested_by || '');
+      if (uid !== selectedUserFilter) return false;
+    }
+
+    // Quick Filters
+    if (quickFilter === 'critical') return req.urgency_level?.urgency_key === 'critical';
+    if (quickFilter === 'high') return req.urgency_level?.urgency_key === 'high' || req.urgency_level?.urgency_key === 'critical';
+    if (quickFilter === 'water') return (req.resource_type || '').toLowerCase().includes('water');
+    if (quickFilter === 'food') return (req.resource_type || '').toLowerCase().includes('food') || (req.resource_type || '').toLowerCase().includes('rice');
+    if (quickFilter === 'medical') return (req.resource_type || '').toLowerCase().includes('med') || (req.resource_type || '').toLowerCase().includes('aid');
+
+    return true;
+  });
+
+  const totalEntries = filteredRequests.length;
   const totalPages = Math.ceil(totalEntries / perPage) || 1;
-  const paginatedRequests = displayedRequests.slice((currentPage - 1) * perPage, currentPage * perPage);
+  const paginatedRequests = filteredRequests.slice((currentPage - 1) * perPage, currentPage * perPage);
 
   const getStatusClass = (statusKey) => {
     switch (statusKey) {
-      case 'pending':      return 'bg-amber-50 text-amber-700 border-amber-100';
-      case 'acknowledged': return 'bg-blue-50 text-blue-700 border-blue-100';
-      case 'approved':     return 'bg-indigo-50 text-indigo-700 border-indigo-100';
-      case 'rejected':     return 'bg-red-50 text-red-700 border-red-100';
-      case 'delivered':    return 'bg-green-50 text-green-700 border-green-100';
-      default:             return 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-800';
+      case 'pending':      return 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800';
+      case 'acknowledged': return 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800';
+      case 'approved':     return 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800';
+      case 'rejected':     return 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800';
+      case 'delivered':    return 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
+      default:             return 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800';
     }
   };
 
   const getUrgencyClass = (key) => {
     switch (key) {
-      case 'critical': return 'bg-red-50 text-red-700 border-red-100';
-      case 'high':     return 'bg-orange-50 text-orange-700 border-orange-100';
-      case 'medium':   return 'bg-amber-50 text-amber-700 border-amber-100';
-      case 'low':      return 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-100 dark:border-slate-800';
-      default:         return 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-100 dark:border-slate-800';
+      case 'critical': return 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800';
+      case 'high':     return 'bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800';
+      case 'medium':   return 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800';
+      case 'low':      return 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800';
+      default:         return 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800';
     }
   };
 
@@ -73,126 +157,315 @@ export default function ResourceRequests() {
     return new Date(value).toLocaleString();
   };
 
-  const approvedCount = displayedRequests.filter(r => r.status?.status_key === 'approved' || r.status === 'approved').length;
-  const rejectedCount = displayedRequests.filter(r => r.status?.status_key === 'rejected' || r.status === 'rejected').length;
+  const approvedCount = filteredRequests.filter(r => r.status?.status_key === 'approved' || r.status === 'approved').length;
+  const rejectedCount = filteredRequests.filter(r => r.status?.status_key === 'rejected' || r.status === 'rejected').length;
 
-  const stats = (
-    <RequestsSummaryCards
-      pendingCount={pendingCount}
-      acknowledgedCount={acknowledgedCount}
-      approvedCount={approvedCount}
-      rejectedCount={rejectedCount}
-      deliveredCount={deliveredCount}
-      criticalCount={criticalCount}
-      highCount={highCount}
-      mediumCount={mediumCount}
-      lowCount={lowCount}
-      loading={loading}
-      requests={requests}
-    />
-  );
-
-  const tabs = (
-    <TableTabs
-      tabs={[
-        { key: "all", label: "All" },
-        { key: "pending", label: "Pending" },
-        { key: "acknowledged", label: "Acknowledged" },
-        { key: "approved", label: "Approved" },
-        { key: "rejected", label: "Rejected" },
-        { key: "delivered", label: "Delivered" },
-      ]}
-      activeTab={statusFilter || "all"}
-      onChange={(key) => {
-        setStatusFilter(key === "all" ? "" : key);
-      }}
-    />
-  );
+  const handleExportCSV = () => {
+    const csvHeader = "Request ID,Resource,Type,Quantity,Urgency,Status,Center,Created At\n";
+    const csvRows = filteredRequests
+      .map((r) => `${r.request_id},"${r.resource_type || ''}",${r.request_type || ''},${r.quantity || 0},${r.urgency_level?.urgency_label || ''},${r.status?.status_label || ''},"${r.center?.name || ''}","${r.created_at || ''}"`)
+      .join("\n");
+    const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", "resource_requests.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
-    <div className="min-h-screen font-sans text-left pb-24 relative">
+    <div className="min-h-screen font-sans text-left pb-24 relative space-y-6">
+      
+      {/* Toast / Notification Alert */}
       {message && (
-        <div className={`flex items-center gap-3 p-4 rounded-2xl border mb-4 ${
+        <div className={`flex items-center gap-3 p-4 rounded-2xl border animate-in zoom-in-95 duration-200 ${
           message.type === 'error'
-            ? 'bg-red-50 border-red-100 text-red-700'
-            : 'bg-green-50 border-green-100 text-green-700'
+            ? 'bg-rose-50 border-rose-100 text-rose-700 dark:bg-rose-950/60 dark:border-rose-900/60 dark:text-rose-300'
+            : 'bg-emerald-50 border-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:border-emerald-900/60 dark:text-emerald-300'
         }`}>
           {message.type === 'error' ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
           <p className="text-xs font-black uppercase tracking-wide">{message.text}</p>
         </div>
       )}
 
-      <TableLayout
-        title="Resource Requests"
-        badgeText={`${totalEntries} Requests`}
-        subtitle="Track incoming supply and personnel fulfillment requests"
-        actions={
-          <button
-            type="button"
-            onClick={() => setIncomingModalOpen(true)}
-            className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-all shadow-xs"
-            title="Open incoming requests modal list"
-          >
-            <Inbox size={15} className="text-amber-500 animate-pulse" />
-            <span>Incoming Requests</span>
-            {pendingCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white">
-                {pendingCount}
+      {/* ─── Top Header Card with View Mode Toggle ─── */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          
+          {/* Title & Subtitle */}
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                Resource Requests
+              </h1>
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                {totalEntries} Total
               </span>
+            </div>
+
+            {/* Subtitle & Role Scope info */}
+            <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
+              {isPersonnel && user?.assigned_center ? (
+                <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-bold">
+                  <MapPin size={13} />
+                  Station: {user.assigned_center.name}
+                </span>
+              ) : (
+                <span>Track, triage, and fulfill emergency supply requests across evacuation centers</span>
+              )}
+            </div>
+          </div>
+
+          {/* Top Actions: Incoming Requests + View Toggle + New Request */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            
+            {/* View Mode Switcher: Kanban vs Table */}
+            <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setViewMode('kanban')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  viewMode === 'kanban'
+                    ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <Kanban size={14} />
+                <span>Resource Board</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  viewMode === 'table'
+                    ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <ListIcon size={14} />
+                <span>List</span>
+              </button>
+            </div>
+
+
+
+            {/* Export CSV Button */}
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition-all"
+              title="Export CSV"
+            >
+              <Download size={14} />
+              <span className="hidden md:inline">Export</span>
+            </button>
+
+            {/* New Request Button */}
+            {canCreate && (
+              <button
+                type="button"
+                onClick={openModal}
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 transition-all active:scale-[0.98]"
+              >
+                <Plus size={15} />
+                <span>New Request</span>
+              </button>
             )}
-          </button>
-        }
-        onExport={() => {
-          const csvHeader = "Request ID,Resource,Type,Quantity,Urgency,Status,Center,Created At\n";
-          const csvRows = displayedRequests
-            .map((r) => `${r.request_id},"${r.resource_type || ''}",${r.request_type || ''},${r.quantity || 0},${r.urgency_level?.urgency_label || ''},${r.status?.status_label || ''},"${r.center?.name || ''}","${r.created_at || ''}"`)
-            .join("\n");
-          const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
-          const link = document.createElement("a");
-          link.href = URL.createObjectURL(blob);
-          link.setAttribute("download", "resource_requests.csv");
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }}
-        onAdd={canCreate ? openModal : undefined}
-        addLabel="New Request"
-        stats={stats}
-        tabs={tabs}
-        pagination={
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalEntries={totalEntries}
-            perPage={perPage}
-            onPageChange={(page) => setCurrentPage(page)}
+          </div>
+        </div>
+
+        {/* ─── Jira-Style Filter Toolbar ─── */}
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
+
+          {/* Search Input */}
+          <div className="relative">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search board"
+              className="h-8 pl-8 pr-8 text-xs rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 w-40 sm:w-52 transition-all"
+            />
+            {search && (
+              <button type="button" onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                <X size={12} />
+              </button>
+            )}
+          </div>
+
+          {/* Requester Avatar Bubbles */}
+          {uniqueRequesters.length > 0 && (
+            <div className="flex items-center -space-x-1.5">
+              <button
+                type="button"
+                onClick={() => setSelectedUserFilter('all')}
+                title="All Requesters"
+                className={`w-7 h-7 rounded-full text-[9px] font-black border-2 z-10 flex items-center justify-center transition-all ${
+                  selectedUserFilter === 'all'
+                    ? 'border-blue-500 bg-blue-600 text-white scale-105'
+                    : 'border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:scale-105'
+                }`}
+              >
+                ALL
+              </button>
+              {uniqueRequesters.slice(0, 5).map((r, idx) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setSelectedUserFilter(selectedUserFilter === r.id ? 'all' : r.id)}
+                  title={`Filter by: ${r.name}`}
+                  className={`w-7 h-7 rounded-full text-[10px] font-black border-2 flex items-center justify-center text-white transition-all ${AVATAR_COLORS[idx % AVATAR_COLORS.length]} ${
+                    selectedUserFilter === r.id
+                      ? 'border-blue-400 scale-110 z-20 shadow-md'
+                      : 'border-white dark:border-slate-900 opacity-90 hover:opacity-100 hover:scale-105'
+                  }`}
+                >
+                  {r.initials}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Filter Dropdown Button */}
+          <div className="relative" ref={filterRef}>
+            <button
+              type="button"
+              onClick={() => setFilterOpen(prev => !prev)}
+              className={`h-8 inline-flex items-center gap-1.5 px-3 text-xs font-bold rounded-lg border transition-all ${
+                quickFilter !== 'all'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400'
+                  : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
+            >
+              <SlidersHorizontal size={13} />
+              <span>Filter</span>
+              {quickFilter !== 'all' && (
+                <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center">1</span>
+              )}
+              <ChevronDown size={12} className={`transition-transform ${filterOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Filter Dropdown Panel */}
+            {filterOpen && (
+              <div className="absolute top-full left-0 mt-1.5 w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 p-2 animate-in fade-in zoom-in-95 duration-150">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2 py-1 mb-1">By Category</p>
+
+                {[{key:'all', label:'All Requests', icon:null, cls:'text-slate-600 dark:text-slate-300'},
+                  {key:'water',   label:'💧 Water',        icon:null, cls:'text-sky-600 dark:text-sky-400'},
+                  {key:'food',    label:'🍚 Food',         icon:null, cls:'text-amber-600 dark:text-amber-400'},
+                  {key:'medical', label:'🩹 Medical',      icon:null, cls:'text-rose-600 dark:text-rose-400'},
+                ].map(opt => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => { setQuickFilter(opt.key); setFilterOpen(false); }}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg transition-all text-left ${
+                      quickFilter === opt.key
+                        ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 font-black'
+                        : `hover:bg-slate-50 dark:hover:bg-slate-800 ${opt.cls}`
+                    }`}
+                  >
+                    <span>{opt.label}</span>
+                    {quickFilter === opt.key && <span className="ml-auto text-blue-500">✓</span>}
+                  </button>
+                ))}
+
+              </div>
+            )}
+          </div>
+
+          {/* By Center Dropdown Button */}
+          {canUpdateStatus && centers.length > 0 && (
+            <div className="relative" ref={centerRef}>
+              <button
+                type="button"
+                onClick={() => setCenterOpen(prev => !prev)}
+                className={`h-8 inline-flex items-center gap-1.5 px-3 text-xs font-bold rounded-lg border transition-all ${
+                  selectedCenterFilter !== 'all'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400'
+                    : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
+                title="Filter by evacuation center"
+              >
+                <Building2 size={13} />
+                <span>By Center</span>
+                {selectedCenterFilter !== 'all' && (
+                  <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center">1</span>
+                )}
+                <ChevronDown size={12} className={`transition-transform ${centerOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {centerOpen && (
+                <div className="absolute top-full left-0 mt-1.5 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 p-2 animate-in fade-in zoom-in-95 duration-150">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2 py-1 mb-1">Evacuation Center</p>
+                  {[{evacuation_center_id: 'all', name: 'All Centers'}, ...centers].map(c => (
+                    <button
+                      key={c.evacuation_center_id}
+                      type="button"
+                      onClick={() => { setSelectedCenterFilter(String(c.evacuation_center_id)); setCenterOpen(false); }}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg transition-all text-left ${
+                        String(selectedCenterFilter) === String(c.evacuation_center_id)
+                          ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 font-black'
+                          : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      <MapPin size={12} className="text-slate-400 flex-shrink-0" />
+                      <span className="truncate">{c.name}</span>
+                      {String(selectedCenterFilter) === String(c.evacuation_center_id) && <span className="ml-auto text-blue-500">✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Active filter badge */}
+          {(quickFilter !== 'all' || selectedUserFilter !== 'all' || selectedCenterFilter !== 'all') && (
+            <button
+              type="button"
+              onClick={() => { setQuickFilter('all'); setSelectedUserFilter('all'); setSelectedCenterFilter('all'); setSearch(''); }}
+              className="h-8 inline-flex items-center gap-1 px-2.5 text-xs font-bold rounded-lg border border-rose-200 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 transition-all"
+            >
+              <X size={12} />
+              <span>Clear filters</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+
+
+      {/* ─── MAIN CONTENT VIEW (KANBAN BOARD OR DATA TABLE) ─── */}
+      {viewMode === 'kanban' ? (
+        <div className="animate-in fade-in duration-200">
+          <KanbanBoard 
+            requests={filteredRequests}
+            loading={loading}
+            canUpdateStatus={canUpdateStatus}
+            canCreate={canCreate}
+            openModal={openModal}
+            handleStatusChange={handleStatusChange}
+            handleDelete={handleDelete}
+            getUrgencyClass={getUrgencyClass}
+            setViewingRequest={setViewingRequest}
           />
-        }
-      >
-        <RequestsTable 
-          search={search}
-          setSearch={setSearch}
-          fetchRequests={fetchRequests}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          showFilters={showFilters}
-          setShowFilters={setShowFilters}
-          typeFilter={typeFilter}
-          setTypeFilter={setTypeFilter}
-          selectedEventId={selectedEventId}
-          setSelectedEventId={setSelectedEventId}
-          activeEvents={activeEvents}
-          loading={loading}
-          displayedRequests={paginatedRequests}
-          canUpdateStatus={canUpdateStatus}
-          handleStatusChange={handleStatusChange}
-          getStatusClass={getStatusClass}
-          getUrgencyClass={getUrgencyClass}
-          formatDateTime={formatDateTime}
-          handleDelete={handleDelete}
-          setViewingRequest={setViewingRequest}
-        />
-      </TableLayout>
+        </div>
+      ) : (
+        <div className="animate-in fade-in duration-200">
+          <JiraListView
+            requests={filteredRequests}
+            loading={loading}
+            canUpdateStatus={canUpdateStatus}
+            handleStatusChange={handleStatusChange}
+            handleDelete={handleDelete}
+            getUrgencyClass={getUrgencyClass}
+            getStatusClass={getStatusClass}
+            setViewingRequest={setViewingRequest}
+          />
+        </div>
+      )}
 
       {/* ─── Incoming Requests List Modal ─── */}
       <IncomingRequestsModal
@@ -227,9 +500,9 @@ export default function ResourceRequests() {
         getStatusClass={getStatusClass}
         canUpdateStatus={canUpdateStatus}
         handleStatusChange={handleStatusChange}
+        handleDelete={handleDelete}
       />
 
-      {/* ─── Floating Action Button ─── */}
       {canCreate && (
         <AnimatedFAB onClick={openModal} icon={Plus} label="New Request" />
       )}

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Phone, AlertCircle } from "lucide-react";
+import { Phone, AlertCircle, MapPin } from "lucide-react";
 import {
   Table,
   TableHeader,
@@ -10,7 +10,6 @@ import {
   StatusBadge,
   RowMenu,
 } from "../../ui/Table";
-import { Select } from "../../ui/Select";
 
 const UserRowSkeleton = () => (
   <tr className="animate-pulse">
@@ -53,6 +52,7 @@ export default function UserTable({
   getRoleLabel,
   selectedUsers = [],
   setSelectedUsers,
+  onView,
 }) {
   const [columnFilters, setColumnFilters] = useState({
     name: "",
@@ -170,7 +170,7 @@ export default function UserTable({
               filteredUsers.map((user) => {
                 const isChecked = selectedUsers.includes(user.user_id);
                 return (
-                  <TableRow key={user.user_id} isSelected={isChecked}>
+                  <TableRow key={user.user_id} isSelected={isChecked} onClick={onView ? () => onView(user) : undefined} className="cursor-pointer">
                     <TableCell>
                       <Checkbox
                         checked={isChecked}
@@ -221,34 +221,26 @@ export default function UserTable({
                     </TableCell>
                     <TableCell>
                       {user.role === "evac_personnel" ? (
-                        <div className="flex flex-col gap-1 min-w-[180px]">
-                          <Select
-                            value={user.assigned_center_id || ""}
-                            disabled={assigningUserId === user.user_id || !canAssign(user)}
-                            onChange={(e) => {
-                              if (e.target.value === user.assigned_center_id) return;
-                              triggerAssignCenter(user.user_id, e.target.value);
-                            }}
-                            options={[
-                              { label: "Unassigned", value: "" },
-                              ...centers.map((c) => ({
-                                label: c.name,
-                                value: c.evacuation_center_id,
-                              })),
-                            ]}
-                          />
-                          {assigningUserId === user.user_id && (
-                            <span className="text-xs text-blue-500 font-medium animate-pulse px-1">
-                              Updating...
-                            </span>
-                          )}
-                        </div>
+                        (() => {
+                          const center = centers.find(
+                            (c) => String(c.evacuation_center_id) === String(user.assigned_center_id)
+                          );
+                          return center ? (
+                            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-200">
+                              <MapPin size={12} className="text-blue-400 flex-shrink-0" />
+                              {center.name}
+                            </div>
+                          ) : (
+                            <span className="text-xs italic text-slate-400 dark:text-slate-500">Unassigned</span>
+                          );
+                        })()
                       ) : (
                         <span className="text-gray-400 font-medium">—</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
                       <RowMenu
+                        onView={onView ? () => onView(user) : undefined}
                         onEdit={canEdit(user) ? () => setEditingUser(user) : undefined}
                         onDelete={canDelete(user) ? () => triggerDeleteUser(user.user_id) : undefined}
                       />
@@ -295,7 +287,8 @@ export default function UserTable({
             {filteredUsers.map((user) => (
               <div
                 key={user.user_id}
-                className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 transition-all space-y-3"
+                className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 transition-all space-y-3 cursor-pointer hover:shadow-md hover:border-slate-200 dark:hover:border-slate-700"
+                onClick={onView ? () => onView(user) : undefined}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
@@ -341,34 +334,22 @@ export default function UserTable({
                 </div>
 
                 {user.role === "evac_personnel" && (
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-400">Station</label>
-                    <Select
-                      className="w-full"
-                      value={user.assigned_center_id || ""}
-                      disabled={assigningUserId === user.user_id || !canAssign(user)}
-                      onChange={(e) => {
-                        if (e.target.value === user.assigned_center_id) return;
-                        triggerAssignCenter(user.user_id, e.target.value);
-                      }}
-                      options={[
-                        { label: "Unassigned", value: "" },
-                        ...centers.map((c) => ({
-                          label: c.name,
-                          value: c.evacuation_center_id,
-                        })),
-                      ]}
-                    />
-                    {assigningUserId === user.user_id && (
-                      <span className="text-xs text-blue-500 font-medium animate-pulse">
-                        Updating...
-                      </span>
-                    )}
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    <MapPin size={11} className="text-slate-300" />
+                    {(() => {
+                      const center = centers.find(
+                        (c) => String(c.evacuation_center_id) === String(user.assigned_center_id)
+                      );
+                      return center
+                        ? <span className="font-medium text-slate-700 dark:text-slate-200">{center.name}</span>
+                        : <span className="italic text-slate-400">Unassigned</span>;
+                    })()}
                   </div>
                 )}
 
                 <div className="flex items-center justify-end pt-2 border-t border-slate-100 dark:border-slate-800">
                   <RowMenu
+                    onView={onView ? () => onView(user) : undefined}
                     onEdit={canEdit(user) ? () => setEditingUser(user) : undefined}
                     onDelete={canDelete(user) ? () => triggerDeleteUser(user.user_id) : undefined}
                   />

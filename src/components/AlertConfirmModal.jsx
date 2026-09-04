@@ -111,7 +111,7 @@ function AlertConfirmModal({
           <button
             type="button"
             disabled={isLoading}
-            onClick={onConfirm}
+            onClick={() => onConfirm?.()}
             className={`flex-1 h-12 rounded-xl text-white font-bold text-xs transition active:scale-[0.98] shadow-md dark:shadow-none flex items-center justify-center gap-2 ${activeStyle.buttonConfirm} disabled:opacity-75 disabled:pointer-events-none`}
           >
             {isLoading ? (

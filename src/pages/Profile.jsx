@@ -39,6 +39,7 @@ export default function Profile() {
 
     const [selectedPhoto, setSelectedPhoto] = useState(null);
     const [photoPreview, setPhotoPreview] = useState(null);
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
     const [selectedCoverPhoto, setSelectedCoverPhoto] = useState(null);
     const [coverPreview, setCoverPreview] = useState(null);
@@ -97,11 +98,47 @@ export default function Profile() {
         setSearchParams({ tab: tabKey });
     };
 
-    const handlePhotoChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setSelectedPhoto(file);
-            setPhotoPreview(URL.createObjectURL(file));
+    const handlePhotoChange = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const previewUrl = URL.createObjectURL(file);
+        setPhotoPreview(previewUrl);
+        setUploadingPhoto(true);
+
+        try {
+            const formData = new FormData();
+            formData.append("first_name", profileData.first_name || "User");
+            formData.append("last_name", profileData.last_name || "Name");
+            formData.append("contact_number", profileData.contact_number || "09000000000");
+            formData.append("profile_photo", file);
+
+            const res = await updateProfile(formData);
+            const updatedUser = res.data?.user || res.user || res.data;
+
+            if (updatedUser) {
+                const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+                const newStoredUser = {
+                    ...storedUser,
+                    ...updatedUser,
+                    name: updatedUser.name || `${updatedUser.first_name} ${updatedUser.last_name}`,
+                    profile_photo_url: updatedUser.profile_photo_url
+                };
+                useUserStore.getState().setUser(newStoredUser);
+
+                setProfileData(prev => ({
+                    ...prev,
+                    profile_photo_url: updatedUser.profile_photo_url
+                }));
+            }
+
+            showMessage("Profile photo updated and saved successfully!");
+        } catch (err) {
+            console.error(err);
+            const errMsg = err.response?.data?.message || "Failed to upload profile photo.";
+            showMessage(errMsg, "error");
+        } finally {
+            setUploadingPhoto(false);
         }
     };
 
@@ -328,7 +365,13 @@ export default function Profile() {
                         
                         {/* Overlapping Large Avatar */}
                         <div className="relative group">
-                            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-slate-900 bg-[#0f2b5c] text-[#38bdf8] font-bold text-3xl sm:text-4xl flex items-center justify-center shadow-xl overflow-hidden">
+                            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-slate-900 bg-[#0f2b5c] text-[#38bdf8] font-bold text-3xl sm:text-4xl flex items-center justify-center shadow-xl overflow-hidden relative">
+                                {uploadingPhoto ? (
+                                    <div className="absolute inset-0 bg-slate-950/70 flex flex-col items-center justify-center gap-1 z-10">
+                                        <Loader2 className="animate-spin text-white" size={28} />
+                                        <span className="text-[10px] text-white font-bold uppercase tracking-wider">Saving</span>
+                                    </div>
+                                ) : null}
                                 {photoPreview || profileData.profile_photo_url ? (
                                     <img src={photoPreview || profileData.profile_photo_url} alt="Profile" className="w-full h-full object-cover" />
                                 ) : (
@@ -337,12 +380,13 @@ export default function Profile() {
                             </div>
 
                             {/* Camera Change Icon */}
-                            <label className="absolute bottom-1 right-1 w-9 h-9 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-full flex items-center justify-center cursor-pointer shadow-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors z-20">
+                            <label className={`absolute bottom-1 right-1 w-9 h-9 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-full flex items-center justify-center shadow-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors z-20 ${uploadingPhoto ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                                 <Camera size={16} />
                                 <input 
                                     type="file" 
                                     className="hidden" 
                                     accept="image/*"
+                                    disabled={uploadingPhoto}
                                     onChange={handlePhotoChange}
                                 />
                             </label>

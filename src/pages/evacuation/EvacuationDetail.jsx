@@ -35,6 +35,9 @@ import { getEvents } from '../../api/events/getEvents';
 
 import UnitModal from '../../components/units/UnitModal';
 import AssignHouseholdModal from '../../components/units/AssignHouseholdModal';
+import ViewUnitDrawer from '../../components/units/ViewUnitDrawer';
+import ViewEvacuatedHouseholdDrawer from '../../components/evacuation/ViewEvacuatedHouseholdDrawer';
+import JiraActionMenu from '../../components/ui/JiraActionMenu';
 import AlertConfirmModal from '../../components/AlertConfirmModal';
 import { isAdmin, isSuperAdmin, isPersonnel } from '../../utils/roles';
 import { useAlert } from '../../context/AlertContext';
@@ -79,7 +82,9 @@ export default function EvacuationDetail() {
     const [selectedHouseholds, setSelectedHouseholds] = useState([]);
     const [householdPage, setHouseholdPage] = useState(1);
 
-    // modals
+    // modals & drawers
+    const [viewingUnit, setViewingUnit] = useState(null);
+    const [viewingHousehold, setViewingHousehold] = useState(null);
     const [unitModal, setUnitModal] = useState(false);
     const [editingUnit, setEditingUnit] = useState(null);
     const [assignModal, setAssignModal] = useState(null);
@@ -533,17 +538,10 @@ export default function EvacuationDetail() {
                                         filterValue={unitNameFilter}
                                         onFilterChange={setUnitNameFilter}
                                     >
-                                        Unit Name & ID
-                                    </TableHead>
-                                    <TableHead
-                                        filterable
-                                        filterValue={unitTypeFilter}
-                                        onFilterChange={setUnitTypeFilter}
-                                    >
-                                        Unit Type
+                                        Unit & Type
                                     </TableHead>
                                     <TableHead>
-                                        Capacity & Evacuees
+                                        Capacity & Occupancy
                                     </TableHead>
                                     <TableHead
                                         filterable
@@ -566,7 +564,7 @@ export default function EvacuationDetail() {
                             <tbody>
                                 {filteredUnits.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan="7" className="px-6 py-16 text-center">
+                                        <TableCell colSpan="6" className="px-6 py-16 text-center">
                                             <Home className="mx-auto text-slate-300 dark:text-slate-600 mb-2" size={28} />
                                             <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">No accommodation units found</p>
                                             <p className="text-xs text-slate-400 mt-1">Try adjusting your column filters.</p>
@@ -583,8 +581,17 @@ export default function EvacuationDetail() {
 
                                             return (
                                                 <Fragment key={unit.unit_id}>
-                                                    <TableRow isSelected={isChecked}>
-                                                        <TableCell>
+                                                    <TableRow 
+                                                        isSelected={isChecked} 
+                                                        onClick={() => {
+                                                            setViewingUnit(unit);
+                                                            if (!allocations[unit.unit_id]) {
+                                                                fetchAllocations(unit.unit_id);
+                                                            }
+                                                        }}
+                                                        className="cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors"
+                                                    >
+                                                        <TableCell onClick={(e) => e.stopPropagation()}>
                                                             <Checkbox
                                                                 checked={isChecked}
                                                                 onChange={() => {
@@ -606,22 +613,31 @@ export default function EvacuationDetail() {
                                                                     <p className="text-xs font-bold text-gray-900 dark:text-slate-100 leading-tight">
                                                                         {unit.name}
                                                                     </p>
-                                                                    <p className="text-[10px] text-gray-400 dark:text-slate-400 leading-none mt-0.5">
-                                                                        ID-{unit.unit_id}
-                                                                    </p>
+                                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                                        <span className="text-[10px] text-gray-400 dark:text-slate-400 leading-none">
+                                                                            ID-{unit.unit_id}
+                                                                        </span>
+                                                                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded border border-slate-200 dark:border-slate-700">
+                                                                            {unit.type?.type_label || 'Room'}
+                                                                        </span>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </TableCell>
                                                         <TableCell>
-                                                            <span className="text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-md font-semibold">
-                                                                {unit.type?.type_label || 'Standard Unit'}
-                                                            </span>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <div className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 font-semibold">
-                                                                <Users size={14} className="text-slate-400" />
-                                                                <span className="font-bold text-slate-900 dark:text-white">{occupancy}</span>
-                                                                <span className="text-slate-400">/ {capacity}</span>
+                                                            <div className="space-y-1 w-36">
+                                                                <div className="flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 font-semibold">
+                                                                    <span className="font-bold text-slate-900 dark:text-white">{occupancy} / {capacity}</span>
+                                                                    <span className="text-[10px] text-slate-400 font-mono">{percent}%</span>
+                                                                </div>
+                                                                <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                                    <div 
+                                                                        className={`h-full rounded-full transition-all ${
+                                                                            percent >= 100 ? 'bg-rose-500' : percent >= 80 ? 'bg-amber-500' : 'bg-emerald-500'
+                                                                        }`}
+                                                                        style={{ width: `${Math.min(100, percent)}%` }}
+                                                                    />
+                                                                </div>
                                                             </div>
                                                         </TableCell>
                                                         <TableCell>
@@ -630,7 +646,7 @@ export default function EvacuationDetail() {
                                                                 color={percent >= 100 ? "red" : percent >= 80 ? "orange" : "green"}
                                                             />
                                                         </TableCell>
-                                                        <TableCell className="text-center">
+                                                        <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                                                             <button
                                                                 onClick={() => toggleUnit(unit.unit_id)}
                                                                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold transition-colors cursor-pointer ${
@@ -644,7 +660,7 @@ export default function EvacuationDetail() {
                                                                 {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                                                             </button>
                                                         </TableCell>
-                                                        <TableCell className="text-right">
+                                                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                                                             <div className="flex items-center justify-end gap-1.5">
                                                                 {canManage && (
                                                                     <button
@@ -654,32 +670,16 @@ export default function EvacuationDetail() {
                                                                         Assign
                                                                     </button>
                                                                 )}
-                                                                {canEditUnits && (
-                                                                    <>
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                setEditingUnit(unit);
-                                                                                setUnitModal(true);
-                                                                            }}
-                                                                            className="p-1.5 text-slate-400 hover:bg-slate-100 dark:bg-slate-800 hover:text-slate-700 dark:text-slate-200 rounded transition-colors"
-                                                                            title="Edit Unit"
-                                                                        >
-                                                                            <Edit2 size={15} />
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => setDeleteUnitModal(unit)}
-                                                                            disabled={occupancy > 0}
-                                                                            title={occupancy > 0 ? "Cannot delete unit with occupants" : "Delete unit"}
-                                                                            className={`p-1.5 rounded transition-colors ${
-                                                                                occupancy > 0 
-                                                                                    ? 'text-slate-200 dark:text-slate-700 cursor-not-allowed' 
-                                                                                    : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer'
-                                                                            }`}
-                                                                        >
-                                                                            <Trash2 size={15} />
-                                                                        </button>
-                                                                    </>
-                                                                )}
+                                                                <JiraActionMenu
+                                                                    onView={() => {
+                                                                        setViewingUnit(unit);
+                                                                        if (!allocations[unit.unit_id]) {
+                                                                            fetchAllocations(unit.unit_id);
+                                                                        }
+                                                                    }}
+                                                                    onDelete={canEditUnits && occupancy === 0 ? () => setDeleteUnitModal(unit) : undefined}
+                                                                    canDelete={canEditUnits && occupancy === 0}
+                                                                />
                                                             </div>
                                                         </TableCell>
                                                     </TableRow>
@@ -687,7 +687,7 @@ export default function EvacuationDetail() {
                                                     {/* Chevron Accordion Household Drawer */}
                                                     {isExpanded && (
                                                         <TableRow>
-                                                            <TableCell colSpan="7" className="p-0 border-b-0">
+                                                            <TableCell colSpan="6" className="p-0 border-b-0">
                                                                 <div className="bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 p-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]">
                                                                     <div className="flex items-center justify-between mb-3 px-1">
                                                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -809,7 +809,7 @@ export default function EvacuationDetail() {
                                             setHouseholdPage(1);
                                         }}
                                     >
-                                        Household Name & ID
+                                        Household & ID
                                     </TableHead>
                                     <TableHead
                                         filterable
@@ -821,7 +821,7 @@ export default function EvacuationDetail() {
                                     >
                                         Contact Number
                                     </TableHead>
-                                    <TableHead>Members</TableHead>
+                                    <TableHead>Evacuees</TableHead>
                                     <TableHead
                                         filterable
                                         filterValue={householdUnitFilter}
@@ -836,37 +836,23 @@ export default function EvacuationDetail() {
                                     >
                                         Assigned Unit
                                     </TableHead>
-                                    <TableHead
-                                        filterable
-                                        filterValue={householdMethodFilter}
-                                        onFilterChange={(val) => {
-                                            setHouseholdMethodFilter(val);
-                                            setHouseholdPage(1);
-                                        }}
-                                        filterOptions={[
-                                            { value: "manual", label: "Manual" },
-                                            { value: "qr", label: "QR Code" },
-                                        ]}
-                                    >
-                                        Verification Method
-                                    </TableHead>
-                                    <TableHead>Verified At</TableHead>
+                                    <TableHead>Verified On</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </tr>
                             </TableHeader>
                             <tbody>
                                 {householdsLoading ? (
                                     <TableRow>
-                                        <TableCell colSpan="8" className="px-6 py-16 text-center text-slate-400">
+                                        <TableCell colSpan="7" className="px-6 py-16 text-center text-slate-400">
                                             Loading evacuated households...
                                         </TableCell>
                                     </TableRow>
                                 ) : paginatedHouseholds.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan="8" className="px-6 py-16 text-center">
+                                        <TableCell colSpan="7" className="px-6 py-16 text-center">
                                             <Users className="mx-auto text-slate-300 dark:text-slate-600 mb-2" size={28} />
                                             <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">No evacuated households found</p>
-                                                                        <p className="text-xs text-slate-400 mt-1">Try adjusting your search terms or status filter.</p>
+                                            <p className="text-xs text-slate-400 mt-1">Try adjusting your search terms or status filter.</p>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -875,8 +861,13 @@ export default function EvacuationDetail() {
                                         const unitName = record.unit_allocation?.unit?.name || record.unit_allocations?.[0]?.unit?.name || record.unit?.name;
 
                                         return (
-                                            <TableRow key={record.evacuation_id} isSelected={isChecked}>
-                                                <TableCell>
+                                            <TableRow 
+                                                key={record.evacuation_id} 
+                                                isSelected={isChecked}
+                                                onClick={() => setViewingHousehold(record)}
+                                                className="cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors"
+                                            >
+                                                <TableCell onClick={(e) => e.stopPropagation()}>
                                                     <Checkbox
                                                         checked={isChecked}
                                                         onChange={() => {
@@ -905,7 +896,7 @@ export default function EvacuationDetail() {
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-slate-300">
+                                                    <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-slate-300 font-mono">
                                                         <Phone size={13} className="text-slate-400" />
                                                         {record.household?.contact_number || '—'}
                                                     </div>
@@ -926,33 +917,17 @@ export default function EvacuationDetail() {
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <span className="text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[11px] font-medium capitalize">
-                                                        {record.method || 'manual'}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell>
                                                     <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                                                         {formatDateTime(record.verified_at)}
                                                     </span>
                                                 </TableCell>
-                                                <TableCell className="text-right">
+                                                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                                                     <div className="flex items-center justify-end gap-1.5">
-                                                        <button
-                                                            onClick={() => navigate(`/households/${record.household_id}?evacuation_id=${record.evacuation_id}&center_id=${id}`)}
-                                                            className="p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 rounded transition-colors"
-                                                            title="View / Edit Household"
-                                                        >
-                                                            <Eye size={15} />
-                                                        </button>
-                                                        {canManage && (
-                                                            <button
-                                                                onClick={() => setDeleteRecordModal(record.evacuation_id)}
-                                                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded transition-colors"
-                                                                title="Delete Evacuation Record"
-                                                            >
-                                                                <Trash2 size={15} />
-                                                            </button>
-                                                        )}
+                                                        <JiraActionMenu
+                                                            onView={() => setViewingHousehold(record)}
+                                                            onDelete={canManage ? () => setDeleteRecordModal(record.evacuation_id) : undefined}
+                                                            canDelete={canManage}
+                                                        />
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
@@ -965,7 +940,51 @@ export default function EvacuationDetail() {
                 </TableLayout>
             )}
 
-            {/* Modals */}
+            {/* Slide-In Drawers for Accommodation Unit & Evacuated Household */}
+            {viewingUnit && (
+                <ViewUnitDrawer
+                    unit={viewingUnit}
+                    allocations={allocations[viewingUnit.unit_id] || []}
+                    onClose={() => setViewingUnit(null)}
+                    canManage={canManage}
+                    canEdit={canEditUnits}
+                    onAssign={(u) => {
+                        setViewingUnit(null);
+                        setAssignModal(u);
+                    }}
+                    onUnassign={(unitId, allocId) => {
+                        setViewingUnit(null);
+                        setUnassignModal({ unitId, allocationId: allocId });
+                    }}
+                    onEdit={(u) => {
+                        setViewingUnit(null);
+                        setEditingUnit(u);
+                        setUnitModal(true);
+                    }}
+                    onDelete={(u) => {
+                        setViewingUnit(null);
+                        setDeleteUnitModal(u);
+                    }}
+                />
+            )}
+
+            {viewingHousehold && (
+                <ViewEvacuatedHouseholdDrawer
+                    record={viewingHousehold}
+                    onClose={() => setViewingHousehold(null)}
+                    canManage={canManage}
+                    onViewProfile={(r) => {
+                        setViewingHousehold(null);
+                        navigate(`/households/${r.household_id}?evacuation_id=${r.evacuation_id}&center_id=${id}`);
+                    }}
+                    onDeleteRecord={(recId) => {
+                        setViewingHousehold(null);
+                        setDeleteRecordModal(recId);
+                    }}
+                />
+            )}
+
+            {/* Unit Modal */}
             {unitModal && (
                 <UnitModal
                     centerId={id}

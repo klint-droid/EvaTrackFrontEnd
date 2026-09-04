@@ -207,19 +207,6 @@ export default function EvacuationAlerts() {
                             >
                               Event
                             </TableHead>
-                            <TableHead
-                              filterable
-                              filterValue={urgencyFilter}
-                              onFilterChange={(v) => setUrgencyFilter(v)}
-                              filterOptions={[
-                                { value: 'critical', label: 'Critical' },
-                                { value: 'high', label: 'High' },
-                                { value: 'medium', label: 'Medium' },
-                                { value: 'low', label: 'Low' },
-                              ]}
-                            >
-                              Urgency
-                            </TableHead>
                             <TableHead>Target</TableHead>
                             <TableHead className="text-center">Recipients</TableHead>
                             <TableHead
@@ -243,7 +230,7 @@ export default function EvacuationAlerts() {
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <TableRow>
-                                    <TableCell colSpan="8" className="py-24 text-center">
+                                    <TableCell colSpan="7" className="py-24 text-center">
                                         <div className="flex flex-col items-center gap-2">
                                             <Loader2 className="animate-spin text-slate-300" size={32} />
                                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">querying system registry...</span>
@@ -252,7 +239,7 @@ export default function EvacuationAlerts() {
                                 </TableRow>
                             ) : filteredAlerts.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan="8" className="py-24 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                    <TableCell colSpan="7" className="py-24 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">
                                         No matching dispatches found.
                                     </TableCell>
                                 </TableRow>
@@ -277,11 +264,6 @@ export default function EvacuationAlerts() {
                                         ) : (
                                             <span className="text-[9px] text-slate-400 font-bold">—</span>
                                         )}
-                                    </TableCell>
-                                    <TableCell>
-                                        <span className={`px-2.5 py-1 text-[8px] font-black uppercase tracking-widest rounded-full border ${getUrgencyStyle(alert.urgency_level?.urgency_key)}`}>
-                                            {alert.urgency_level?.urgency_label}
-                                        </span>
                                     </TableCell>
                                     <TableCell>
                                         {(alert.center?.evacuation_center_id || alert.evacuation_center_id) ? (
