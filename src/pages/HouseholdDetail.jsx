@@ -4,6 +4,7 @@ import HouseholdHeader from '../components/households/HouseholdHeader';
 import HouseholdStats from '../components/households/HouseholdStats';
 import EvacueeList from '../components/households/EvacueeList';
 import CheckInModal from '../components/households/CheckInModal';
+import ResourceNotFound from '../components/ui/ResourceNotFound';
 import { useHouseholdDetail } from '../hooks/useHouseholdDetail';
 
 export default function HouseholdDetail() {
@@ -81,19 +82,12 @@ export default function HouseholdDetail() {
 
     if (!household) {
         return (
-            <div className="min-h-screen bg-white dark:bg-slate-900 flex flex-col items-center justify-center p-6 text-center">
-                <XCircle size={48} className="text-red-200 mb-4" />
-                <p className="text-base font-black text-slate-700 dark:text-slate-200 mb-1">Household Not Found</p>
-                <p className="text-xs text-slate-400 mb-6">
-                    This household does not exist or you don&apos;t have access to it.
-                </p>
-                <button
-                    onClick={() => navigate(-1)}
-                    className="px-5 py-2.5 bg-slate-900 text-white text-xs font-black rounded-xl hover:bg-slate-800 active:scale-95 transition-all"
-                >
-                    Go Back
-                </button>
-            </div>
+            <ResourceNotFound
+                title="Household Not Found"
+                message="This household does not exist or you don't have access to view its details."
+                backUrl="/households"
+                backLabel="Back to Households"
+            />
         );
     }
 

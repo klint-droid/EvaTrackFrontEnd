@@ -1,11 +1,11 @@
 import { create } from 'zustand';
-import { getUser } from '../api/auth/getUser';
-import { UserProfile } from '../utils/roles';
+import { getUser as fetchApiUser } from '../api/auth/getUser';
+import { UserProfile, UserRole, normalizeRole } from '../utils/roles';
 
 interface UserState {
   user: UserProfile | null;
   loading: boolean;
-  setUser: (user: any) => void;
+  setUser: (user: Partial<UserProfile> | Record<string, unknown> | null) => void;
   fetchFreshUser: () => Promise<void>;
   isSuperAdmin: () => boolean;
   isAdmin: () => boolean;
@@ -17,7 +17,12 @@ export const useUserStore = create<UserState>((set, get) => ({
   user: (() => {
     try {
       const stored = localStorage.getItem("user");
-      return stored ? (JSON.parse(stored) as UserProfile) : null;
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      if (parsed) {
+        parsed.role = normalizeRole(parsed.role, parsed.role_id);
+      }
+      return parsed as UserProfile;
     } catch {
       return null;
     }
@@ -26,10 +31,19 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   setUser: (user) => {
     if (user) {
+      const normalizedRole: UserRole = normalizeRole(
+        user.role?.role_key || user.role,
+        user.role_id || user.role?.role_id
+      );
+
       const normalizedUser: UserProfile = {
         ...user,
-        role: (user.role?.role_key || user.role) as any,
-        role_label: user.role?.role_name || user.role_label,
+        role: normalizedRole,
+        role_label: user.role?.role_name || user.role_label || (
+          normalizedRole === 'super_admin' ? 'Super Admin' :
+          normalizedRole === 'evac_admin' ? 'Evacuation Admin' :
+          'Evacuation Personnel'
+        ),
         assigned_center: user.assigned_center ? {
           id: user.assigned_center.evacuation_center_id || user.assigned_center.id,
           name: user.assigned_center.name,
@@ -46,7 +60,7 @@ export const useUserStore = create<UserState>((set, get) => ({
   fetchFreshUser: async () => {
     set({ loading: true });
     try {
-      const res = await getUser();
+      const res = await fetchApiUser();
       const body = res.data?.data || res.data || res;
       const freshUser = body.data || body;
       if (freshUser) {

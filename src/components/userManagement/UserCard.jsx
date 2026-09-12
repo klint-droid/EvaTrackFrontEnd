@@ -1,7 +1,7 @@
 import React from "react";
 import { Phone, MapPin } from "lucide-react";
 import { StatusBadge } from "../../ui/Table";
-import JiraActionMenu from "../ui/JiraActionMenu";
+import ActionMenu from "../ui/ActionMenu";
 
 export default function UserCard({
   user,
@@ -66,7 +66,7 @@ export default function UserCard({
 
         {/* Prevent card click from bubbling through action menu */}
         <div onClick={(e) => e.stopPropagation()}>
-          <JiraActionMenu
+          <ActionMenu
             onView={onView}
             onEdit={canEdit && canEdit(user) ? onEdit : undefined}
             onDelete={canDelete && canDelete(user) ? onDelete : undefined}

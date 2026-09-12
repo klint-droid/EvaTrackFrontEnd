@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   ChevronDown,
   ChevronUp,
@@ -122,15 +123,55 @@ export function SortableHeader({ label, direction, onClick, className = "" }) {
  */
 export function RowMenu({ actions = [], onDelete, onEdit, onDuplicate, onView, className = "" }) {
   const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, right: 0, openUpwards: false });
   const ref = useRef(null);
+  const buttonRef = useRef(null);
+  const menuPortalRef = useRef(null);
 
   useEffect(() => {
+    if (!open) return;
     function handleClick(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (
+        ref.current && !ref.current.contains(e.target) &&
+        menuPortalRef.current && !menuPortalRef.current.contains(e.target)
+      ) {
+        setOpen(false);
+      }
     }
+    const handleScroll = (e) => {
+      if (menuPortalRef.current && menuPortalRef.current.contains(e.target)) return;
+      setOpen(false);
+    };
+
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
+    window.addEventListener("scroll", handleScroll, true);
+    window.addEventListener("resize", handleScroll);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      window.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [open]);
+
+  const handleToggle = (e) => {
+    e.stopPropagation();
+    if (!open && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+
+      // Only open upwards if space below is too tight (< 190px) AND there is actually more space above
+      const openUp = spaceBelow < 190 && spaceAbove > spaceBelow;
+
+      setCoords({
+        openUpwards: openUp,
+        top: openUp ? undefined : rect.bottom + 4,
+        bottom: openUp ? window.innerHeight - rect.top + 4 : undefined,
+        right: Math.max(12, window.innerWidth - rect.right),
+      });
+    }
+    setOpen((o) => !o);
+  };
 
   const defaultActions = [];
   if (onView) defaultActions.push({ label: "View Details", onClick: onView });
@@ -145,39 +186,50 @@ export function RowMenu({ actions = [], onDelete, onEdit, onDuplicate, onView, c
   return (
     <div className={`relative inline-block text-left ${className}`} ref={ref}>
       <button
+        ref={buttonRef}
         type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen((o) => !o);
-        }}
+        onClick={handleToggle}
         aria-label="Row actions"
-        className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+        className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 cursor-pointer"
       >
         <MoreVertical size={16} />
       </button>
-      {open && (
-        <div className="absolute right-0 z-30 mt-1 w-36 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-slate-800 dark:bg-slate-900">
-          {allActions.map((action, idx) => (
-            <button
-              key={idx}
-              type="button"
-              disabled={action.disabled}
-              className={`block w-full px-3.5 py-1.5 text-left text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                action.danger
-                  ? "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
-                  : "text-gray-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:bg-slate-800"
-              }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpen(false);
-                action.onClick?.();
-              }}
-            >
-              {action.label}
-            </button>
-          ))}
-        </div>
-      )}
+
+      {open &&
+        createPortal(
+          <div
+            ref={menuPortalRef}
+            style={{
+              position: "fixed",
+              top: coords.top !== undefined ? `${coords.top}px` : "auto",
+              bottom: coords.bottom !== undefined ? `${coords.bottom}px` : "auto",
+              right: `${coords.right}px`,
+            }}
+            className="z-[9999] w-40 overflow-hidden rounded-xl border border-gray-200 bg-white py-1.5 shadow-2xl dark:border-slate-800 dark:bg-slate-900 animate-in fade-in zoom-in-95 duration-100 text-left"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {allActions.map((action, idx) => (
+              <button
+                key={idx}
+                type="button"
+                disabled={action.disabled}
+                className={`block w-full px-3.5 py-2 text-left text-xs font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${
+                  action.danger
+                    ? "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+                    : "text-gray-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpen(false);
+                  action.onClick?.();
+                }}
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

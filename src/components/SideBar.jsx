@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 
 import { useUserStore } from "../store/useUserStore";
+import { normalizeRole } from "../utils/roles";
 
 const Sidebar = ({ isOpen, onClose, isCollapsed: externalIsCollapsed }) => {
     const [internalIsCollapsed, setInternalIsCollapsed] = useState(false);
@@ -30,6 +31,13 @@ const Sidebar = ({ isOpen, onClose, isCollapsed: externalIsCollapsed }) => {
     const user = useUserStore(state => state.user) || {};
     const setUser = useUserStore(state => state.setUser);
     const navigate = useNavigate();
+
+    const currentRole = normalizeRole(user?.role, user?.role_id);
+
+    const isAllowedRole = (itemRoles) => {
+        if (!itemRoles || itemRoles.length === 0) return true;
+        return itemRoles.includes(currentRole);
+    };
 
     const handleLogout = async () => {
         try {
@@ -101,7 +109,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed: externalIsCollapsed }) => {
                     {/* PRIMARY NAV GROUP */}
                     <div className="space-y-0.5">
                         {navPrimary
-                            .filter(item => !item.roles || item.roles.includes(user?.role))
+                            .filter(item => isAllowedRole(item.roles))
                             .map((item) => (
                                 <NavLink
                                     key={item.path + item.label}
@@ -142,7 +150,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed: externalIsCollapsed }) => {
                         )}
                         <div className="space-y-0.5">
                             {navWorkspaces
-                                .filter(item => !item.roles || item.roles.includes(user?.role))
+                                .filter(item => isAllowedRole(item.roles))
                                 .map((item) => (
                                     <NavLink
                                         key={item.path + item.label}

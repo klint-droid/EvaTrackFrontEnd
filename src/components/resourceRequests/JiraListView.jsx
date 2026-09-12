@@ -51,7 +51,7 @@ const formatTimeAgo = (dateString) => {
   return `${Math.floor(diff / 86400)}d ago`;
 };
 
-import JiraActionMenu from '../ui/JiraActionMenu';
+import ActionMenu from '../ui/ActionMenu';
 
 const STATUS_MENU_OPTIONS = [
   { key: 'pending', label: 'Incoming' },
@@ -181,7 +181,7 @@ export default function JiraListView({
                 <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 shadow-xs" title={`Requested by: ${req.requester?.name || 'Officer'}`}>
                   {initials}
                 </div>
-                <JiraActionMenu
+                <ActionMenu
                   itemId={req.request_id}
                   itemKey={req.request_id}
                   currentStatus={statusKey}

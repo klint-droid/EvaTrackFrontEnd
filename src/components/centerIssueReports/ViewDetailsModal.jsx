@@ -72,7 +72,7 @@ function Field({ label, icon: Icon, children }) {
   );
 }
 
-import JiraActionMenu from '../ui/JiraActionMenu';
+import ActionMenu from '../ui/ActionMenu';
 
 export default function ViewDetailsModal({
   report,
@@ -146,7 +146,7 @@ export default function ViewDetailsModal({
                 Edit
               </button>
             )}
-            <JiraActionMenu
+            <ActionMenu
               itemId={report.report_id}
               itemKey={report.report_id}
               currentStatus={currentStatus}

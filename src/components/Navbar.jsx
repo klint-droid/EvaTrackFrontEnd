@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LogIn, Radio } from "lucide-react";
+import { Radio } from "lucide-react";
 import Logo from "../assets/evatrack_logo_horizontal.svg";
 
 const Navbar = () => {
@@ -8,7 +8,6 @@ const Navbar = () => {
 
   const navLinks = [
     { to: "/portal", label: "Live Map", icon: Radio },
-    { to: "/login", label: "Login", icon: LogIn },
   ];
 
   return (

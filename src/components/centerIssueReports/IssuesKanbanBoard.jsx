@@ -4,7 +4,7 @@ import {
   MapPin, Wrench, HeartPulse, Shield, AlertTriangle, FileWarning,
   Clock, Sparkles, CheckCircle2, ShieldCheck, Paperclip
 } from 'lucide-react';
-import JiraActionMenu from '../ui/JiraActionMenu';
+import ActionMenu from '../ui/ActionMenu';
 
 const COLUMNS = [
   {
@@ -219,7 +219,7 @@ export default function IssuesKanbanBoard({
                               <Paperclip size={10} className="text-slate-400" />
                             )}
                             <span className="text-[9px] font-mono text-slate-400">{formatTimeAgo(report.created_at)}</span>
-                            <JiraActionMenu
+                            <ActionMenu
                               itemId={report.report_id}
                               itemKey={report.report_id}
                               currentStatus={column.id}

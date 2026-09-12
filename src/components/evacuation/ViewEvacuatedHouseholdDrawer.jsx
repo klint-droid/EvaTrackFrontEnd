@@ -4,7 +4,7 @@ import {
   X, Users, Phone, Home, Calendar, Clock, 
   CheckCircle2, ExternalLink, QrCode, UserCheck, Trash2, ArrowRight
 } from 'lucide-react';
-import JiraActionMenu from '../ui/JiraActionMenu';
+import ActionMenu from '../ui/ActionMenu';
 
 function Field({ label, icon: Icon, children }) {
   return (
@@ -75,7 +75,7 @@ export default function ViewEvacuatedHouseholdDrawer({
                 Profile <ExternalLink size={11} />
               </button>
             )}
-            <JiraActionMenu
+            <ActionMenu
               onView={() => {}}
               onDelete={canManage && onDeleteRecord ? () => { onClose(); onDeleteRecord(record.evacuation_id); } : undefined}
               canDelete={canManage}

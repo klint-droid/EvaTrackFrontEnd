@@ -4,7 +4,7 @@ import {
   X, Home, Users, Hash, MapPin, 
   DoorOpen, CheckCircle2, AlertCircle, Edit2, Plus, Trash2, ArrowRight
 } from 'lucide-react';
-import JiraActionMenu from '../ui/JiraActionMenu';
+import ActionMenu from '../ui/ActionMenu';
 
 function Field({ label, icon: Icon, children }) {
   return (
@@ -73,7 +73,7 @@ export default function ViewUnitDrawer({
                 Edit
               </button>
             )}
-            <JiraActionMenu
+            <ActionMenu
               onView={() => {}}
               onDelete={canEdit && onDelete ? () => { onClose(); onDelete(unit); } : undefined}
               canDelete={canEdit && occupancy === 0}

@@ -4,7 +4,7 @@ import {
   MapPin, Droplet, Utensils, HeartPulse, Home, Box,
   Clock, Sparkles, CheckCircle2, Inbox
 } from 'lucide-react';
-import JiraActionMenu from '../ui/JiraActionMenu';
+import ActionMenu from '../ui/ActionMenu';
 
 const COLUMNS = [
   {
@@ -200,7 +200,7 @@ export default function KanbanBoard({
                           </span>
                           <div className="flex items-center gap-1">
                             <span className="text-[9px] font-mono text-slate-400">{formatTimeAgo(req.created_at)}</span>
-                            <JiraActionMenu
+                            <ActionMenu
                               itemId={req.request_id}
                               itemKey={req.request_id}
                               currentStatus={column.id}

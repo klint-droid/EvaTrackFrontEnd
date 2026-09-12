@@ -33,7 +33,7 @@ const formatTimeAgo = (dateString) => {
   return `${Math.floor(diff / 86400)}d ago`;
 };
 
-import JiraActionMenu from '../ui/JiraActionMenu';
+import ActionMenu from '../ui/ActionMenu';
 
 const STATUS_MENU_OPTIONS = [
   { key: 'open', label: 'Open' },
@@ -158,7 +158,7 @@ export default function IssuesListView({
                 >
                   {initials}
                 </div>
-                <JiraActionMenu
+                <ActionMenu
                   itemId={report.report_id}
                   itemKey={report.report_id}
                   currentStatus={statusKey}

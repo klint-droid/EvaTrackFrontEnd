@@ -10,6 +10,12 @@ import Navbar from "./components/Navbar";
 import { AlertProvider } from "./context/AlertContext";
 import { ThemeProvider } from "./context/ThemeContext";
 
+// Error Pages & Components
+import NotFound from "./pages/errors/NotFound";
+import AccessDenied from "./pages/errors/AccessDenied";
+import ServerError from "./pages/errors/ServerError";
+import ErrorBoundary from "./components/ErrorBoundary";
+
 // Admin Pages
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -40,46 +46,53 @@ function App() {
   return (
     <ThemeProvider>
       <AlertProvider>
-        <BrowserRouter>
-          <Routes>
-        
-        {/* PUBLIC ROUTES (With Navbar) */}
-        <Route element={<PublicLayout />}>
-          <Route path="/" element={<Landing />} />
-          <Route path="/portal" element={<PublicPortal />} />
-        </Route>
+        <ErrorBoundary>
+          <BrowserRouter>
+            <Routes>
+              {/* PUBLIC ROUTES (With Navbar) */}
+              <Route element={<PublicLayout />}>
+                <Route path="/" element={<Landing />} />
+                <Route path="/portal" element={<PublicPortal />} />
+              </Route>
 
-        {/* STANDALONE ROUTE (No Navbar) */}
-        <Route path="/login" element={<Login />} />
+              {/* STANDALONE ROUTE (No Navbar) */}
+              <Route path="/login" element={<Login />} />
 
-        {/* PROTECTED ADMIN ROUTES (With DashboardLayout) */}
-        <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/user-management" element={<UserManagement />} />
-          <Route path="/evacuation-alerts" element={<EvacuationAlerts />} />
-          <Route path="/household-verification" element={<VerifyHousehold />} />
-          <Route path="/events" element={<EventManagement />} />
+              {/* ERROR ROUTES */}
+              <Route path="/403" element={<AccessDenied />} />
+              <Route path="/unauthorized" element={<AccessDenied />} />
+              <Route path="/500" element={<ServerError />} />
 
-          <Route path="/evacuation-centers">
-            <Route index element={<EvacuationList />} />
-            <Route path=":id" element={<EvacuationDetail />} />
-          </Route>
+              {/* PROTECTED ADMIN ROUTES (With DashboardLayout) */}
+              <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/user-management" element={<UserManagement />} />
+                <Route path="/evacuation-alerts" element={<EvacuationAlerts />} />
+                <Route path="/household-verification" element={<VerifyHousehold />} />
+                <Route path="/events" element={<EventManagement />} />
 
-          <Route path="/households">
-            <Route index element={<HouseholdManagement />} />
-            <Route path=":id" element={<HouseholdDetail />} />
-          </Route>
+                <Route path="/evacuation-centers">
+                  <Route index element={<EvacuationList />} />
+                  <Route path=":id" element={<EvacuationDetail />} />
+                </Route>
 
-          <Route path="/resource-requests" element={<ResourceRequests />} />
-          <Route path="/center-issue-reports" element={<CenterIssueReports />} />
+                <Route path="/households">
+                  <Route index element={<HouseholdManagement />} />
+                  <Route path=":id" element={<HouseholdDetail />} />
+                </Route>
 
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="*" element={<h1>404</h1>} />
-        </Route>
+                <Route path="/resource-requests" element={<ResourceRequests />} />
+                <Route path="/center-issue-reports" element={<CenterIssueReports />} />
 
-        </Routes>
-        </BrowserRouter>
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/profile" element={<Profile />} />
+              </Route>
+
+              {/* GLOBAL CATCH-ALL (404 Not Found) */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </ErrorBoundary>
       </AlertProvider>
     </ThemeProvider>
   );

@@ -5,10 +5,10 @@ const AnimatedFAB = ({ icon: Icon, label, onClick, className = "" }) => {
     <button
       type="button"
       onClick={onClick}
-      className={`fixed bottom-10 right-24 z-[100] flex items-center justify-center gap-2.5 px-6 py-4 bg-slate-900 dark:bg-slate-900 text-white dark:text-blue-400 border border-slate-700 dark:border-blue-500/40 rounded-[15px] font-black text-[15px] shadow-[0_8px_30px_rgb(0,0,0,0.3)] dark:shadow-[0_8px_30px_rgba(59,130,246,0.15)] transition-all duration-300 hover:-translate-y-1 overflow-hidden group cursor-pointer ${className}`}
+      className={`fixed bottom-10 right-24 z-[100] flex items-center justify-center gap-2.5 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-2xl font-bold text-[14px] shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40 transition-all duration-200 hover:-translate-y-0.5 overflow-hidden group cursor-pointer ${className}`}
     >
-      <Icon className="w-5 h-5 z-10 text-white dark:text-blue-400 transition-transform duration-300 group-hover:scale-110" strokeWidth={2.5} />
-      <span className="z-10 text-white dark:text-blue-400">{label}</span>
+      <Icon className="w-5 h-5 text-white transition-transform duration-200 group-hover:scale-110" strokeWidth={2.5} />
+      <span className="text-white tracking-wide">{label}</span>
     </button>
   );
 };

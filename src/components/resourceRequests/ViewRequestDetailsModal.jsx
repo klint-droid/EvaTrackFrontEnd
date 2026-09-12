@@ -6,7 +6,7 @@ import {
   Droplet, Utensils, HeartPulse, Home, Box, Hash
 } from 'lucide-react';
 
-import JiraActionMenu from '../ui/JiraActionMenu';
+import ActionMenu from '../ui/ActionMenu';
 
 const STATUS_OPTIONS = [
   { key: 'pending',      label: 'Incoming',       color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-400/40' },
@@ -122,7 +122,7 @@ export default function ViewRequestDetailsModal({
             <span className="font-mono font-black text-slate-400 dark:text-slate-500">/ RR-{shortId.toUpperCase()}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <JiraActionMenu
+            <ActionMenu
               itemId={request.request_id}
               itemKey={request.request_id}
               currentStatus={currentStatus}
