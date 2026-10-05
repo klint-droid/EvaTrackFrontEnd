@@ -1,5 +1,6 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getHousehold } from '../api/households/getHousehold';
 import { addMember } from '../api/households/addMember';
 import { updateMember } from '../api/households/updateMember';
@@ -13,52 +14,82 @@ export const useHouseholdDetail = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+    const queryClient = useQueryClient();
+    const { showAlert, showConfirm } = useAlert();
 
     const evacuationIdFromUrl: string | null = searchParams.get('evacuation_id');
     const centerIdFromUrl: string | null = searchParams.get('center_id');
 
-    const [household, setHousehold] = useState<any>(null);
-    const [evacuationContext, setEvacuationContext] = useState<any>(null);
-    const [loading, setLoading] = useState<boolean>(true);
     const [memberModal, setMemberModal] = useState<boolean>(false);
     const [editingMember, setEditingMember] = useState<any>(null);
     const [statusUpdatingMemberId, setStatusUpdatingMemberId] = useState<string | number | null>(null);
     const [activeEvacTab, setActiveEvacTab] = useState<string | number | null>(null);
     const [memberSearch, setMemberSearch] = useState<string>('');
     const [checkInModal, setCheckInModal] = useState<{ open: boolean, member: any }>({ open: false, member: null });
-    const { showAlert, showConfirm } = useAlert();
 
+    // 1. Current user query (cached)
     const storedUser = localStorage.getItem("user");
-    const currentUser = storedUser ? JSON.parse(storedUser) : null;
-    const [user, setUser] = useState<any>(currentUser);
+    const initialUser = storedUser ? JSON.parse(storedUser) : null;
+
+    const { data: user = initialUser } = useQuery({
+        queryKey: ['currentUser'],
+        queryFn: async () => {
+            const res: any = await fetchUserApi();
+            const body = res.data?.data || res.data || res;
+            const freshUser = body.data || body;
+            if (freshUser) {
+                const normalizedUser = {
+                    ...freshUser,
+                    role: freshUser.role?.role_key || freshUser.role,
+                    role_label: freshUser.role?.role_name || freshUser.role_label,
+                    assigned_center: freshUser.assigned_center ? {
+                        id: freshUser.assigned_center.evacuation_center_id || freshUser.assigned_center.id,
+                        name: freshUser.assigned_center.name,
+                    } : (freshUser.assigned_center_id ? { id: freshUser.assigned_center_id } : null),
+                };
+                localStorage.setItem("user", JSON.stringify(normalizedUser));
+                return normalizedUser;
+            }
+            return initialUser;
+        },
+        initialData: initialUser,
+        staleTime: 1000 * 60 * 5,
+    });
 
     const isSuperAdminUser: boolean = user?.role === 'super_admin';
     const isAdminUser: boolean = user?.role === 'evac_admin';
     const isPersonnelUser: boolean = user?.role === 'evac_personnel';
-
     const assignedCenterId = user?.assigned_center?.id || user?.assigned_center_id;
 
-    useEffect(() => {
-        fetchUserApi()
-            .then((res: any) => {
-                const body = res.data?.data || res.data || res;
-                const freshUser = body.data || body;
-                if (freshUser) {
-                    const normalizedUser = {
-                        ...freshUser,
-                        role: freshUser.role?.role_key || freshUser.role,
-                        role_label: freshUser.role?.role_name || freshUser.role_label,
-                        assigned_center: freshUser.assigned_center ? {
-                            id: freshUser.assigned_center.evacuation_center_id || freshUser.assigned_center.id,
-                            name: freshUser.assigned_center.name,
-                        } : (freshUser.assigned_center_id ? { id: freshUser.assigned_center_id } : null),
-                    };
-                    setUser(normalizedUser);
-                    localStorage.setItem("user", JSON.stringify(normalizedUser));
-                }
-            })
-            .catch(console.error);
-    }, []);
+    // 2. Household details query
+    const { 
+        data: household = null, 
+        isLoading: isHouseholdLoading 
+    } = useQuery<any>({
+        queryKey: ['households', id],
+        queryFn: async () => {
+            if (!id) return null;
+            const res: any = await getHousehold(id);
+            return res.data || res;
+        },
+        enabled: !!id,
+    });
+
+    // 3. Evacuation context query (if evacuation_id exists in URL)
+    const { 
+        data: evacuationContext = null, 
+        isLoading: isEvacLoading 
+    } = useQuery<any>({
+        queryKey: ['evacuationRecord', evacuationIdFromUrl],
+        queryFn: async () => {
+            if (!evacuationIdFromUrl) return null;
+            const res: any = await getEvacuationRecord(evacuationIdFromUrl);
+            return res.data || res;
+        },
+        enabled: !!evacuationIdFromUrl,
+    });
+
+    const loading = isHouseholdLoading || (!!evacuationIdFromUrl && isEvacLoading);
 
     const targetCenterId = centerIdFromUrl ||
                            evacuationContext?.center_id ||
@@ -77,39 +108,6 @@ export const useHouseholdDetail = () => {
     const canDelete: boolean = isSuperAdminUser || isAdminUser;
     const isEvacuationContext: boolean = !!evacuationIdFromUrl;
 
-    const fetchHousehold = async () => {
-        try {
-            const res = await getHousehold(id);
-            setHousehold(res.data || res);
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
-    const fetchEvacuationContext = async () => {
-        if (!evacuationIdFromUrl) return;
-        try {
-            const res = await getEvacuationRecord(evacuationIdFromUrl);
-            setEvacuationContext(res.data || res);
-        } catch (err: any) {
-            console.error(err);
-            showAlert(err.response?.data?.message || 'Failed to load evacuation record.', 'Error', 'danger');
-        }
-    };
-
-    const fetchPageData = async () => {
-        setLoading(true);
-        try {
-            await Promise.all([fetchHousehold(), fetchEvacuationContext()]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchPageData();
-    }, [id, evacuationIdFromUrl]);
-
     const openAdd = () => {
         setEditingMember(null);
         setMemberModal(true);
@@ -120,37 +118,85 @@ export const useHouseholdDetail = () => {
         setMemberModal(true);
     };
 
+    // Member Save Mutation (Add / Edit)
+    const saveMemberMutation = useMutation({
+        mutationFn: async (formData: any) => {
+            if (editingMember) {
+                return await updateMember(id, editingMember.member_id, formData);
+            } else {
+                return await addMember(id, formData);
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['households', id] });
+            if (evacuationIdFromUrl) {
+                queryClient.invalidateQueries({ queryKey: ['evacuationRecord', evacuationIdFromUrl] });
+            }
+            setMemberModal(false);
+        },
+        onError: (err: any) => {
+            console.error(err);
+            showAlert(err.response?.data?.message || 'Failed to save member.', 'Error', 'danger');
+        }
+    });
+
     const handleSave = async (formData: any) => {
-        if (editingMember) {
-            await updateMember(id, editingMember.member_id, formData);
-        } else {
-            await addMember(id, formData);
-        }
-
-        await fetchHousehold();
-
-        if (evacuationIdFromUrl) {
-            await fetchEvacuationContext();
-        }
+        await saveMemberMutation.mutateAsync(formData);
     };
+
+    // Member Delete Mutation
+    const deleteMemberMutation = useMutation({
+        mutationFn: async (memberId: string | number) => {
+            return await deleteMember(id as string, String(memberId));
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['households', id] });
+            if (evacuationIdFromUrl) {
+                queryClient.invalidateQueries({ queryKey: ['evacuationRecord', evacuationIdFromUrl] });
+            }
+        },
+        onError: (err: any) => {
+            showAlert(err.response?.data?.message || 'Failed to remove member.', 'Error', 'danger');
+        }
+    });
 
     const handleDelete = async (memberId: string | number) => {
         showConfirm(
             'Remove this member?',
             async () => {
-                try {
-                    await deleteMember(id as string, String(memberId));
-                    await fetchHousehold();
-                    if (evacuationIdFromUrl) await fetchEvacuationContext();
-                } catch (err: any) {
-                    showAlert(err.response?.data?.message || 'Failed to remove member.', 'Error', 'danger');
-                }
+                await deleteMemberMutation.mutateAsync(memberId);
             },
             'Remove Member',
             'danger',
             'Remove'
         );
     };
+
+    // Member Evacuation Status Mutation
+    const updateStatusMutation = useMutation({
+        mutationFn: async ({ evacId, memberId, status }: { evacId: string | number, memberId: string | number, status: string }) => {
+            return await updateMemberEvacuationStatus(
+                String(evacId),
+                String(memberId),
+                status as any
+            );
+        },
+        onMutate: ({ memberId }) => {
+            setStatusUpdatingMemberId(memberId);
+        },
+        onSettled: () => {
+            setStatusUpdatingMemberId(null);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['households', id] });
+            if (evacuationIdFromUrl) {
+                queryClient.invalidateQueries({ queryKey: ['evacuationRecord', evacuationIdFromUrl] });
+            }
+        },
+        onError: (err: any) => {
+            showAlert(err.response?.data?.message || 'Failed to update member evacuation status.', 'Error', 'danger');
+        }
+    });
 
     const handleMemberStatusChange = async (memberId: string | number, status: string, evacId?: string | number) => {
         const activeEvacuation = evacId
@@ -164,20 +210,11 @@ export const useHouseholdDetail = () => {
             return;
         }
 
-        try {
-            setStatusUpdatingMemberId(memberId);
-            await updateMemberEvacuationStatus(
-                String(activeEvacuation.evacuation_id),
-                String(memberId),
-                status as any
-            );
-            await fetchHousehold();
-            if (evacuationIdFromUrl) await fetchEvacuationContext();
-        } catch (err: any) {
-            showAlert(err.response?.data?.message || 'Failed to update member evacuation status.', 'Error', 'danger');
-        } finally {
-            setStatusUpdatingMemberId(null);
-        }
+        await updateStatusMutation.mutateAsync({
+            evacId: activeEvacuation.evacuation_id,
+            memberId,
+            status
+        });
     };
 
     const handleBack = () => {
@@ -252,7 +289,7 @@ export const useHouseholdDetail = () => {
                 : (allActiveEvacuations[0].center_id || allActiveEvacuations[0].center?.evacuation_center_id)
             );
         }
-    }, [allActiveEvacuations, povCenterId]);
+    }, [allActiveEvacuations, povCenterId, activeEvacTab]);
 
     const filteredMembers = useMemo<any[]>(() => {
         if (!household?.members) return [];

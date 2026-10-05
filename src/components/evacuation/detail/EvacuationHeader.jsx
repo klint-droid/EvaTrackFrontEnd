@@ -24,13 +24,6 @@ export default function EvacuationHeader({ center, onBack }) {
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 leading-none">
                     {center.name}
                 </h1>
-                <span className={`ml-3 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border ${
-                    center.current_event
-                        ? "text-blue-600 bg-blue-50 border-blue-100 dark:bg-blue-950/40 dark:border-blue-900/50 dark:text-blue-300"
-                        : "text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700"
-                }`}>
-                    {center.current_event?.name || "No Event Assigned"}
-                </span>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 pl-10 text-left">
                 {center.osm_address}

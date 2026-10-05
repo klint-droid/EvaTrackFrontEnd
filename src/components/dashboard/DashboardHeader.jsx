@@ -1,5 +1,4 @@
 import React from "react";
-import { RefreshCw, Radio, RefreshCwIcon } from "lucide-react";
 
 function RadarGraphic() {
     return (
@@ -22,31 +21,12 @@ export default function DashboardHeader({
     assignedCenter,
     loading,
     user,
-    selectedEventId,
-    setSelectedEventId,
-    activeEvents = [],
-    activeEvent = null,
-    recentAlerts = [],
-    loadDashboard,
-    lastUpdatedTime
 }) {
     const todayFormatted = new Date().toLocaleDateString("en-US", {
         weekday: "long",
         month: "long",
         day: "numeric",
     });
-
-    // 🔹 Dynamically resolve advisory label from backend data
-    const selectedEvt = activeEvents.find(e => String(e.event_id) === String(selectedEventId));
-    const currentEvent = (selectedEventId !== "all" && selectedEvt) 
-        ? selectedEvt 
-        : activeEvent || activeEvents.find(e => !e.ended_at) || activeEvents[0];
-
-    const advisoryLabel = currentEvent
-        ? `${currentEvent.primary_type?.type_name || 'Active Event'}: ${currentEvent.name}`
-        : recentAlerts && recentAlerts.length > 0
-            ? `Advisory: ${recentAlerts[0].title || recentAlerts[0].subject || recentAlerts[0].message || 'Emergency Update'}`
-            : "Status: No Active Disaster Advisories";
 
     return (
         <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 p-6 sm:p-8 flex items-center justify-between shadow-sm text-white">
@@ -72,45 +52,6 @@ export default function DashboardHeader({
                         : "Real-time monitoring across registered evacuation centers, emergency broadcasts, and field resources."
                     }
                 </p>
-
-                {/* Active Event Display & Refresh */}
-                <div className="pt-2 flex flex-wrap items-center gap-3">
-                    {activeEvents.filter(evt => !evt.ended_at).length > 0 ? (
-                        activeEvents.filter(evt => !evt.ended_at).length === 1 ? (
-                            <div className="inline-flex items-center gap-2 bg-rose-500/25 border border-rose-400/40 text-rose-100 text-xs sm:text-sm font-semibold rounded-full px-4 py-1.5 shadow-sm">
-                                <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
-                                <span>Active Event: {activeEvents.filter(evt => !evt.ended_at)[0].name}</span>
-                            </div>
-                        ) : (
-                            <select
-                                value={selectedEventId}
-                                onChange={(e) => setSelectedEventId(e.target.value)}
-                                className="px-3.5 py-1.5 bg-slate-900/80 border border-white/20 text-white text-xs font-semibold rounded-full hover:bg-slate-900 transition-all focus:outline-none cursor-pointer"
-                            >
-                                {activeEvents.filter(evt => !evt.ended_at).map(evt => (
-                                    <option key={evt.event_id} value={evt.event_id} className="bg-slate-900 text-white">
-                                        🔴 Active Event: {evt.name}
-                                    </option>
-                                ))}
-                            </select>
-                        )
-                    ) : (
-                        <div className="inline-flex items-center gap-2 bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 text-xs sm:text-sm font-medium rounded-full px-4 py-1.5">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                            <span>No Active Disaster Event</span>
-                        </div>
-                    )}
-
-                    {/* Manual Refresh Button */}
-                    <button
-                        onClick={() => loadDashboard(true)}
-                        disabled={loading}
-                        className="p-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-full transition-all disabled:opacity-50"
-                        title="Refresh Dashboard"
-                    >
-                        <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-                    </button>
-                </div>
             </div>
 
             {/* Radar Graphic Right Decoration */}
@@ -120,4 +61,3 @@ export default function DashboardHeader({
         </div>
     );
 }
-

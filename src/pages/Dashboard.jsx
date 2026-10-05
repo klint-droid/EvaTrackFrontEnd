@@ -14,6 +14,7 @@ import DashboardHeader from "../components/dashboard/DashboardHeader";
 import DashboardMetrics from "../components/dashboard/DashboardMetrics";
 import DashboardCapacityArea from "../components/dashboard/DashboardCapacityArea";
 import DashboardSidebar from "../components/dashboard/DashboardSidebar";
+import EmergencyAnnouncementBanner from "../components/dashboard/EmergencyAnnouncementBanner";
 
 // Module-level cache to persist dashboard metrics across route navigation
 let dashboardCache = null;
@@ -252,19 +253,15 @@ const Dashboard = () => {
     return (
         <div className="space-y-5 sm:space-y-8 animate-in fade-in duration-500 text-left">
             
+            {/* 🚨 LIVE DISASTER ANNOUNCEMENT SLIDING BANNER */}
+            <EmergencyAnnouncementBanner activeEvents={activeEvents} />
+
             {/* 👋 WELCOME BANNER WITH COHESIVE COMPLEMENTARY DESIGN */}
             <DashboardHeader 
                 isPersonnel={isPersonnel}
                 assignedCenter={assignedCenter}
                 loading={loading}
                 user={user}
-                selectedEventId={selectedEventId}
-                setSelectedEventId={setSelectedEventId}
-                activeEvents={activeEvents}
-                activeEvent={activeEvent}
-                recentAlerts={recentAlerts}
-                loadDashboard={loadDashboard}
-                lastUpdatedTime={lastUpdatedTime}
             />
 
             {/* 🔹 STREAMLINED METRICS GRID (COHESIVE LEFT-BORDER ACCENTS) */}

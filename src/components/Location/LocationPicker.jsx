@@ -27,17 +27,19 @@ function Recenter({ position }) {
   return null;
 }
 
-export default function LocationPicker({ position, onSelect }) {
+export default function LocationPicker({ position, onSelect, defaultCenter = [10.3157, 123.8854] }) {
   const [search, setSearch] = useState("");
   const [searching, setSearching] = useState(false);
   const { showAlert } = useAlert();
-  const defaultCenter = [14.5995, 120.9842]; 
 
   const handleSearch = async () => {
     if (!search.trim()) return;
     setSearching(true);
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${search}`);
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(search)}`,
+        { headers: { "User-Agent": "EvacTrack/1.0 (klintruales11@gmail.com)" } }
+      );
       const data = await res.json();
       if (data.length > 0) {
         onSelect({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
@@ -71,7 +73,7 @@ export default function LocationPicker({ position, onSelect }) {
       {/* 🗺 MAP CONTAINER */}
       <div className="flex-1 overflow-hidden border-l border-slate-200 dark:border-slate-700">
         <MapContainer
-          center={defaultCenter}
+          center={position ? [position.lat, position.lng] : defaultCenter}
           zoom={13}
           zoomControl={false} // Clean UI
           style={{ height: "100%", width: "100%" }}

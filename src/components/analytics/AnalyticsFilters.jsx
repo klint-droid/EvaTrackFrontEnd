@@ -4,9 +4,6 @@ import { Select } from "../../ui/Select";
 import { Input } from "../../ui/Input";
 
 export default function AnalyticsFilters({
-    selectedEventId,
-    setSelectedEventId,
-    events = [],
     isPersonnel,
     selectedCenterId,
     setSelectedCenterId,
@@ -17,28 +14,16 @@ export default function AnalyticsFilters({
     endDate,
     setEndDate
 }) {
-    return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-colors text-left">
-            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full lg:w-auto">
-                {/* Disaster Event Dropdown */}
-                <div className="flex flex-col gap-1 min-w-[220px]">
-                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Disaster Event</span>
-                    <Select
-                        value={selectedEventId}
-                        onChange={(e) => setSelectedEventId(e.target.value)}
-                        options={[
-                            { value: 'all', label: '🌐 All Disaster Events' },
-                            ...events.map(event => ({
-                                value: event.event_id,
-                                label: `🚨 ${event.name} (${event.type})`
-                            }))
-                        ]}
-                    />
-                </div>
+    const hasActiveFilters = Boolean(startDate || endDate || (selectedCenterId !== "all" && !isPersonnel));
 
-                {/* Center Dropdown (Admin Only) */}
-                <div className="flex flex-col gap-1 min-w-[220px]">
-                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Evacuation Center</span>
+    return (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors text-left">
+            {/* Center Selector (Admin Dropdown / Personnel Badge) */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+                <div className="flex flex-col gap-1 min-w-[240px]">
+                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Evacuation Center
+                    </span>
                     {!isPersonnel ? (
                         <Select
                             value={selectedCenterId}
@@ -59,10 +44,12 @@ export default function AnalyticsFilters({
                 </div>
             </div>
 
-            {/* Date Filters Section */}
-            <div className="flex flex-row items-end gap-3 w-full lg:w-auto justify-start lg:justify-end">
+            {/* Date Pickers (From Date & To Date) */}
+            <div className="flex flex-row items-end gap-3 w-full md:w-auto justify-start md:justify-end">
                 <div className="flex flex-col gap-1">
-                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">From Date</span>
+                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        From Date
+                    </span>
                     <Input
                         type="date"
                         icon={Calendar}
@@ -70,8 +57,11 @@ export default function AnalyticsFilters({
                         onChange={(e) => setStartDate(e.target.value)}
                     />
                 </div>
+
                 <div className="flex flex-col gap-1">
-                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">To Date</span>
+                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        To Date
+                    </span>
                     <Input
                         type="date"
                         icon={Calendar}
@@ -79,8 +69,10 @@ export default function AnalyticsFilters({
                         onChange={(e) => setEndDate(e.target.value)}
                     />
                 </div>
-                {(startDate || endDate || (selectedCenterId !== "all" && !isPersonnel)) && (
+
+                {hasActiveFilters && (
                     <button
+                        type="button"
                         onClick={() => {
                             setStartDate("");
                             setEndDate("");
@@ -95,5 +87,3 @@ export default function AnalyticsFilters({
         </div>
     );
 }
-
-

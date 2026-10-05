@@ -57,7 +57,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed: externalIsCollapsed }) => {
     const navWorkspaces = [
         { icon: Building2, label: "Evacuation Centers", path: "/evacuation-centers", roles: ["evac_personnel", "evac_admin", "super_admin"] },
         { icon: Radio, label: "Disaster Events", path: "/events", roles: ["evac_admin", "super_admin"] },
-        { icon: Megaphone, label: "Alerts & Broadcasts", path: "/evacuation-alerts", roles: ["evac_personnel", "evac_admin", "super_admin"] },
+        { icon: Megaphone, label: "SMS & Push", path: "/evacuation-alerts", roles: ["evac_personnel", "evac_admin", "super_admin"] },
         { icon: ClipboardList, label: "Issue Reports", path: "/center-issue-reports", roles: ["evac_admin", "evac_personnel", "super_admin"] },
         { icon: Truck, label: "Resource Requests", path: "/resource-requests", roles: ["evac_personnel", "evac_admin", "super_admin"] },
         { icon: Users, label: "Household Verification", path: "/household-verification", roles: ["evac_personnel", "evac_admin", "super_admin"] },

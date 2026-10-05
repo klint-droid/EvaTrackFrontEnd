@@ -5,7 +5,7 @@ import { UserProfile, UserRole, normalizeRole } from '../utils/roles';
 interface UserState {
   user: UserProfile | null;
   loading: boolean;
-  setUser: (user: Partial<UserProfile> | Record<string, unknown> | null) => void;
+  setUser: (user: any) => void;
   fetchFreshUser: () => Promise<void>;
   isSuperAdmin: () => boolean;
   isAdmin: () => boolean;
@@ -29,26 +29,27 @@ export const useUserStore = create<UserState>((set, get) => ({
   })(),
   loading: false,
 
-  setUser: (user) => {
+  setUser: (user: any) => {
     if (user) {
+      const u = user as any;
       const normalizedRole: UserRole = normalizeRole(
-        user.role?.role_key || user.role,
-        user.role_id || user.role?.role_id
+        u.role?.role_key || u.role,
+        u.role_id || u.role?.role_id
       );
 
-      const normalizedUser: UserProfile = {
-        ...user,
+      const normalizedUser = {
+        ...u,
         role: normalizedRole,
-        role_label: user.role?.role_name || user.role_label || (
+        role_label: u.role?.role_name || u.role_label || (
           normalizedRole === 'super_admin' ? 'Super Admin' :
           normalizedRole === 'evac_admin' ? 'Evacuation Admin' :
           'Evacuation Personnel'
         ),
-        assigned_center: user.assigned_center ? {
-          id: user.assigned_center.evacuation_center_id || user.assigned_center.id,
-          name: user.assigned_center.name,
-        } : (user.assigned_center_id ? { id: user.assigned_center_id, name: '' } : null),
-      };
+        assigned_center: u.assigned_center ? {
+          id: u.assigned_center.evacuation_center_id || u.assigned_center.id,
+          name: u.assigned_center.name,
+        } : (u.assigned_center_id ? { id: u.assigned_center_id, name: '' } : null),
+      } as UserProfile;
       localStorage.setItem("user", JSON.stringify(normalizedUser));
       set({ user: normalizedUser });
     } else {

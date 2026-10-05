@@ -21,8 +21,6 @@ export default function Analytics() {
     const isPersonnel = storedUser?.role === "evac_personnel";
     const assignedCenter = storedUser?.assigned_center; // { id, name } or null
 
-    const [events, setEvents] = useState([]);
-    const [selectedEventId, setSelectedEventId] = useState("all");
     const [analytics, setAnalytics] = useState(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -58,7 +56,7 @@ export default function Analytics() {
         setExportDropdown(false);
         try {
             await exportAnalyticsData(pathType, {
-                event_id: selectedEventId,
+                event_id: "all",
                 center_id: selectedCenterId,
                 start_date: startDate,
                 end_date: endDate,
@@ -69,19 +67,6 @@ export default function Analytics() {
             showAlert("Export failed: " + (err.response?.data?.message || err.message || "Unknown error"), "Export Error", "danger");
         } finally {
             setExporting(false);
-        }
-    };
-
-    // Fetch the list of disaster events for the dropdown
-    const fetchEventsList = async () => {
-        try {
-            const res = await API.get("/api/analytics/events-list");
-            if (res.data && res.data.success) {
-                setEvents(res.data.events);
-            }
-        } catch (err) {
-            console.error("Failed to load events list:", err);
-            setError("Unable to retrieve disaster events.");
         }
     };
 
@@ -96,13 +81,13 @@ export default function Analytics() {
         }
     };
 
-    // Fetch the dashboard statistics
-    const fetchAnalytics = async (eventId, isRefresh = false) => {
+    // Fetch the dashboard statistics (scoped by date range and evacuation center)
+    const fetchAnalytics = async (isRefresh = false) => {
         if (isRefresh) setRefreshing(true);
         else setLoading(true);
 
         try {
-            let queryParams = `event_id=${eventId}`;
+            let queryParams = `event_id=all`;
             if (selectedCenterId && selectedCenterId !== "all") {
                 queryParams += `&center_id=${selectedCenterId}`;
             }
@@ -128,20 +113,16 @@ export default function Analytics() {
     };
 
     useEffect(() => {
-        fetchEventsList();
         fetchCenters();
     }, []);
 
     useEffect(() => {
-        fetchAnalytics(selectedEventId);
-    }, [selectedEventId, selectedCenterId, startDate, endDate]);
+        fetchAnalytics();
+    }, [selectedCenterId, startDate, endDate]);
 
     const handleRefresh = () => {
-        fetchAnalytics(selectedEventId, true);
+        fetchAnalytics(true);
     };
-
-    // Helper for selected event details
-    const selectedEvent = events.find(e => e.event_id === selectedEventId);
 
     return (
         <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 text-left">
@@ -162,9 +143,6 @@ export default function Analytics() {
 
             {/* ── FILTER COMMAND BAR ── */}
             <AnalyticsFilters 
-                selectedEventId={selectedEventId}
-                setSelectedEventId={setSelectedEventId}
-                events={events}
                 isPersonnel={isPersonnel}
                 selectedCenterId={selectedCenterId}
                 setSelectedCenterId={setSelectedCenterId}
@@ -199,21 +177,6 @@ export default function Analytics() {
                 </div>
             ) : analytics ? (
                 <div className="space-y-6">
-                    
-                    {/* ── EVENT METADATA WIDGET ── */}
-                    {selectedEventId !== "all" && selectedEvent && (
-                        <div className="flex flex-wrap items-center gap-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/50 p-3.5 rounded-xl text-xs">
-                            <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-semibold">
-                                <Calendar size={15} /> Disaster Event:
-                            </span>
-                            <span className="text-slate-700 dark:text-slate-200 font-bold">{selectedEvent.name} ({selectedEvent.type})</span>
-                            <span className="text-slate-300 dark:text-slate-700">|</span>
-                            <span className="text-slate-600 dark:text-slate-300">Started: {selectedEvent.started_at ? new Date(selectedEvent.started_at).toLocaleDateString() : "N/A"}</span>
-                            <span className="text-slate-300 dark:text-slate-700">|</span>
-                            <span className="text-slate-600 dark:text-slate-300">Status: {selectedEvent.ended_at ? "Ended" : <span className="text-emerald-600 dark:text-emerald-400 font-bold">● Active & Ongoing</span>}</span>
-                        </div>
-                    )}
-
                     {/* ── 1. KPI WIDGETS PANEL ── */}
                     <AnalyticsKPIs analytics={analytics} isPersonnel={isPersonnel} />
 

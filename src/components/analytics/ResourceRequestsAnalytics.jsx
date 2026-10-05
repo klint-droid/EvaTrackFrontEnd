@@ -1,6 +1,6 @@
 import React from "react";
 import { Package } from "lucide-react";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList } from "recharts";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 
 const REQ_STATUS_COLORS = {
     pending: "#f59e0b",      // Amber (Incoming)
@@ -18,6 +18,10 @@ export default function ResourceRequestsAnalytics({ analytics }) {
     const totalRequests = statusDist.reduce((acc, curr) => acc + (curr.count || 0), 0);
     const totalDelivered = statusDist.find(s => s.status_key === 'delivered')?.count || 0;
     const fulfillmentRate = totalRequests > 0 ? Math.round((totalDelivered / totalRequests) * 100) : 0;
+
+    // Sort by total volume descending for standard top-demand analytics hierarchy
+    const sortedTopTypes = [...topTypes].sort((a, b) => (Number(b.total_quantity) || 0) - (Number(a.total_quantity) || 0));
+    const maxQty = Math.max(...sortedTopTypes.map(t => Number(t.total_quantity) || 0), 1);
 
     return (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-xs transition-colors text-left space-y-6">
@@ -100,7 +104,7 @@ export default function ResourceRequestsAnalytics({ analytics }) {
                     </div>
                 </div>
 
-                {/* 2. Top Requested Items & Volumes */}
+                {/* 2. Top Requested Items & Volumes (Pixel-Perfect Horizontal Bar Chart) */}
                 <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 p-5 rounded-xl flex flex-col justify-between">
                     <div>
                         <div className="flex items-center justify-between mb-3">
@@ -108,38 +112,71 @@ export default function ResourceRequestsAnalytics({ analytics }) {
                                 Top Requested Resource Types & Volumes
                             </h4>
                             <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                                {topTypes.length} Categories
+                                {sortedTopTypes.length} Categories
                             </span>
                         </div>
-                        <div className="h-52">
-                            {topTypes.length > 0 ? (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={topTypes} layout="vertical" margin={{ top: 5, right: 30, left: 15, bottom: 5 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                                        <XAxis type="number" stroke="#94a3b8" fontSize={10} tickLine={false} />
-                                        <YAxis dataKey="type" type="category" stroke="#94a3b8" fontSize={10} width={90} tickLine={false} />
-                                        <Tooltip contentStyle={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0", borderRadius: "10px", color: "#1e293b", fontSize: "12px" }} />
-                                        <Bar dataKey="count" fill="#3b82f6" radius={[0, 4, 4, 0]} maxBarSize={20}>
-                                            <LabelList dataKey="total_quantity" content={(props) => {
-                                                const { x, y, width, value } = props;
-                                                return (
-                                                    <text x={x + width + 8} y={y + 13} fill="#64748b" fontSize={10} fontWeight={800}>
-                                                        {value ? `${Number(value).toLocaleString()} units` : ''}
-                                                    </text>
-                                                );
-                                            }} />
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
+
+                        {/* Column Header Alignment Guides */}
+                        <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 pb-1.5 border-b border-slate-200 dark:border-slate-800 mb-2.5">
+                            <span className="w-28 sm:w-32 shrink-0">Resource</span>
+                            <span className="flex-1 text-center px-3">Volume Distribution</span>
+                            <span className="w-24 sm:w-28 shrink-0 text-right">Total Units</span>
+                        </div>
+
+                        <div className="h-44 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                            {sortedTopTypes.length > 0 ? (
+                                sortedTopTypes.map((item, index) => {
+                                    const qty = Number(item.total_quantity) || 0;
+                                    const count = Number(item.count) || 0;
+                                    const percent = Math.min(100, Math.max(3, Math.round((qty / maxQty) * 100)));
+
+                                    return (
+                                        <div key={item.type || index} className="flex items-center gap-3 group">
+                                            {/* Left: Resource Category */}
+                                            <div className="w-28 sm:w-32 shrink-0 min-w-0">
+                                                <div className="font-bold text-xs text-slate-800 dark:text-slate-200 truncate capitalize" title={item.type}>
+                                                    {item.type}
+                                                </div>
+                                                <div className="text-[10px] text-slate-400 font-medium">
+                                                    {count} {count === 1 ? 'request' : 'requests'}
+                                                </div>
+                                            </div>
+
+                                            {/* Center: Proportional Volume Bar */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="h-3 w-full bg-slate-200/70 dark:bg-slate-700/50 rounded-full overflow-hidden p-0.5">
+                                                    <div
+                                                        className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-500 rounded-full transition-all duration-500"
+                                                        style={{ width: `${percent}%`, minWidth: '6px' }}
+                                                        title={`${qty.toLocaleString()} units (${percent}% of top demand)`}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Right: Exact Units (strictly right-aligned) */}
+                                            <div className="w-24 sm:w-28 shrink-0 text-right">
+                                                <span className="font-mono font-bold text-xs text-slate-900 dark:text-slate-100">
+                                                    {qty.toLocaleString()}
+                                                </span>
+                                                <span className="text-[11px] text-slate-400 font-medium ml-1">
+                                                    units
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })
                             ) : (
-                                <div className="h-full flex items-center justify-center text-xs text-slate-400 italic">No resource requests recorded</div>
+                                <div className="h-full flex items-center justify-center text-xs text-slate-400 italic">
+                                    No resource requests recorded
+                                </div>
                             )}
                         </div>
                     </div>
-                    <div className="mt-4 border-t border-slate-200 dark:border-slate-800 pt-3 text-center flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+
+                    <div className="mt-4 border-t border-slate-200 dark:border-slate-800 pt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                         <span>Total Units Demanded:</span>
                         <span className="font-extrabold text-blue-600 dark:text-blue-400 font-mono">
-                            {topTypes.reduce((acc, curr) => acc + (curr.total_quantity || 0), 0).toLocaleString()} units
+                            {sortedTopTypes.reduce((acc, curr) => acc + (curr.total_quantity || 0), 0).toLocaleString()} units
                         </span>
                     </div>
                 </div>

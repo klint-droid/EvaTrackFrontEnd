@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { scanQR } from "../api/evacuationRecords/scanQR";
 import { searchHousehold } from "../api/evacuationRecords/searchHousehold";
 import { createHousehold } from "../api/evacuationRecords/createHousehold";
@@ -13,9 +14,11 @@ import { useUserStore } from "../store/useUserStore";
 
 export const useVerifyHousehold = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [tab, setTab] = useState<string>("admit");
   const [query, setQuery] = useState<string>("");
+  const [searchType, setSearchType] = useState<'household' | 'member'>('household');
   const [results, setResults] = useState<any>(undefined);
   const [headName, setHeadName] = useState<string>("");
   const [contactNumber, setContactNumber] = useState<string>("");
@@ -25,10 +28,9 @@ export const useVerifyHousehold = () => {
   const user = useUserStore((state) => state.user);
   const fetchFreshUser = useUserStore((state) => state.fetchFreshUser);
   const setUser = useUserStore((state) => state.setUser);
-  const [centerName, setCenterName] = useState<string | null>(null);
-  const [centers, setCenters] = useState<any[]>([]);
+  
+  const [centerNameOverride, setCenterName] = useState<string | null>(null);
   const [activeCenterId, setActiveCenterId] = useState<string | null>(null);
-  const [activeCenter, setActiveCenter] = useState<any>(null);
 
   const [assignmentModal, setAssignmentModal] = useState<boolean>(false);
   const [qrModalOpen, setQrModalOpen] = useState<boolean>(false);
@@ -36,19 +38,8 @@ export const useVerifyHousehold = () => {
   const [memberCount, setMemberCount] = useState<string | number>("");
   const [selectedMembers, setSelectedMembers] = useState<any[]>([]);
   const [modalError, setModalError] = useState<string | null>(null);
-  const [units, setUnits] = useState<any[]>([]);
   const [selectedUnitId, setSelectedUnitId] = useState<string>("");
   const { showConfirm, showAlert } = useAlert();
-
-  const records = Array.isArray(results) ? results : (Array.isArray(results?.data) ? results.data : (results?.data?.data || []));
-
-  const showMessage = (msg: string, type: string = "success") => {
-    setMessage({
-      text: msg || (type === "error" ? "Something went wrong." : "Success."),
-      type,
-    });
-    setTimeout(() => setMessage(null), 3500);
-  };
 
   const getApiBody = (res: any) => {
     if (res?.data?.message || res?.data?.data) {
@@ -65,6 +56,55 @@ export const useVerifyHousehold = () => {
   const getMessage = (res: any, fallback: string = "Success.") => {
     const body = getApiBody(res);
     return body?.message || fallback;
+  };
+
+  const isUserAdmin = user?.role === "evac_admin" || user?.role === "super_admin";
+  const assignedId = user?.assigned_center?.id || user?.assigned_center_id;
+
+  // 1. Centers Query (Cached)
+  const { data: centers = [] } = useQuery<any[]>({
+    queryKey: ['centers'],
+    queryFn: async () => {
+      const res: any = await getCenters();
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    enabled: isUserAdmin,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // 2. Active Center Query (Cached)
+  const { data: activeCenter = null } = useQuery<any>({
+    queryKey: ['center', activeCenterId],
+    queryFn: async () => {
+      if (!activeCenterId) return null;
+      const res = await getCenter(activeCenterId);
+      const body = getApiBody(res);
+      return body?.data || body;
+    },
+    enabled: !!activeCenterId,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // 3. Units for Active Center Query (Cached)
+  const { data: units = [] } = useQuery<any[]>({
+    queryKey: ['centerUnits', activeCenterId, 'all'],
+    queryFn: async () => {
+      if (!activeCenterId) return [];
+      const res: any = await getUnitsByCenter(activeCenterId, 1, 1000);
+      return res.data || [];
+    },
+    enabled: !!activeCenterId,
+  });
+
+  const centerName = centerNameOverride || activeCenter?.name || activeCenter?.center_name || activeCenterId || null;
+  const records = Array.isArray(results) ? results : (Array.isArray(results?.data) ? results.data : (results?.data?.data || []));
+
+  const showMessage = (msg: string, type: string = "success") => {
+    setMessage({
+      text: msg || (type === "error" ? "Something went wrong." : "Success."),
+      type,
+    });
+    setTimeout(() => setMessage(null), 3500);
   };
 
   const getActiveEvacuation = (member: any) => {
@@ -109,52 +149,10 @@ export const useVerifyHousehold = () => {
 
   useEffect(() => {
     if (!user) return;
-    const isUserAdmin = user.role === "evac_admin" || user.role === "super_admin";
-    const assignedId = user.assigned_center?.id || user.assigned_center_id;
-
-    if (isUserAdmin) {
-      getCenters()
-        .then((res: any) => {
-          const list = Array.isArray(res) ? res : (res?.data ?? []);
-          setCenters(list);
-          // Only set activeCenterId if the admin has a specifically assigned center, 
-          // otherwise leave it null so they are forced to choose in the Admission Modal.
-          if (assignedId && !activeCenterId) {
-            setActiveCenterId(assignedId);
-          }
-        })
-        .catch(console.error);
-    } else if (assignedId && !activeCenterId) {
+    if (assignedId && !activeCenterId) {
       setActiveCenterId(assignedId);
     }
-  }, [user]);
-
-  useEffect(() => {
-    if (!activeCenterId) {
-      setActiveCenter(null);
-      return;
-    }
-
-    getCenter(activeCenterId)
-      .then((res) => {
-        const body = getApiBody(res);
-        const center = body?.data || body;
-        setActiveCenter(center);
-        setCenterName(
-          center?.name || center?.center_name || activeCenterId
-        );
-      })
-      .catch(() => {
-        setActiveCenter(null);
-        setCenterName(activeCenterId);
-      });
-
-    getUnitsByCenter(activeCenterId, 1, 1000)
-      .then((res: any) => {
-        setUnits(res.data || []);
-      })
-      .catch(console.error);
-  }, [activeCenterId]);
+  }, [user, assignedId, activeCenterId]);
 
   const handleScan = async (rawScan: string) => {
     let householdId = rawScan;
@@ -225,15 +223,17 @@ export const useVerifyHousehold = () => {
     }
   };
 
-  const handleSearch = async () => {
-    const trimmed = query.trim();
-    if (!trimmed || trimmed.length < 2) {
-      showMessage("Please enter at least 2 characters to search.", "error");
+  const handleSearch = async (overrideType?: 'household' | 'member', overrideQuery?: string) => {
+    const activeType = overrideType || searchType;
+    const raw = overrideQuery !== undefined ? overrideQuery : query;
+    const trimmed = raw.trim();
+    if (!trimmed || trimmed.length < 1) {
+      showMessage("Please enter at least 1 character to search.", "error");
       return;
     }
     setLoading(true);
     try {
-      const data = await searchHousehold(trimmed);
+      const data = await searchHousehold(trimmed, activeType);
       setResults(data);
     } catch (err: any) {
       showMessage(err.response?.data?.message || "Search failed.", "error");
@@ -254,6 +254,21 @@ export const useVerifyHousehold = () => {
   };
 
   const handleVerify = (household: any) => {
+    const currentEvac = household?.current_evacuation || household?.currentEvacuation;
+    const isEvacuated = currentEvac && (currentEvac.household_status_id === 2 || currentEvac.household_status_id === "2") && !currentEvac.event?.ended_at;
+    const evacuated = isEvacuated ? Number(currentEvac.evacuated_count || 0) : 0;
+    const total = Math.max(
+      Number(household?.members_count || 0),
+      Number(household?.member_count || 0),
+      Number(household?.members?.length || 0),
+      evacuated
+    );
+
+    if (isEvacuated && total > 0 && evacuated >= total) {
+      showMessage("This household is already 100% evacuated.", "error");
+      return;
+    }
+
     openAdmissionModal(household);
   };
 
@@ -352,6 +367,12 @@ export const useVerifyHousehold = () => {
         }
       }
 
+      // Synchronize caches across the app
+      queryClient.invalidateQueries({ queryKey: ['households'] });
+      queryClient.invalidateQueries({ queryKey: ['centerHouseholds', activeCenterId] });
+      queryClient.invalidateQueries({ queryKey: ['centerUnits', activeCenterId] });
+      queryClient.invalidateQueries({ queryKey: ['center', activeCenterId] });
+
       setAssignmentModal(false);
       setScannedData(null);
       setMemberCount("");
@@ -437,6 +458,7 @@ export const useVerifyHousehold = () => {
   return {
     tab, setTab,
     query, setQuery,
+    searchType, setSearchType,
     results, setResults,
     headName, setHeadName,
     contactNumber, setContactNumber,
@@ -451,7 +473,7 @@ export const useVerifyHousehold = () => {
     memberCount, setMemberCount,
     selectedMembers, setSelectedMembers,
     modalError, setModalError,
-    units, setUnits,
+    units, setUnits: () => {},
     selectedUnitId, setSelectedUnitId,
     records,
     handleScan,

@@ -31,8 +31,6 @@ export default function EventManagement() {
 
       <EventStatsCards 
         activeCount={activeCount}
-        totalAssignedCenters={totalAssignedCenters}
-        uniqueRegions={uniqueRegions}
         historyTotal={historyPagination.total}
       />
 

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCenterIssueReports } from '../api/centerIssueReports/getCenterIssueReports';
 import { createCenterIssueReport } from '../api/centerIssueReports/createCenterIssueReport';
 import { updateCenterIssueReport } from '../api/centerIssueReports/updateCenterIssueReport';
@@ -29,22 +30,8 @@ const EMPTY_FORM: FormState = {
 };
 
 export const useCenterIssueReports = () => {
-  const [user, setUser] = useState<any>(null);
-  const [reports, setReports] = useState<any[]>([]);
-  const [centers, setCenters] = useState<any[]>([]);
-
-  const [summary, setSummary] = useState<any>({
-    open: 0,
-    in_progress: 0,
-    resolved: 0,
-    critical: 0,
-    high: 0,
-    medium: 0,
-    low: 0,
-  });
-
-  const [loading, setLoading] = useState<boolean>(true);
-  const [saving, setSaving] = useState<boolean>(false);
+  const queryClient = useQueryClient();
+  const { showConfirm } = useAlert();
 
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [editingReport, setEditingReport] = useState<any>(null);
@@ -56,11 +43,9 @@ export const useCenterIssueReports = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [severityFilter, setSeverityFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
-  const [activeEvents, setActiveEvents] = useState<any[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>("all");
 
   const [message, setMessage] = useState<{ text: string; type: string } | null>(null);
-  const { showConfirm } = useAlert();
 
   const canCreate: boolean = isAdmin() || isSuperAdmin() || isPersonnel();
   const canUpdateStatus: boolean = isAdmin() || isSuperAdmin();
@@ -78,72 +63,117 @@ export const useCenterIssueReports = () => {
     return [];
   };
 
-  const fetchUser = async () => {
-    try {
+  // 1. User Query (Cached)
+  const { data: user = null } = useQuery<any>({
+    queryKey: ['currentUser'],
+    queryFn: async () => {
       const res = await getUser();
-      setUser(res.data || res);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+      return res.data || res;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
 
-  const fetchCenters = async () => {
-    if (!canChooseCenter) return;
-
-    try {
+  // 2. Centers Query (Cached)
+  const { data: centers = [] } = useQuery<any[]>({
+    queryKey: ['centers'],
+    queryFn: async () => {
       const res = await getCenters();
-      setCenters(normalizeArray(res));
-    } catch (err) {
-      console.error(err);
-    }
-  };
+      return normalizeArray(res);
+    },
+    enabled: canChooseCenter,
+    staleTime: 1000 * 60 * 5,
+  });
 
-  const fetchActiveEvents = async () => {
-    try {
+  // 3. Events Query (Cached)
+  const { data: activeEvents = [] } = useQuery<any[]>({
+    queryKey: ['events'],
+    queryFn: async () => {
       const res: any = await getEvents();
-      const list = res.data || res || [];
-      setActiveEvents(list);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+      return res.data || res || [];
+    },
+    staleTime: 1000 * 60 * 2,
+  });
 
-  const fetchReports = async () => {
-    try {
-      setLoading(true);
+  // 4. Center Issue Reports Query
+  const { 
+    data: reportsResponse = { data: [], summary: {} } as any,
+    isLoading: loading,
+  } = useQuery<any>({
+    queryKey: ['centerIssueReports', search, categoryFilter, severityFilter, statusFilter],
+    queryFn: async () => {
       const res = await getCenterIssueReports({
         q: search || undefined,
         category: categoryFilter ? (categoryFilter as any) : undefined,
         severity: severityFilter ? (severityFilter as any) : undefined,
         status: statusFilter ? (statusFilter as any) : undefined,
       });
+      return res;
+    },
+  });
 
-      setReports(res.data || []);
-      setSummary(res.summary || {});
-    } catch (err: any) {
-      console.error(err);
-      showMessage(err.response?.data?.message || 'Failed to load center issue reports.', 'error');
-    } finally {
-      setLoading(false);
-    }
+  const reports: any[] = reportsResponse?.data || [];
+  const summary: any = reportsResponse?.summary || {
+    open: 0, in_progress: 0, resolved: 0,
+    critical: 0, high: 0, medium: 0, low: 0,
   };
 
-  useEffect(() => {
-    fetchUser();
-    fetchCenters();
-    fetchActiveEvents();
-  }, []);
+  // Create / Update Mutation
+  const saveReportMutation = useMutation({
+    mutationFn: async (payloadToSubmit: any) => {
+      if (editingReport) {
+        return await updateCenterIssueReport(editingReport.report_id, payloadToSubmit);
+      } else {
+        return await createCenterIssueReport(payloadToSubmit);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['centerIssueReports'] });
+      showMessage(editingReport ? 'Issue report updated successfully.' : 'Issue report submitted successfully.');
+      setModalOpen(false);
+      setEditingReport(null);
+      setForm(EMPTY_FORM);
+    },
+    onError: (err: any) => {
+      showMessage(err.response?.data?.message || 'Failed to save issue report.', 'error');
+    }
+  });
 
-  useEffect(() => {
-    fetchReports();
-  }, [categoryFilter, severityFilter, statusFilter]);
+  // Status Change Mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ reportId, status }: { reportId: string | number, status: string }) => {
+      return await updateCenterIssueReportStatus(reportId as any, status as any);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['centerIssueReports'] });
+      showMessage('Issue report status updated.');
+    },
+    onError: (err: any) => {
+      showMessage(err.response?.data?.message || 'Failed to update status.', 'error');
+    }
+  });
 
-  const activeEventsList = activeEvents.filter(e => !e.ended_at);
+  // Delete Mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (reportId: string | number) => {
+      return await deleteCenterIssueReport(reportId as any);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['centerIssueReports'] });
+      showMessage('Issue report deleted successfully.');
+    },
+    onError: (err: any) => {
+      showMessage(err.response?.data?.message || 'Failed to delete issue report.', 'error');
+    }
+  });
+
+  const fetchReports = () => {
+    return queryClient.invalidateQueries({ queryKey: ['centerIssueReports'] });
+  };
 
   const displayedReports = (selectedEventId === "all" || selectedEventId === "all_history" || !selectedEventId)
     ? reports
-    : reports.filter(report => {
-        const evt = activeEvents.find(e => e.event_id === selectedEventId);
+    : reports.filter((report: any) => {
+        const evt = activeEvents.find((e: any) => e.event_id === selectedEventId);
         if (!evt) return true;
 
         if (report.center?.current_event_id === selectedEventId) return true;
@@ -185,7 +215,6 @@ export const useCenterIssueReports = () => {
     ? (summary.low !== undefined ? summary.low : displayedReports.filter(r => getSeverityKey(r) === 'low').length)
     : displayedReports.filter(r => getSeverityKey(r) === 'low').length;
 
-
   const openCreateModal = () => {
     setEditingReport(null);
     setForm({
@@ -219,74 +248,43 @@ export const useCenterIssueReports = () => {
       return;
     }
 
-    try {
-      setSaving(true);
-      
-      let payloadToSubmit: any;
+    let payloadToSubmit: any;
 
-      if (form.attachment) {
-        const formData = new FormData();
-        formData.append('category', form.category);
-        formData.append('title', form.title);
-        formData.append('description', form.description);
-        formData.append('severity', form.severity);
-        if (canChooseCenter && form.evacuation_center_id) {
-            formData.append('evacuation_center_id', form.evacuation_center_id);
-        }
-        formData.append('attachment', form.attachment);
-        payloadToSubmit = formData;
-      } else {
-        payloadToSubmit = {
-          category: form.category,
-          title: form.title,
-          description: form.description,
-          severity: form.severity,
-        };
-        if (canChooseCenter) {
-          payloadToSubmit.evacuation_center_id = form.evacuation_center_id;
-        }
+    if (form.attachment) {
+      const formData = new FormData();
+      formData.append('category', form.category);
+      formData.append('title', form.title);
+      formData.append('description', form.description);
+      formData.append('severity', form.severity);
+      if (canChooseCenter && form.evacuation_center_id) {
+          formData.append('evacuation_center_id', form.evacuation_center_id);
       }
-
-      if (editingReport) {
-        await updateCenterIssueReport(editingReport.report_id, payloadToSubmit);
-        showMessage('Issue report updated successfully.');
-      } else {
-        await createCenterIssueReport(payloadToSubmit);
-        showMessage('Issue report submitted successfully.');
+      formData.append('attachment', form.attachment);
+      payloadToSubmit = formData;
+    } else {
+      payloadToSubmit = {
+        category: form.category,
+        title: form.title,
+        description: form.description,
+        severity: form.severity,
+      };
+      if (canChooseCenter) {
+        payloadToSubmit.evacuation_center_id = form.evacuation_center_id;
       }
-
-      setModalOpen(false);
-      setEditingReport(null);
-      setForm(EMPTY_FORM);
-      fetchReports();
-    } catch (err: any) {
-      showMessage(err.response?.data?.message || 'Failed to save issue report.', 'error');
-    } finally {
-      setSaving(false);
     }
+
+    await saveReportMutation.mutateAsync(payloadToSubmit);
   };
 
   const handleStatusChange = async (reportId: string | number, status: string) => {
-    try {
-      await updateCenterIssueReportStatus(reportId as any, status as any);
-      showMessage('Issue report status updated.');
-      fetchReports();
-    } catch (err: any) {
-      showMessage(err.response?.data?.message || 'Failed to update status.', 'error');
-    }
+    await updateStatusMutation.mutateAsync({ reportId, status });
   };
 
   const handleDelete = async (reportId: string | number) => {
     showConfirm(
       'Delete this issue report?',
       async () => {
-        try {
-          await deleteCenterIssueReport(reportId as any);
-          showMessage('Issue report deleted successfully.');
-          fetchReports();
-        } catch (err: any) {
-          showMessage(err.response?.data?.message || 'Failed to delete issue report.', 'error');
-        }
+        await deleteMutation.mutateAsync(reportId);
       },
       'Delete Report',
       'danger',
@@ -308,7 +306,7 @@ export const useCenterIssueReports = () => {
     centers,
     summary,
     loading,
-    saving,
+    saving: saveReportMutation.isPending,
     modalOpen, setModalOpen,
     editingReport, setEditingReport,
     viewingReport, setViewingReport,
@@ -318,7 +316,8 @@ export const useCenterIssueReports = () => {
     categoryFilter, setCategoryFilter,
     severityFilter, setSeverityFilter,
     statusFilter, setStatusFilter,
-    activeEvents, setActiveEvents,
+    activeEvents,
+    setActiveEvents: () => {},
     selectedEventId, setSelectedEventId,
     message,
     canCreate, canUpdateStatus, canChooseCenter,

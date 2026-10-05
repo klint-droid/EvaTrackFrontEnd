@@ -11,6 +11,7 @@ export default function VerifyHousehold() {
   const {
     tab, setTab,
     query, setQuery,
+    searchType, setSearchType,
     results,
     headName, setHeadName,
     contactNumber, setContactNumber,
@@ -93,6 +94,8 @@ export default function VerifyHousehold() {
           <RegistrySearch
             query={query}
             setQuery={setQuery}
+            searchType={searchType}
+            setSearchType={setSearchType}
             handleSearch={handleSearch}
             setQrModalOpen={setQrModalOpen}
             loading={loading}

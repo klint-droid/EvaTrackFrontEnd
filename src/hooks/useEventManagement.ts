@@ -1,77 +1,96 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { getEvents } from '../api/events/getEvents';
-import { getHistoryEvents } from '../api/events/getHistoryEvents';
+import { getHistoryEvents, type HistoryEventFilters } from '../api/events/getHistoryEvents';
 import { getDisasterTypes } from '../api/events/getDisasterTypes';
 
-interface Filters {
+export interface Filters extends HistoryEventFilters {
   type_id: string;
   start_date: string;
   end_date: string;
+  q?: string;
 }
 
 export const useEventManagement = () => {
-  const [events, setEvents] = useState<any[]>([]);
-  const [historicalEvents, setHistoricalEvents] = useState<any[]>([]);
-  const [historyPagination, setHistoryPagination] = useState<any>({});
-  const [historyLoading, setHistoryLoading] = useState<boolean>(false);
-  
-  const [disasterTypes, setDisasterTypes] = useState<any[]>([]);
-  const [filters, setFilters] = useState<Filters>({
+  const queryClient = useQueryClient();
+
+  const [historyPage, setHistoryPage] = useState<number>(1);
+  const [filters, setFiltersState] = useState<Filters>({
     type_id: '',
     start_date: '',
-    end_date: ''
+    end_date: '',
+    q: ''
   });
 
-  const [loading, setLoading] = useState<boolean>(true);
+  const setFilters = (newFilters: Filters | ((prev: Filters) => Filters)) => {
+    setHistoryPage(1);
+    setFiltersState(newFilters);
+  };
+
   const [showModal, setShowModal] = useState<boolean>(false);
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [assigningEvent, setAssigningEvent] = useState<any>(null);
   const [viewingEvent, setViewingEvent] = useState<any>(null);
 
-  const fetchEvents = async () => {
-    setLoading(true);
-    try {
+  // 1. Events Query
+  const { 
+    data: events = [], 
+    isLoading: loading 
+  } = useQuery({
+    queryKey: ['events'],
+    queryFn: async () => {
       const res = await getEvents();
-      setEvents(res.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+      return res.data || [];
+    }
+  });
+
+  // 2. Disaster Types Query (Lookup data, cached for entire session)
+  const { 
+    data: disasterTypes = [] 
+  } = useQuery({
+    queryKey: ['disasterTypes'],
+    queryFn: async () => {
+      const res = await getDisasterTypes();
+      return Array.isArray(res) ? res : (res?.data || []);
+    },
+    staleTime: Infinity,
+  });
+
+  // 3. Historical Events Query (Paginated & Filtered)
+  const { 
+    data: historyPagination = { data: [] } as any, 
+    isFetching: historyLoading 
+  } = useQuery({
+    queryKey: ['events', 'history', historyPage, filters],
+    queryFn: async () => {
+      return await getHistoryEvents(historyPage, filters);
+    },
+    placeholderData: keepPreviousData,
+  });
+
+  const historicalEvents = (historyPagination as any)?.data || [];
+
+  const fetchEvents = () => {
+    return queryClient.invalidateQueries({ queryKey: ['events'] });
+  };
+
+  const fetchHistory = (page?: number) => {
+    if (typeof page === 'number') {
+      setHistoryPage(page);
+    } else {
+      queryClient.invalidateQueries({ queryKey: ['events', 'history'] });
     }
   };
 
-  const fetchHistory = async (page: number = 1) => {
-    setHistoryLoading(true);
-    try {
-      const res = await getHistoryEvents(page, filters);
-      setHistoricalEvents(res.data || []);
-      setHistoryPagination(res);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setHistoryLoading(false);
-    }
-  };
-
-  useEffect(() => { 
-    fetchEvents(); 
-    fetchHistory(1);
-    getDisasterTypes().then(res => setDisasterTypes(Array.isArray(res) ? res : (res?.data || [])));
-  }, []);
-
-  useEffect(() => {
-    fetchHistory(1);
-  }, [filters.type_id, filters.start_date, filters.end_date]);
-
-  const activeEvents = events.filter(e => !e.ended_at);
+  const activeEvents = events.filter((e: any) => !e.ended_at);
 
   const activeCount = activeEvents.length;
-  const totalAssignedCenters = activeEvents.reduce((acc, curr) => {
+  const totalAssignedCenters = activeEvents.reduce((acc: number, curr: any) => {
     return acc + (curr.evacuation_centers?.length || 0);
   }, 0);
 
   const uniqueRegions = new Set<string>();
-  activeEvents.forEach(e => {
+  activeEvents.forEach((e: any) => {
     (e.evacuation_centers || []).forEach((c: any) => {
       if (c.region) uniqueRegions.add(c.region);
     });
@@ -83,12 +102,17 @@ export const useEventManagement = () => {
     historyPagination,
     historyLoading,
     disasterTypes,
-    filters, setFilters,
+    filters,
+    setFilters,
     loading,
-    showModal, setShowModal,
-    showFilters, setShowFilters,
-    assigningEvent, setAssigningEvent,
-    viewingEvent, setViewingEvent,
+    showModal,
+    setShowModal,
+    showFilters,
+    setShowFilters,
+    assigningEvent,
+    setAssigningEvent,
+    viewingEvent,
+    setViewingEvent,
     activeEvents,
     activeCount,
     totalAssignedCenters,

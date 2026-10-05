@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { getCenter } from '../api/evacuation/getCenter';
 import { getUnitsByCenter } from '../api/units/getUnitsByCenter';
 import { deleteUnit } from '../api/units/deleteUnit';
@@ -7,22 +8,16 @@ import { getUnitAllocations } from '../api/allocations/getUnitAllocations';
 import { unassignHousehold } from '../api/allocations/unassignHousehold';
 import { getRecordsByCenter } from '../api/evacuationRecords/getRecordsByCenter';
 import { deleteRecord } from '../api/evacuationRecords/deleteRecord';
-import { exportCenterData } from '../api/evacuationRecords/exportCenterData';
+import { exportCenterData, type ExportType } from '../api/evacuationRecords/exportCenterData';
 import { getEvents } from '../api/events/getEvents';
 import { isAdmin, isSuperAdmin, isPersonnel } from '../utils/roles';
 import { useAlert } from '../context/AlertContext';
 
-/**
- * Custom Hook: useEvacuationDetail
- *
- * Adheres to Single Responsibility Principle (SRP).
- * Encapsulates all data fetching, filtering, pagination, modal state,
- * and mutations for the Evacuation Detail view.
- */
 export function useEvacuationDetail() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
+    const queryClient = useQueryClient();
     const activeTab = searchParams.get('tab') || 'units';
     const { showAlert } = useAlert();
 
@@ -30,14 +25,7 @@ export function useEvacuationDetail() {
         setSearchParams({ tab });
     };
 
-    // Center & Event Data
-    const [center, setCenter] = useState<any>(null);
-    const [units, setUnits] = useState<any[]>([]);
-    const [evacuatedHouseholds, setEvacuatedHouseholds] = useState<any[]>([]);
-    const [events, setEvents] = useState<any[]>([]);
     const [selectedEventId, setSelectedEventId] = useState<string>('');
-    const [loading, setLoading] = useState(true);
-    const [householdsLoading, setHouseholdsLoading] = useState(false);
 
     // Units State & Filters
     const [expandedUnit, setExpandedUnit] = useState<string | number | null>(null);
@@ -47,7 +35,6 @@ export function useEvacuationDetail() {
     const [unitStatusFilter, setUnitStatusFilter] = useState('');
     const [selectedUnits, setSelectedUnits] = useState<any[]>([]);
     const [unitsPage, setUnitsPage] = useState(1);
-    const [unitsMeta, setUnitsMeta] = useState<any>(null);
 
     // Households State & Filters
     const [householdNameFilter, setHouseholdNameFilter] = useState('');
@@ -80,6 +67,67 @@ export function useEvacuationDetail() {
     const canAdmit = isPersonnel();
     const canEditUnits = isAdmin() || isSuperAdmin();
 
+    // 1. Center Query
+    const { data: center = null, isLoading: isCenterLoading } = useQuery<any>({
+        queryKey: ['center', id],
+        queryFn: async () => {
+            if (!id) return null;
+            return await getCenter(id);
+        },
+        enabled: !!id,
+    });
+
+    // 2. Units Query
+    const { data: unitsResponse = { data: [] } as any, isLoading: isUnitsLoading } = useQuery<any>({
+        queryKey: ['centerUnits', id, unitsPage],
+        queryFn: async () => {
+            if (!id) return { data: [] };
+            return await getUnitsByCenter(id, unitsPage, 15);
+        },
+        enabled: !!id,
+        placeholderData: keepPreviousData,
+    });
+
+    const units: any[] = unitsResponse?.data || [];
+    const unitsMeta = {
+        current_page: unitsResponse?.current_page,
+        last_page: unitsResponse?.last_page,
+        total: unitsResponse?.total,
+        from: unitsResponse?.from,
+        to: unitsResponse?.to
+    };
+
+    // 3. Events Query (Cached)
+    const { data: events = [] } = useQuery<any[]>({
+        queryKey: ['events'],
+        queryFn: async () => {
+            const res: any = await getEvents();
+            return res.data || res || [];
+        },
+        staleTime: 1000 * 60 * 2,
+    });
+
+    // Sync selectedEventId from center when center loads
+    useEffect(() => {
+        if (center && !selectedEventId) {
+            setSelectedEventId(center.current_event_id || "all");
+        }
+    }, [center]);
+
+    // 4. Evacuated Households Query
+    const { data: householdsResponse = { data: [] } as any, isLoading: householdsLoading } = useQuery<any>({
+        queryKey: ['centerHouseholds', id, selectedEventId],
+        queryFn: async () => {
+            if (!id) return { data: [] };
+            const eventParam = selectedEventId === "all" || !selectedEventId ? null : selectedEventId;
+            return await getRecordsByCenter(id, null, eventParam);
+        },
+        enabled: !!id,
+    });
+
+    const evacuatedHouseholds: any[] = householdsResponse?.data || [];
+    const loading = isCenterLoading || isUnitsLoading;
+
     // Close export dropdown on outside click
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -92,12 +140,12 @@ export function useEvacuationDetail() {
     }, []);
 
     // Export handler
-    const handleExport = async (type: string) => {
+    const handleExport = async (type: ExportType | string) => {
         if (!id) return;
         setExportDropdown(false);
         setExporting(true);
         try {
-            await exportCenterData(id, type);
+            await exportCenterData(id, type as ExportType);
         } catch (err: any) {
             showAlert(err.response?.data?.message || 'Failed to export data.', 'Export Error', 'danger');
         } finally {
@@ -105,82 +153,21 @@ export function useEvacuationDetail() {
         }
     };
 
-    // Data Fetchers
-    const fetchCenter = async () => {
-        if (!id) return;
-        try {
-            const data = await getCenter(id);
-            setCenter(data);
-        } catch (err) {
-            console.error(err);
-        }
+    const fetchCenter = () => {
+        return queryClient.invalidateQueries({ queryKey: ['center', id] });
     };
 
-    const fetchUnits = async (page = unitsPage) => {
-        if (!id) return;
-        try {
-            const res = await getUnitsByCenter(id, page, 15);
-            setUnits(res.data || []);
-            setUnitsMeta({
-                current_page: res.current_page,
-                last_page: res.last_page,
-                total: res.total,
-                from: res.from,
-                to: res.to
-            });
-            setUnitsPage(page);
-        } catch (err) {
-            console.error(err);
-        }
+    const fetchUnits = (page = unitsPage) => {
+        setUnitsPage(page);
+        return queryClient.invalidateQueries({ queryKey: ['centerUnits', id] });
     };
 
-    const fetchEvents = async () => {
-        try {
-            const res = await getEvents();
-            setEvents(res.data || []);
-        } catch (err) {
-            console.error(err);
+    const fetchEvacuatedHouseholds = (eventIdFilter = selectedEventId) => {
+        if (eventIdFilter !== selectedEventId) {
+            setSelectedEventId(eventIdFilter);
         }
+        return queryClient.invalidateQueries({ queryKey: ['centerHouseholds', id] });
     };
-
-    const fetchEvacuatedHouseholds = async (eventIdFilter = selectedEventId) => {
-        if (!id) return;
-        try {
-            setHouseholdsLoading(true);
-            const eventParam = eventIdFilter === "all" || !eventIdFilter ? null : eventIdFilter;
-            const res = await getRecordsByCenter(id, null, eventParam);
-            setEvacuatedHouseholds(res.data || []);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setHouseholdsLoading(false);
-        }
-    };
-
-    const fetchPageData = async () => {
-        await Promise.all([
-            fetchCenter(),
-            fetchUnits(),
-            fetchEvents(),
-        ]);
-        setLoading(false);
-    };
-
-    useEffect(() => {
-        fetchPageData();
-    }, [id]);
-
-    useEffect(() => {
-        if (center) {
-            setSelectedEventId(center.current_event_id || "all");
-        }
-    }, [center]);
-
-    useEffect(() => {
-        if (selectedEventId) {
-            fetchEvacuatedHouseholds(selectedEventId);
-        }
-    }, [selectedEventId]);
 
     const fetchAllocations = async (unitId: string | number) => {
         try {
@@ -207,7 +194,8 @@ export function useEvacuationDetail() {
         try {
             await deleteUnit(id, deleteUnitModal.unit_id);
             setDeleteUnitModal(null);
-            fetchUnits();
+            queryClient.invalidateQueries({ queryKey: ['centerUnits', id] });
+            queryClient.invalidateQueries({ queryKey: ['center', id] });
         } catch (err: any) {
             showAlert(err.response?.data?.message || 'Failed to delete unit.', 'Error', 'danger');
         } finally {
@@ -221,8 +209,9 @@ export function useEvacuationDetail() {
         try {
             await unassignHousehold(unassignModal.unitId, unassignModal.allocationId);
             fetchAllocations(unassignModal.unitId);
-            fetchUnits();
-            fetchEvacuatedHouseholds();
+            queryClient.invalidateQueries({ queryKey: ['centerUnits', id] });
+            queryClient.invalidateQueries({ queryKey: ['centerHouseholds', id] });
+            queryClient.invalidateQueries({ queryKey: ['center', id] });
             setUnassignModal(null);
         } catch (err: any) {
             showAlert(err.response?.data?.message || 'Failed to unassign.', 'Error', 'danger');
@@ -236,11 +225,9 @@ export function useEvacuationDetail() {
         setIsDeletingRecord(true);
         try {
             await deleteRecord(deleteRecordModal);
-            await Promise.all([
-                fetchCenter(),
-                fetchUnits(),
-                fetchEvacuatedHouseholds(),
-            ]);
+            queryClient.invalidateQueries({ queryKey: ['center', id] });
+            queryClient.invalidateQueries({ queryKey: ['centerUnits', id] });
+            queryClient.invalidateQueries({ queryKey: ['centerHouseholds', id] });
             if (expandedUnit) {
                 await fetchAllocations(expandedUnit);
             }
@@ -281,6 +268,11 @@ export function useEvacuationDetail() {
     });
 
     const filteredHouseholds = evacuatedHouseholds.filter(record => {
+        const isCheckedOut = record.household_status_id === 6 || record.household_status_id === "6" || Number(record.evacuated_count || 0) === 0;
+        if (isCheckedOut) {
+            return false;
+        }
+
         const nameStr = `${record.household?.household_name || ''} ID-${record.household_id || ''}`.toLowerCase();
         if (householdNameFilter && !nameStr.includes(householdNameFilter.toLowerCase())) {
             return false;

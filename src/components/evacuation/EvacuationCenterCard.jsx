@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, MapPin, Users, DoorOpen, ChevronRight, ShieldAlert } from "lucide-react";
+import { Home, MapPin, Users, DoorOpen, ChevronRight } from "lucide-react";
 import { RowMenu } from "../../ui/Table";
 
 export default function EvacuationCenterCard({
@@ -105,14 +105,6 @@ export default function EvacuationCenterCard({
           />
         </div>
       </div>
-
-      {/* Active Disaster Event Banner (if assigned) */}
-      {center.current_event && (
-        <div className="mt-2.5 px-2.5 py-1 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 flex items-center gap-1.5 text-[11px] font-semibold text-red-700 dark:text-red-400">
-          <ShieldAlert size={12} className="text-red-500 animate-pulse flex-shrink-0" />
-          <span className="truncate">{center.current_event.name}</span>
-        </div>
-      )}
 
       {/* Occupancy bar */}
       <div className="mt-3 space-y-1.5 bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/80">

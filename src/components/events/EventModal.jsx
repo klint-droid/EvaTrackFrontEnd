@@ -186,7 +186,7 @@ export default function EventModal({ onClose, onCreated }) {
                                 placeholder="e.g., Typhoon Aghon - May 2024"
                                 value={form.name}
                                 onChange={e => setForm({ ...form, name: e.target.value })}
-                                className="w-full bg-[#3a3a3a] border-2 border-blue-500 ring-4 ring-blue-50 rounded-xl px-4 py-3 text-sm font-medium outline-none text-white placeholder-slate-500 focus:ring-blue-100 transition-all"
+                                className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-xl px-4 py-3 text-sm font-semibold outline-none text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-4 focus:ring-blue-500/10 transition-all"
                             />
                         </div>
 
@@ -243,7 +243,7 @@ export default function EventModal({ onClose, onCreated }) {
                     <button
                         onClick={handleSubmit}
                         disabled={loading || typesLoading || !form.name || !form.type_id || !form.severity_id}
-                        className="px-6 py-2.5 bg-[#f5cb5c] hover:bg-[#ebd54b] text-slate-900 dark:text-slate-50 text-sm font-bold rounded-xl shadow-sm dark:shadow-none transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-6 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 active:scale-95 text-white text-sm font-bold rounded-xl shadow-md shadow-rose-600/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                         <Megaphone size={16} strokeWidth={2.5} />
                         {loading ? 'Declaring...' : 'Declare Event'}

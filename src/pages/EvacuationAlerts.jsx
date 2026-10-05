@@ -161,9 +161,9 @@ export default function EvacuationAlerts() {
             </div>
 
             <TableLayout
-                title="Evacuation Alerts"
+                title="SMS & Push Alerts"
                 badgeText={`${pagination.total || alerts.length} Dispatches`}
-                subtitle="Broadcast emergency warnings, SMS notifications, and disaster alerts"
+                subtitle="Broadcast emergency warnings, SMS notifications, and mobile push alerts"
                 onExport={() => {
                   const csvHeader = "Notification ID,Message,Urgency,Recipients,Status,Timestamp\n";
                   const csvRows = filteredAlerts

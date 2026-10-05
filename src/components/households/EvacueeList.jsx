@@ -34,7 +34,7 @@ export default function EvacueeList({
     allEvacuatedMemberIds
 }) {
 
-    const renderMemberRow = (member, showStatus = false, context = null) => {
+    const renderMemberRow = (member, index, showStatus = false, context = null) => {
         const memberEvac = memberEvacMap[member.member_id];
         const isMemberEvacuated = !!memberEvac;
         const isStatusUpdating = statusUpdatingMemberId === member.member_id;
@@ -45,13 +45,17 @@ export default function EvacueeList({
 
         return (
             <TableRow key={member.member_id} className="group">
+                <TableCell className="w-12 text-center text-xs font-mono text-slate-400">
+                    {index + 1}
+                </TableCell>
+
                 <TableCell className="text-sm font-medium text-slate-700 dark:text-slate-200">
                     {[member.first_name, member.middle_name, member.last_name]
                         .filter(Boolean)
                         .join(' ')}
                 </TableCell>
 
-                <TableCell className="text-sm text-slate-500 dark:text-slate-400">
+                <TableCell className="text-sm text-center text-slate-500 dark:text-slate-400">
                     {(() => {
                         if (!member.birth_date) return '—';
                         const birth = new Date(member.birth_date);
@@ -103,7 +107,7 @@ export default function EvacueeList({
                                   })
                                 : '—'}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-center">
                             {(() => {
                             if (!isMemberEvacuated) {
                                 const canCheckIn = canModify && (
@@ -211,12 +215,12 @@ export default function EvacueeList({
                             <TableHead>Vulnerable Groups</TableHead>
                             {showStatus && <TableHead>Verified At</TableHead>}
                             {showStatus && <TableHead className="text-center">Status</TableHead>}
-                            {canEdit && <TableHead className="w-10"></TableHead>}
+                            <TableHead className="w-10 text-right"></TableHead>
                         </tr>
                     </TableHeader>
 
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                        {members.map(member => renderMemberRow(member, showStatus, context))}
+                        {members.map((member, index) => renderMemberRow(member, index, showStatus, context))}
                     </tbody>
                 </Table>
         );

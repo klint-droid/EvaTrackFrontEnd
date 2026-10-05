@@ -175,8 +175,10 @@ export default function HouseholdManagement() {
     };
     const getEvacuationProgress = (household) => {
         const currentEvac = household.current_evacuation || household.currentEvacuation;
-        const isEvacuated = currentEvac && (currentEvac.household_status_id === 2 || currentEvac.household_status_id === "2");
-        const isReturned = currentEvac && (currentEvac.household_status_id === 6 || currentEvac.household_status_id === "6");
+        const latestEvac = household.latest_evacuation || household.latestEvacuation;
+        const isEvacuated = currentEvac && (currentEvac.household_status_id === 2 || currentEvac.household_status_id === "2") && Number(currentEvac.evacuated_count || 0) > 0;
+        const isReturned = (!isEvacuated && latestEvac && (latestEvac.household_status_id === 6 || latestEvac.household_status_id === "6")) ||
+                           (currentEvac && (currentEvac.household_status_id === 6 || currentEvac.household_status_id === "6"));
         
         const evacuated = isEvacuated ? Number(currentEvac.evacuated_count || 0) : 0;
         // Accurately resolve total members from actual registered members count, declared count, or evacuated count
@@ -191,7 +193,7 @@ export default function HouseholdManagement() {
             return {
                 status: 'returned',
                 label: 'Returned Home',
-                evacuated,
+                evacuated: 0,
                 total,
                 pct: 100,
                 badgeClass: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/50',
@@ -396,7 +398,7 @@ export default function HouseholdManagement() {
                                         </span>
                                     </TableCell>
                                     <TableCell className="text-xs">
-                                        {h.current_evacuation ? (
+                                        {h.current_evacuation && Number(h.current_evacuation.evacuated_count || 0) > 0 ? (
                                             <div>
                                                 <p className="font-medium text-slate-700 dark:text-slate-200 leading-tight">
                                                     {h.current_evacuation.center?.name || '—'}
@@ -404,6 +406,18 @@ export default function HouseholdManagement() {
                                                 <p className="text-[10px] text-slate-400 leading-none">
                                                     {h.current_evacuation.unit_allocation?.unit?.name || 'No unit assigned'}
                                                 </p>
+                                            </div>
+                                        ) : (h.latest_evacuation || h.latestEvacuation) && (
+                                            (h.latest_evacuation || h.latestEvacuation).household_status_id === 6 ||
+                                            (h.latest_evacuation || h.latestEvacuation).household_status_id === "6"
+                                        ) ? (
+                                            <div>
+                                                <p className="font-medium text-slate-500 dark:text-slate-400 leading-tight">
+                                                    {(h.latest_evacuation || h.latestEvacuation).center?.name || '—'}
+                                                </p>
+                                                <span className="inline-block mt-0.5 text-[9px] font-semibold text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                                                    Checked Out
+                                                </span>
                                             </div>
                                         ) : (
                                             <span className="text-slate-400 text-xs">—</span>
