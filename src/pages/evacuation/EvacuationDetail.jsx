@@ -1,6 +1,7 @@
 import React from 'react';
 import { Home, Users } from 'lucide-react';
 import ResourceNotFound from '../../components/ui/ResourceNotFound';
+import UnitsOccupancySummary from '../../components/evacuation/detail/UnitsOccupancySummary';
 import { useEvacuationDetail } from '../../hooks/useEvacuationDetail';
 import EvacuationHeader from '../../components/evacuation/detail/EvacuationHeader';
 import EvacuationStats from '../../components/evacuation/detail/EvacuationStats';
