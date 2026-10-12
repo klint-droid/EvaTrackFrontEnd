@@ -154,6 +154,9 @@ export default function EvacuationList() {
 
   return (
     <div className="space-y-4 font-sans text-left">
+      <p role="status" className="sr-only">
+        {loading ? 'Loading evacuation centers...' : ''}
+      </p>
       <TableLayout
         title="Evacuation Centers"
         badgeText={`${centers.length} Shelters`}
