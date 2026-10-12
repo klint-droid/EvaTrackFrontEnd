@@ -27,6 +27,9 @@ export default function EventManagement() {
 
   return (
     <div className="min-h-screen font-sans text-left">
+      <p role="status" className="sr-only">
+        {loading ? 'Loading active events...' : historyLoading ? 'Loading historical events...' : ''}
+      </p>
       <EventHeader setShowModal={setShowModal} />
 
       <EventStatsCards 

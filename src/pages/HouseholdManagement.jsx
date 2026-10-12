@@ -282,6 +282,9 @@ export default function HouseholdManagement() {
         />
     );    return (
         <div className="min-h-screen font-sans text-left pb-24">
+            <p role="status" className="sr-only">
+                {loading ? 'Loading households...' : ''}
+            </p>
             <TableLayout
                 title="Households"
                 badgeText={`${pagination.total || households.length} Households`}
