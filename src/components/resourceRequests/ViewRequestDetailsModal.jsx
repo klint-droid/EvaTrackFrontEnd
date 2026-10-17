@@ -103,13 +103,8 @@ export default function ViewRequestDetailsModal({
     setStatusChanging(false);
   };
 
-  return createPortal(
-    <>
-      {/* Translucent backdrop */}
-      <div
-        className="fixed inset-0 bg-black/20 dark:bg-black/40 z-[9998] transition-opacity duration-200"
-        onClick={onClose}
-      />
+    return (
+    <div className="w-full bg-white dark:bg-[#0f1623] border border-slate-200 dark:border-[#1e2a3d] rounded-2xl shadow-sm flex flex-col overflow-hidden max-h-[calc(100vh-3rem)]">
 
       {/* Right-side Drawer */}
       <div className="fixed top-0 right-0 h-full w-full max-w-[420px] bg-white dark:bg-[#0f1623] border-l border-slate-200 dark:border-[#1e2a3d] shadow-2xl z-[9999] flex flex-col animate-in slide-in-from-right duration-200 overflow-hidden">
@@ -310,7 +305,6 @@ export default function ViewRequestDetailsModal({
           </div>
         )}
       </div>
-    </>,
-    document.body
+       </div>
   );
 }
