@@ -52,6 +52,26 @@ export default function ResourceRequests() {
   const centerRef = useRef(null);
   const perPage = 10;
 
+  // Split-screen details panel: keep the last request mounted during the close animation
+  const [cachedRequest, setCachedRequest] = useState(null);
+  const panelOpen = !!viewingRequest;
+
+  useEffect(() => {
+    if (viewingRequest) setCachedRequest(viewingRequest);
+  }, [viewingRequest]);
+
+  useEffect(() => {
+    if (!panelOpen) {
+      const t = setTimeout(() => setCachedRequest(null), 300);
+      return () => clearTimeout(t);
+    }
+  }, [panelOpen]);
+
+
+
+
+
+
   // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e) => {
@@ -437,35 +457,61 @@ export default function ResourceRequests() {
 
 
 
-      {/* ─── MAIN CONTENT VIEW (KANBAN BOARD OR DATA TABLE) ─── */}
-      {viewMode === 'kanban' ? (
-        <div className="animate-in fade-in duration-200">
-          <KanbanBoard 
-            requests={filteredRequests}
-            loading={loading}
-            canUpdateStatus={canUpdateStatus}
-            canCreate={canCreate}
-            openModal={openModal}
-            handleStatusChange={handleStatusChange}
-            handleDelete={handleDelete}
-            getUrgencyClass={getUrgencyClass}
-            setViewingRequest={setViewingRequest}
-          />
+            {/* ─── MAIN CONTENT VIEW (SPLIT LAYOUT: BOARD + DETAILS PANEL) ─── */}
+      <div className="flex flex-col lg:flex-row gap-4 items-start">
+
+        {/* Left: board / list — flexes to fill whatever width remains */}
+        <div className="flex-1 min-w-0 w-full">
+          {viewMode === 'kanban' ? (
+            <div className="animate-in fade-in duration-200">
+              <KanbanBoard 
+                requests={filteredRequests}
+                loading={loading}
+                canUpdateStatus={canUpdateStatus}
+                canCreate={canCreate}
+                openModal={openModal}
+                handleStatusChange={handleStatusChange}
+                handleDelete={handleDelete}
+                getUrgencyClass={getUrgencyClass}
+                setViewingRequest={setViewingRequest}
+                compact={panelOpen}
+              />
+            </div>
+          ) : (
+            <div className="animate-in fade-in duration-200">
+              <JiraListView
+                requests={filteredRequests}
+                loading={loading}
+                canUpdateStatus={canUpdateStatus}
+                handleStatusChange={handleStatusChange}
+                handleDelete={handleDelete}
+                getUrgencyClass={getUrgencyClass}
+                getStatusClass={getStatusClass}
+                setViewingRequest={setViewingRequest}
+              />
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="animate-in fade-in duration-200">
-          <JiraListView
-            requests={filteredRequests}
-            loading={loading}
-            canUpdateStatus={canUpdateStatus}
-            handleStatusChange={handleStatusChange}
-            handleDelete={handleDelete}
+
+        {/* Right: details panel — animates width; board auto-compresses beside it */}
+                <div
+          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+            panelOpen
+              ? 'block w-full lg:w-[420px] lg:flex-shrink-0'
+              : 'hidden lg:block lg:w-0 lg:flex-shrink-0'
+          }`}
+        >
+          <ViewRequestDetailsModal 
+            request={viewingRequest || cachedRequest}
+            onClose={() => setViewingRequest(null)}
             getUrgencyClass={getUrgencyClass}
             getStatusClass={getStatusClass}
-            setViewingRequest={setViewingRequest}
+            canUpdateStatus={canUpdateStatus}
+            handleStatusChange={handleStatusChange}
+            handleDelete={handleDelete}
           />
         </div>
-      )}
+      </div>
 
       {/* ─── Incoming Requests List Modal ─── */}
       <IncomingRequestsModal
@@ -475,6 +521,7 @@ export default function ResourceRequests() {
         getUrgencyClass={getUrgencyClass}
         getStatusClass={getStatusClass}
         onSelectRequest={(req) => {
+          setIncomingModalOpen(false);
           setViewingRequest(req);
         }}
       />
@@ -492,16 +539,7 @@ export default function ResourceRequests() {
         saving={saving}
       />
 
-      {/* ─── View & Update Details Modal ─── */}
-      <ViewRequestDetailsModal 
-        request={viewingRequest}
-        onClose={() => setViewingRequest(null)}
-        getUrgencyClass={getUrgencyClass}
-        getStatusClass={getStatusClass}
-        canUpdateStatus={canUpdateStatus}
-        handleStatusChange={handleStatusChange}
-        handleDelete={handleDelete}
-      />
+      
 
       {canCreate && (
         <AnimatedFAB onClick={openModal} icon={Plus} label="New Request" />

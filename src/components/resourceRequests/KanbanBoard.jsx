@@ -95,8 +95,10 @@ export default function KanbanBoard({
   handleStatusChange,
   handleDelete,
   getUrgencyClass,
-  setViewingRequest
+  setViewingRequest,
+  compact = false
 }) {
+  const [isDragging, setIsDragging] = useState(false);
   const [draggedRequestId, setDraggedRequestId] = useState(null);
   const [dragOverColumn, setDragOverColumn] = useState(null);
 
@@ -127,8 +129,8 @@ export default function KanbanBoard({
 
   return (
     <div className="w-full overflow-x-auto">
-      {/* 4-equal-column grid — no fixed height, columns grow with content */}
-      <div className="grid grid-cols-4 gap-2.5 min-w-[780px]">
+            {/* 4-equal-column grid — keeps all 4 columns; compresses to fit when details panel is open */}
+      <div className={`grid grid-cols-4 ${compact ? 'gap-2 min-w-0' : 'gap-2.5 min-w-[780px]'}`}>
         {COLUMNS.map((column) => {
           const colRequests = requests.filter(r => {
             const sk = r.status?.status_key || r.status || 'pending';
