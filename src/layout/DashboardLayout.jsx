@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Sidebar from "../components/SideBar";
+import BottomNav from "../components/navigation/BottomNav";
+import MobilePwaPrompt from "../components/navigation/MobilePwaPrompt";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { 
     User, LogOut, Settings, Moon, Sun, 
@@ -9,6 +11,7 @@ import {
 import { logout } from "../api/auth/logout";
 import { useUserStore } from "../store/useUserStore";
 import { useTheme } from "../context/ThemeContext";
+import NotificationBell from "../components/notifications/NotificationBell";
 
 function TargetLogo({ onClick }) {
     return (
@@ -90,7 +93,7 @@ const DashboardLayout = () => {
                 {/* LEFT: Logo + Sidebar Toggle */}
                 <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                     {/* LOGO */}
-                    <TargetLogo onClick={() => navigate("/dashboard")} />
+                    <TargetLogo onClick={() => navigate(user?.role === "super_admin" ? "/user-management" : "/dashboard")} />
 
                     {/* SIDEBAR PANEL TOGGLE ICON */}
                     <button
@@ -111,6 +114,8 @@ const DashboardLayout = () => {
 
                 {/* FAR RIGHT: ACTION ICONS & PROFILE */}
                 <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                    <NotificationBell />
+
                     <button
                         onClick={toggleTheme}
                         className="p-1.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
@@ -315,13 +320,19 @@ const DashboardLayout = () => {
                 {/* SIDEBAR */}
                 <Sidebar isOpen={isSidebarOpen} isCollapsed={isSidebarCollapsed} onClose={() => setIsSidebarOpen(false)} />
 
-                {/* MAIN CONTENT AREA */}
+                {/* MAIN CONTENT AREA (pb-24 on mobile prevents bottom nav overlap) */}
                 <main className="flex-1 overflow-y-auto bg-[#f8fafc] dark:bg-slate-950 transition-colors duration-300 text-left">
-                    <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-8">
+                    <div className="max-w-6xl mx-auto p-4 sm:p-6 pb-24 lg:pb-8 space-y-8">
                         <Outlet />
                     </div>
                 </main>
             </div>
+
+            {/* MOBILE NOTIFICATION: DO YOU WANT TO INSTALL PROMPT */}
+            <MobilePwaPrompt />
+
+            {/* MOBILE BOTTOM NAVIGATION BAR */}
+            <BottomNav />
 
         </div>
     );

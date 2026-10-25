@@ -7,7 +7,6 @@ export default function IncomingRequestsModal({
   onClose, 
   requests = [], 
   onSelectRequest,
-  getUrgencyClass,
   getStatusClass
 }) {
   if (!isOpen) return null;
@@ -150,9 +149,6 @@ export default function IncomingRequestsModal({
                 </div>
 
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className={`px-2.5 py-1 text-[10px] font-black rounded-lg border uppercase ${getUrgencyClass(req.urgency_level?.urgency_key)}`}>
-                    {req.urgency_level?.urgency_label || 'Normal'}
-                  </span>
                   <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400 group-hover:text-amber-500 flex items-center justify-center transition-colors">
                     <ChevronRight size={16} />
                   </div>

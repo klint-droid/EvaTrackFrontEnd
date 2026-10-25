@@ -66,7 +66,6 @@ export default function JiraListView({
   canUpdateStatus = false,
   handleStatusChange,
   handleDelete,
-  getUrgencyClass,
   getStatusClass,
   setViewingRequest
 }) {

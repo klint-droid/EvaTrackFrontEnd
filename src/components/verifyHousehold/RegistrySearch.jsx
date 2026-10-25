@@ -110,55 +110,14 @@ export default function RegistrySearch({
     };
 
     return (
-        <div className="p-6 sm:p-8 space-y-6">
-            {/* Jira-Style Header & Segmented Filter Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
-                <div className="space-y-1">
-                    <h3 className="text-sm font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
-                        <Search size={16} className="text-blue-600 dark:text-blue-400" />
-                        Registry Query
-                    </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Search family units or individual evacuees to initiate center admission
-                    </p>
-                </div>
-
-                {/* Jira-Style Segmented Switcher */}
-                <div className="inline-flex p-1 bg-slate-100 dark:bg-slate-800/90 rounded-xl border border-slate-200 dark:border-slate-700 self-start sm:self-center">
-                    <button
-                        type="button"
-                        onClick={() => onSwitchType('household')}
-                        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 ${
-                            searchType === 'household'
-                                ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm border border-slate-200/80 dark:border-slate-700'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                        }`}
-                    >
-                        <Home size={13} />
-                        <span>Households</span>
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => onSwitchType('member')}
-                        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 ${
-                            searchType === 'member'
-                                ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm border border-slate-200/80 dark:border-slate-700'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                        }`}
-                    >
-                        <User size={13} />
-                        <span>Members</span>
-                    </button>
-                </div>
-            </div>
-
-            {/* Jira-Style Search Toolbar */}
-            <div className="flex flex-col sm:flex-row gap-2.5">
+        <div className="p-5 sm:p-7 space-y-6">
+            {/* Integrated Toolbar matching standard EvaTrack table views */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                {/* Search Input Bar */}
                 <div className="relative flex-1 group">
                     <SearchIcon
                         className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 dark:group-focus-within:text-blue-400 transition-colors pointer-events-none"
-                        size={17}
+                        size={16}
                     />
                     <input
                         value={query}
@@ -169,13 +128,13 @@ export default function RegistrySearch({
                                 ? "Search by household name (e.g. Sacnanas) or ID (HH-0088)..." 
                                 : "Search by member's first or last name (e.g. Mary Sacnanas)..."
                         }
-                        className="w-full pl-10 pr-9 py-2.5 bg-slate-50 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all shadow-inner dark:shadow-none"
+                        className="w-full pl-10 pr-9 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all"
                     />
                     {query && (
                         <button
                             type="button"
                             onClick={() => setQuery("")}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-md"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-md cursor-pointer"
                             title="Clear query"
                         >
                             <X size={15} />
@@ -183,56 +142,132 @@ export default function RegistrySearch({
                     )}
                 </div>
 
-                <div className="flex gap-2">
+                {/* Scope Pill Switcher: Households vs Members */}
+                <div className="inline-flex p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/80 shrink-0 self-stretch sm:self-auto">
+                    <button
+                        type="button"
+                        onClick={() => onSwitchType('household')}
+                        className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            searchType === 'household'
+                                ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs border border-slate-200/80 dark:border-slate-700'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                        }`}
+                    >
+                        <Home size={13} />
+                        <span>Households</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => onSwitchType('member')}
+                        className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            searchType === 'member'
+                                ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs border border-slate-200/80 dark:border-slate-700'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                        }`}
+                    >
+                        <User size={13} />
+                        <span>Members</span>
+                    </button>
+                </div>
+
+                {/* Action Buttons: Scan QR + Search */}
+                <div className="flex items-center gap-2 shrink-0">
                     <button
                         type="button"
                         onClick={() => setQrModalOpen(true)}
-                        className="px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-700 transition-all duration-150 flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98]"
+                        className="flex-1 sm:flex-initial px-3.5 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
                         title="Scan QR Card"
                     >
-                        <QrCode size={15} className="text-blue-600 dark:text-blue-400" />
+                        <QrCode size={14} className="text-blue-600 dark:text-blue-400" />
                         <span>Scan QR</span>
                     </button>
 
                     <button
                         onClick={() => handleSearch()}
                         disabled={loading}
-                        className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-xl transition-all duration-150 disabled:opacity-50 flex items-center justify-center min-w-[85px] shadow-sm shadow-blue-600/20"
+                        className="flex-1 sm:flex-initial px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center min-w-[85px] shadow-xs cursor-pointer active:scale-95"
                     >
-                        {loading ? <Loader2 className="animate-spin" size={15} /> : "Search"}
+                        {loading ? <Loader2 className="animate-spin" size={14} /> : "Search"}
                     </button>
                 </div>
             </div>
 
             {/* Results Counter / Filter Indicator */}
             {results !== undefined && (
-                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
+                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1 border-b border-slate-100 dark:border-slate-800/80 pb-3">
                     <span>
-                        Found <strong className="text-slate-800 dark:text-slate-200">{records.length}</strong> {searchType === 'household' ? 'household(s)' : 'family match(es)'} for "{query}"
+                        Found <strong className="text-slate-800 dark:text-slate-200 font-bold">{records.length}</strong> {searchType === 'household' ? 'household(s)' : 'family match(es)'} for &ldquo;{query}&rdquo;
                     </span>
                     <span className="text-[11px] font-mono uppercase bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
-                        Mode: {searchType}
+                        Query Filter: {searchType}
                     </span>
                 </div>
             )}
 
-            {/* Search Registry Results Box (Jira Card Style) */}
-            <div className="space-y-3 max-h-[460px] overflow-y-auto pr-1">
+            {/* Search Registry Results / Empty State */}
+            <div className="space-y-3 min-h-[280px]">
                 {results === undefined ? (
-                    <div className="py-14 text-center border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50/50 dark:bg-slate-800/30 flex flex-col items-center justify-center space-y-2">
-                        <Search className="text-slate-300 dark:text-slate-600" size={26} />
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-                            Ready to query registry
-                        </p>
-                        <p className="text-[11px] text-slate-400">
-                            Search by {searchType === 'household' ? 'household name/ID' : 'member name'} or scan a digital QR card
-                        </p>
+                    <div className="py-12 px-6 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-950/40 flex flex-col items-center justify-center space-y-6">
+                        <div className="space-y-1.5 max-w-md mx-auto">
+                            <div className="w-12 h-12 mx-auto rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/60 flex items-center justify-center shadow-xs">
+                                <Search size={22} />
+                            </div>
+                            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider pt-2">
+                                Ready to Query Demographic Registry
+                            </h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                Lookup registered households from SafeTrack or verify evacuees directly via digital QR pass
+                            </p>
+                        </div>
+
+                        {/* Informative Guidance Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-2xl text-left">
+                            <div 
+                                onClick={() => setQrModalOpen(true)}
+                                className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-blue-300 dark:hover:border-blue-800 transition-all cursor-pointer group shadow-2xs"
+                            >
+                                <div className="flex items-center gap-2 mb-1.5 text-blue-600 dark:text-blue-400 font-bold text-xs">
+                                    <QrCode size={14} className="group-hover:scale-110 transition-transform" />
+                                    <span>Scan QR Pass</span>
+                                </div>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                                    Fastest admission. Scan evacuee QR card to pull record and admit immediately.
+                                </p>
+                            </div>
+
+                            <div 
+                                onClick={() => onSwitchType('household')}
+                                className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-blue-300 dark:hover:border-blue-800 transition-all cursor-pointer group shadow-2xs"
+                            >
+                                <div className="flex items-center gap-2 mb-1.5 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
+                                    <Home size={14} className="group-hover:scale-110 transition-transform" />
+                                    <span>Household Lookup</span>
+                                </div>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                                    Search by family name or SafeTrack Household ID (e.g. HH-0088).
+                                </p>
+                            </div>
+
+                            <div 
+                                onClick={() => onSwitchType('member')}
+                                className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-blue-300 dark:hover:border-blue-800 transition-all cursor-pointer group shadow-2xs"
+                            >
+                                <div className="flex items-center gap-2 mb-1.5 text-indigo-600 dark:text-indigo-400 font-bold text-xs">
+                                    <User size={14} className="group-hover:scale-110 transition-transform" />
+                                    <span>Member Lookup</span>
+                                </div>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                                    Locate a family even if you only know an individual evacuee&apos;s name.
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 ) : records.length === 0 ? (
                     <div className="py-12 text-center border border-dashed border-rose-200 dark:border-rose-900/50 rounded-2xl bg-rose-50/30 dark:bg-rose-950/20">
                         <AlertCircle className="text-rose-500 mx-auto mb-2" size={24} />
                         <p className="text-xs text-rose-600 dark:text-rose-400 font-bold uppercase tracking-wider">
-                            No {searchType === 'household' ? 'households' : 'members'} found matching "{query}"
+                            No {searchType === 'household' ? 'households' : 'members'} found matching &ldquo;{query}&rdquo;
                         </p>
                         <p className="text-[11px] text-slate-400 mt-1">
                             {searchType === 'household' 

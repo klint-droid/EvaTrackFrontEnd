@@ -19,7 +19,7 @@ export default function HouseholdDetail() {
         memberSearch, setMemberSearch,
         checkInModal, setCheckInModal,
         
-        isSuperAdminUser, isAdminUser, isPersonnelUser,
+        isAdminUser, isPersonnelUser,
         povCenterId, canEdit, canDelete, isEvacuationContext,
         
         openAdd, openEdit, handleSave, handleDelete, handleMemberStatusChange, handleBack,
@@ -114,7 +114,6 @@ export default function HouseholdDetail() {
                 household={household}
                 isEvacuated={isEvacuated}
                 isPersonnelUser={isPersonnelUser}
-                isSuperAdminUser={isSuperAdminUser}
                 isAdminUser={isAdminUser}
                 memberSearch={memberSearch}
                 setMemberSearch={setMemberSearch}

@@ -8,15 +8,7 @@ export default function DashboardSidebar({
     displayIssues,
     displayRequests
 }) {
-    const getAlertUrgencyStyle = (key) => {
-        switch (key) {
-            case 'critical': return 'bg-rose-500 shadow-sm shadow-rose-500/40 animate-ping';
-            case 'high':     return 'bg-amber-500';
-            case 'medium':   return 'bg-yellow-400';
-            case 'low':      return 'bg-emerald-500';
-            default:         return 'bg-slate-300';
-        }
-    };
+
 
     const getCategoryIcon = (category) => {
         switch (category) {
@@ -122,7 +114,7 @@ export default function DashboardSidebar({
                     <div className="space-y-3">
                         {recentAlerts.slice(0, 3).map((alert, i) => (
                             <div key={alert.notif_id || i} className="flex items-start gap-2.5 border-b border-slate-100 dark:border-slate-800/60 pb-2.5 last:border-0 last:pb-0">
-                                <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${getAlertUrgencyStyle(alert.urgency_level?.urgency_key)}`} />
+                                <span className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-blue-500 shadow-sm shadow-blue-500/40" />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-xs text-slate-700 dark:text-slate-200 font-medium leading-snug truncate" title={alert.message}>
                                         {alert.message}

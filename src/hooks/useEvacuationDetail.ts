@@ -8,9 +8,8 @@ import { getUnitAllocations } from '../api/allocations/getUnitAllocations';
 import { unassignHousehold } from '../api/allocations/unassignHousehold';
 import { getRecordsByCenter } from '../api/evacuationRecords/getRecordsByCenter';
 import { deleteRecord } from '../api/evacuationRecords/deleteRecord';
-import { exportCenterData, type ExportType } from '../api/evacuationRecords/exportCenterData';
 import { getEvents } from '../api/events/getEvents';
-import { isAdmin, isSuperAdmin, isPersonnel } from '../utils/roles';
+import { isAdmin, isPersonnel } from '../utils/roles';
 import { useAlert } from '../context/AlertContext';
 
 export function useEvacuationDetail() {
@@ -57,15 +56,10 @@ export function useEvacuationDetail() {
     const [deleteRecordModal, setDeleteRecordModal] = useState<any>(null);
     const [isDeletingRecord, setIsDeletingRecord] = useState(false);
 
-    // Export State
-    const [exportDropdown, setExportDropdown] = useState(false);
-    const [exporting, setExporting] = useState(false);
-    const exportRef = useRef<HTMLDivElement>(null);
-
     // Permissions
-    const canManage = isAdmin() || isSuperAdmin() || isPersonnel();
+    const canManage = isAdmin() || isPersonnel();
     const canAdmit = isPersonnel();
-    const canEditUnits = isAdmin() || isSuperAdmin();
+    const canEditUnits = isAdmin();
 
     // 1. Center Query
     const { data: center = null, isLoading: isCenterLoading } = useQuery<any>({
@@ -127,31 +121,6 @@ export function useEvacuationDetail() {
 
     const evacuatedHouseholds: any[] = householdsResponse?.data || [];
     const loading = isCenterLoading || isUnitsLoading;
-
-    // Close export dropdown on outside click
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
-                setExportDropdown(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    // Export handler
-    const handleExport = async (type: ExportType | string) => {
-        if (!id) return;
-        setExportDropdown(false);
-        setExporting(true);
-        try {
-            await exportCenterData(id, type as ExportType);
-        } catch (err: any) {
-            showAlert(err.response?.data?.message || 'Failed to export data.', 'Export Error', 'danger');
-        } finally {
-            setExporting(false);
-        }
-    };
 
     const fetchCenter = () => {
         return queryClient.invalidateQueries({ queryKey: ['center', id] });
@@ -371,13 +340,6 @@ export function useEvacuationDetail() {
         deleteRecordModal,
         setDeleteRecordModal,
         isDeletingRecord,
-
-        // Export
-        exportDropdown,
-        setExportDropdown,
-        exporting,
-        exportRef,
-        handleExport,
 
         // Permissions
         canManage,

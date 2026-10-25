@@ -63,29 +63,34 @@ function App() {
               <Route path="/unauthorized" element={<AccessDenied />} />
               <Route path="/500" element={<ServerError />} />
 
-              {/* PROTECTED ADMIN ROUTES (With DashboardLayout) */}
+              {/* PROTECTED ROUTES — All authenticated users */}
               <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/user-management" element={<UserManagement />} />
-                <Route path="/evacuation-alerts" element={<EvacuationAlerts />} />
-                <Route path="/household-verification" element={<VerifyHousehold />} />
-                <Route path="/events" element={<EventManagement />} />
+                {/* Super Admin + Evac Admin */}
+                <Route path="/user-management" element={<ProtectedRoute allowedRoles={["super_admin", "evac_admin"]}><UserManagement /></ProtectedRoute>} />
+
+                {/* All authenticated users */}
+                <Route path="/profile" element={<Profile />} />
+
+                {/* Operational routes — Evac Admin + Evac Personnel only (NOT Super Admin) */}
+                <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["evac_admin", "evac_personnel"]}><Dashboard /></ProtectedRoute>} />
+                <Route path="/evacuation-alerts" element={<ProtectedRoute allowedRoles={["evac_admin", "evac_personnel"]}><EvacuationAlerts /></ProtectedRoute>} />
+                <Route path="/household-verification" element={<ProtectedRoute allowedRoles={["evac_personnel"]}><VerifyHousehold /></ProtectedRoute>} />
+                <Route path="/events" element={<ProtectedRoute allowedRoles={["evac_admin"]}><EventManagement /></ProtectedRoute>} />
 
                 <Route path="/evacuation-centers">
-                  <Route index element={<EvacuationList />} />
-                  <Route path=":id" element={<EvacuationDetail />} />
+                  <Route index element={<ProtectedRoute allowedRoles={["evac_admin", "evac_personnel"]}><EvacuationList /></ProtectedRoute>} />
+                  <Route path=":id" element={<ProtectedRoute allowedRoles={["evac_admin", "evac_personnel"]}><EvacuationDetail /></ProtectedRoute>} />
                 </Route>
 
                 <Route path="/households">
-                  <Route index element={<HouseholdManagement />} />
-                  <Route path=":id" element={<HouseholdDetail />} />
+                  <Route index element={<ProtectedRoute allowedRoles={["evac_admin", "evac_personnel"]}><HouseholdManagement /></ProtectedRoute>} />
+                  <Route path=":id" element={<ProtectedRoute allowedRoles={["evac_admin", "evac_personnel"]}><HouseholdDetail /></ProtectedRoute>} />
                 </Route>
 
-                <Route path="/resource-requests" element={<ResourceRequests />} />
-                <Route path="/center-issue-reports" element={<CenterIssueReports />} />
+                <Route path="/resource-requests" element={<ProtectedRoute allowedRoles={["evac_admin", "evac_personnel"]}><ResourceRequests /></ProtectedRoute>} />
+                <Route path="/center-issue-reports" element={<ProtectedRoute allowedRoles={["evac_admin", "evac_personnel"]}><CenterIssueReports /></ProtectedRoute>} />
 
-                <Route path="/analytics" element={<Analytics />} />
-                <Route path="/profile" element={<Profile />} />
+                <Route path="/analytics" element={<ProtectedRoute allowedRoles={["evac_admin", "evac_personnel"]}><Analytics /></ProtectedRoute>} />
               </Route>
 
               {/* GLOBAL CATCH-ALL (404 Not Found) */}

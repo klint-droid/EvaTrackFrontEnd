@@ -39,13 +39,6 @@ const formatTimeAgo = (d) => {
   return `${Math.floor(diff / 86400)}d ago`;
 };
 
-const urgencyConfig = {
-  critical: { cls: 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border-rose-300 dark:border-rose-800', dot: 'bg-rose-500', ping: true },
-  high:     { cls: 'bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-800', dot: 'bg-orange-500', ping: false },
-  medium:   { cls: 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-800', dot: 'bg-amber-400', ping: false },
-  low:      { cls: 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700', dot: 'bg-slate-400', ping: false },
-};
-
 function Field({ label, icon: Icon, children }) {
   return (
     <div className="space-y-1.5">
@@ -60,7 +53,6 @@ function Field({ label, icon: Icon, children }) {
 export default function ViewRequestDetailsModal({
   request,
   onClose,
-  getUrgencyClass,
   getStatusClass,
   canUpdateStatus,
   handleStatusChange,
@@ -80,8 +72,6 @@ export default function ViewRequestDetailsModal({
     : (request.request_type ? `${request.request_type} Request` : 'Resource Request');
 
   const shortId = request.request_id?.slice(-8) || request.request_id || '—';
-  const urgencyKey = request.urgency_level?.urgency_key || 'low';
-  const urg = urgencyConfig[urgencyKey] || urgencyConfig.low;
   const statusObj = STATUS_OPTIONS.find(s => s.key === currentStatus) || STATUS_OPTIONS[0];
   const r = request.requester;
   const requesterName = r?.name?.trim()

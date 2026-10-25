@@ -1,25 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
     X, Shield, MessageSquare, Smartphone, Laptop,
-    AlertTriangle, AlertCircle, Info, Activity
+    AlertTriangle, AlertCircle, Info, Activity,
+    ChevronDown, Users, MapPin
 } from 'lucide-react';
 import { sendAlert } from '../../api/alerts/sendAlert';
-import { getUrgencyLevels } from '../../api/alerts/getUrgencyLevels';
 import { getCenters } from '../../api/evacuation/getCenters';
 import { getEvents } from '../../api/events/getEvents';
-
-const URGENCY_CONFIG = {
-    critical: { icon: AlertTriangle, text: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', activeBg: 'bg-red-50/50', activeBorder: 'border-red-400', leftBar: 'bg-red-500' },
-    high:     { icon: AlertCircle,   text: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200', activeBg: 'bg-orange-50/50', activeBorder: 'border-orange-400', leftBar: 'bg-orange-500' },
-    medium:   { icon: Activity,      text: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200', activeBg: 'bg-yellow-50/50', activeBorder: 'border-yellow-400', leftBar: 'bg-yellow-500' },
-    low:      { icon: Info,          text: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', activeBg: 'bg-green-50/50', activeBorder: 'border-green-400', leftBar: 'bg-green-500' },
-};
 
 export default function CreateAlertModal({ onClose, onSent }) {
     const [form, setForm] = useState({
         message: '',
-        urgency_level_id: '',
         scheduled_at: '',
         is_recurring: false,
         recurrence_type: 'daily',
@@ -33,31 +25,34 @@ export default function CreateAlertModal({ onClose, onSent }) {
     });
     
     const [selectedTargets, setSelectedTargets] = useState([{ type: 'all', id: 'all' }]);
+    const [isTargetDropdownOpen, setIsTargetDropdownOpen] = useState(false);
+    const targetDropdownRef = useRef(null);
     const [isScheduled, setIsScheduled] = useState(false);
     
-    const [urgencyLevels, setUrgencyLevels] = useState([]);
     const [centers, setCenters] = useState([]);
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    // Close target dropdown when clicking outside
     useEffect(() => {
-        getUrgencyLevels().then(res => {
-            const list = res.data || [];
-            setUrgencyLevels(list);
-            const crit = list.find(u => u.urgency_key === 'critical') || list[0];
-            if (crit) {
-                setForm(prev => ({ ...prev, urgency_level_id: crit.urgency_id }));
+        const handleClickOutside = (e) => {
+            if (targetDropdownRef.current && !targetDropdownRef.current.contains(e.target)) {
+                setIsTargetDropdownOpen(false);
             }
-        });
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
         getCenters().then(res => setCenters(Array.isArray(res) ? res : (res?.data ?? [])));
         getEvents().then(res => setEvents((res.data || []).filter(e => !e.ended_at)));
     }, []);
 
     const targetOptions = [
         { type: 'all', id: 'all', label: 'All Public' },
-        ...centers.map(c => ({ type: 'center', id: c.evacuation_center_id, label: c.name })),
-        ...events.map(e => ({ type: 'event', id: e.event_id, label: e.name }))
+        ...centers.map(c => ({ type: 'center', id: c.evacuation_center_id, label: c.name }))
     ];
 
     const handleSubmit = async () => {
@@ -65,15 +60,15 @@ export default function CreateAlertModal({ onClose, onSent }) {
             setError('Alert message is required.');
             return;
         }
+
+        if (!channels.sms && !channels.push) {
+            setError('Please select at least one delivery channel (SMS or Push).');
+            return;
+        }
         
         let channelVal = 'both';
         if (channels.sms && !channels.push) channelVal = 'sms';
         if (!channels.sms && channels.push) channelVal = 'push';
-
-        const defaultUrgencyId = form.urgency_level_id 
-            || urgencyLevels.find(u => u.urgency_key === 'critical')?.urgency_id 
-            || urgencyLevels[0]?.urgency_id 
-            || 1;
 
         setLoading(true);
         setError(null);
@@ -81,11 +76,9 @@ export default function CreateAlertModal({ onClose, onSent }) {
             const promises = selectedTargets.map(target => {
                 const payload = { 
                     message: form.message,
-                    urgency_level_id: defaultUrgencyId,
                     channel: channelVal,
                     target_filter: 'all', 
                     evacuation_center_id: target.type === 'center' ? target.id : undefined,
-                    evacuation_event_id: target.type === 'event' ? target.id : undefined,
                 };
                 
                 if (isScheduled && form.scheduled_at) {
@@ -110,34 +103,40 @@ export default function CreateAlertModal({ onClose, onSent }) {
         }
     };
 
-    const handleTargetClick = (e, opt) => {
-        if (e.ctrlKey || e.metaKey) {
-            // Multi-select logic
-            if (opt.type === 'all') {
-                setSelectedTargets([{ type: 'all', id: 'all' }]);
-                return;
-            }
-            
-            const isAlreadySelected = selectedTargets.some(t => t.type === opt.type && t.id === opt.id);
-            let newTargets;
-            
-            if (isAlreadySelected) {
-                newTargets = selectedTargets.filter(t => !(t.type === opt.type && t.id === opt.id));
-                if (newTargets.length === 0) newTargets = [{ type: 'all', id: 'all' }];
-            } else {
-                newTargets = selectedTargets.filter(t => t.type !== 'all');
-                newTargets.push({ type: opt.type, id: opt.id });
-            }
-            setSelectedTargets(newTargets);
+    const toggleTarget = (opt) => {
+        if (opt.type === 'all') {
+            setSelectedTargets([{ type: 'all', id: 'all' }]);
+            return;
+        }
+
+        const isAlreadySelected = selectedTargets.some(
+            t => t.type === 'center' && String(t.id) === String(opt.id)
+        );
+
+        if (isAlreadySelected) {
+            const remaining = selectedTargets.filter(
+                t => !(t.type === 'center' && String(t.id) === String(opt.id))
+            );
+            setSelectedTargets(remaining.length > 0 ? remaining : [{ type: 'all', id: 'all' }]);
         } else {
-            // Single select logic
-            setSelectedTargets([{ type: opt.type, id: opt.id }]);
+            const filtered = selectedTargets.filter(t => t.type !== 'all');
+            setSelectedTargets([...filtered, { type: 'center', id: opt.id }]);
         }
     };
 
-    const selectedUrgency = urgencyLevels.find(u => u.urgency_id === form.urgency_level_id);
-    const urgencyConf = selectedUrgency ? URGENCY_CONFIG[selectedUrgency.urgency_key] : URGENCY_CONFIG.low;
-    const UrgencyIcon = urgencyConf?.icon || Info;
+    const isAllSelected = selectedTargets.some(t => t.type === 'all');
+    const selectedCenterCount = selectedTargets.filter(t => t.type === 'center').length;
+    
+    let targetSummaryLabel = 'All Public';
+    if (!isAllSelected) {
+        if (selectedCenterCount === 1) {
+            const c = centers.find(center => String(center.evacuation_center_id) === String(selectedTargets[0]?.id));
+            targetSummaryLabel = c?.name || '1 Center Selected';
+        } else {
+            targetSummaryLabel = `${selectedCenterCount} Centers Selected`;
+        }
+    }
+
 
     return createPortal(
         <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9999] p-4 sm:p-8">
@@ -186,45 +185,180 @@ export default function CreateAlertModal({ onClose, onSent }) {
                             </div>
                         </div>
 
-                        {/* Split row: Target & Channels */}
-                        <div className="grid grid-cols-2 gap-6">
-                            {/* Target Audience */}
-                            <div className="space-y-3 flex flex-col">
-                                <label className="text-xs font-black text-slate-800 dark:text-slate-100">Target Audience</label>
-                                <div className="border-2 border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden h-40 overflow-y-auto bg-white dark:bg-slate-900 flex flex-col p-1.5">
-                                    {targetOptions.map((opt, i) => {
-                                        const isSelected = selectedTargets.some(t => t.type === opt.type && t.id === opt.id);
-                                        return (
+                        {/* Split row: Target Audience & Delivery Channels */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Target Audience (Multi-Select Dropdown) */}
+                            <div className="space-y-2 flex flex-col relative" ref={targetDropdownRef}>
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs font-black text-slate-800 dark:text-slate-100">
+                                        Target Audience
+                                    </label>
+                                    <span className="text-[10px] text-slate-400 font-medium">
+                                        {isAllSelected ? 'All Citizens' : `${selectedCenterCount} selected`}
+                                    </span>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setIsTargetDropdownOpen(prev => !prev)}
+                                    className={`w-full h-[52px] px-3.5 bg-white dark:bg-slate-900 border-2 rounded-xl flex items-center justify-between text-left transition-all ${
+                                        isTargetDropdownOpen
+                                            ? 'border-blue-500 ring-4 ring-blue-500/10'
+                                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                                        {isAllSelected ? (
+                                            <Users size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                                        ) : (
+                                            <MapPin size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                                        )}
+                                        <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 truncate">
+                                            {targetSummaryLabel}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                        {!isAllSelected && (
+                                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">
+                                                {selectedCenterCount}
+                                            </span>
+                                        )}
+                                        <ChevronDown
+                                            size={16}
+                                            className={`text-slate-400 transition-transform duration-200 ${
+                                                isTargetDropdownOpen ? 'rotate-180 text-blue-600' : ''
+                                            }`}
+                                        />
+                                    </div>
+                                </button>
+
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium px-1 truncate">
+                                    {isAllSelected
+                                        ? 'Broadcast will reach all citizens and evacuation units.'
+                                        : `Alert targeted specifically to ${selectedCenterCount} designated evacuation center(s).`}
+                                </p>
+
+                                {/* Dropdown Popover */}
+                                {isTargetDropdownOpen && (
+                                    <div className="absolute top-[72px] left-0 right-0 z-50 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                                        {/* All Public Option */}
+                                        <div className="p-1.5 border-b border-slate-100 dark:border-slate-800">
                                             <button
-                                                key={`${opt.type}-${opt.id}`}
-                                                onClick={(e) => handleTargetClick(e, opt)}
-                                                className={`text-left px-3 py-2 text-sm rounded-lg transition-all ${
-                                                    isSelected ? 'bg-slate-300/60 font-bold text-slate-800 dark:text-slate-100' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:bg-slate-800'
+                                                type="button"
+                                                onClick={() => toggleTarget({ type: 'all', id: 'all' })}
+                                                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all ${
+                                                    isAllSelected
+                                                        ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300'
+                                                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                                                 }`}
                                             >
-                                                {opt.label}
+                                                <div className="flex items-center gap-2.5">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isAllSelected}
+                                                        onChange={() => {}}
+                                                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                                    />
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Users size={14} className="text-blue-600 dark:text-blue-400" />
+                                                        <span>All Public</span>
+                                                    </div>
+                                                </div>
+                                                <span className="text-[10px] text-slate-400 font-medium">Broadcast to all</span>
                                             </button>
-                                        );
-                                    })}
-                                </div>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 px-1">Hold Ctrl/Cmd to select multiple.</p>
+                                        </div>
+
+                                        {/* Evacuation Centers Section Header */}
+                                        <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                                            <span>Evacuation Centers</span>
+                                            <span>{centers.length} Centers</span>
+                                        </div>
+
+                                        {/* Scrollable Center Options */}
+                                        <div className="max-h-52 overflow-y-auto p-1.5 space-y-0.5">
+                                            {centers.map(c => {
+                                                const isSelected = selectedTargets.some(
+                                                    t => t.type === 'center' && String(t.id) === String(c.evacuation_center_id)
+                                                );
+                                                return (
+                                                    <button
+                                                        key={c.evacuation_center_id}
+                                                        type="button"
+                                                        onClick={() => toggleTarget({ type: 'center', id: c.evacuation_center_id })}
+                                                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs transition-all ${
+                                                            isSelected
+                                                                ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-bold'
+                                                                : 'text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                                                        }`}
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={isSelected}
+                                                            onChange={() => {}}
+                                                            className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                                        />
+                                                        <span className="truncate">{c.name}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Delivery Channels */}
-                            <div className="space-y-3 flex flex-col">
-                                <label className="text-xs font-black text-slate-800 dark:text-slate-100">Delivery Channels</label>
-                                <div className="border-2 border-slate-200 dark:border-slate-700 rounded-xl p-5 flex-1 bg-white dark:bg-slate-900 space-y-4">
-                                    <label className="flex items-center gap-3 cursor-pointer">
-                                        <input type="checkbox" checked={channels.sms} onChange={e => setChannels({...channels, sms: e.target.checked})} className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-600 cursor-pointer" />
-                                        <MessageSquare size={16} className="text-slate-500 dark:text-slate-400" />
-                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-200">SMS Broadcast</span>
+                            <div className="space-y-2 flex flex-col">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs font-black text-slate-800 dark:text-slate-100">
+                                        Delivery Channels
                                     </label>
-                                    <label className="flex items-center gap-3 cursor-pointer">
-                                        <input type="checkbox" checked={channels.push} onChange={e => setChannels({...channels, push: e.target.checked})} className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-600 cursor-pointer" />
-                                        <Smartphone size={16} className="text-slate-500 dark:text-slate-400" />
-                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Push Notification</span>
+                                    <span className="text-[10px] text-slate-400 font-medium">Select 1 or both</span>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 h-[52px]">
+                                    <label
+                                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border-2 cursor-pointer transition-all ${
+                                            channels.sms
+                                                ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 font-bold'
+                                                : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-900'
+                                        }`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={channels.sms}
+                                            onChange={e => setChannels({ ...channels, sms: e.target.checked })}
+                                            className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-600 cursor-pointer"
+                                        />
+                                        <MessageSquare size={16} className={channels.sms ? 'text-blue-600 dark:text-blue-400 shrink-0' : 'text-slate-400 shrink-0'} />
+                                        <span className="text-xs font-semibold truncate">SMS Broadcast</span>
+                                    </label>
+                                    <label
+                                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border-2 cursor-pointer transition-all ${
+                                            channels.push
+                                                ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 font-bold'
+                                                : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-900'
+                                        }`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={channels.push}
+                                            onChange={e => setChannels({ ...channels, push: e.target.checked })}
+                                            className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-600 cursor-pointer"
+                                        />
+                                        <Smartphone size={16} className={channels.push ? 'text-blue-600 dark:text-blue-400 shrink-0' : 'text-slate-400 shrink-0'} />
+                                        <span className="text-xs font-semibold truncate">Push Notification</span>
                                     </label>
                                 </div>
+
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium px-1 truncate">
+                                    {channels.sms && channels.push
+                                        ? 'Active: SMS Broadcast & Push Notification'
+                                        : channels.sms
+                                        ? 'Active: SMS Broadcast only'
+                                        : channels.push
+                                        ? 'Active: Push Notification only'
+                                        : 'None selected (requires at least one)'}
+                                </p>
                             </div>
                         </div>
 
@@ -345,12 +479,12 @@ export default function CreateAlertModal({ onClose, onSent }) {
                                 {/* Notification Card */}
                                 <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-none border border-slate-200 dark:border-slate-700 p-4 relative overflow-hidden flex flex-col gap-2 mt-2">
                                     {/* Left color bar */}
-                                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${urgencyConf.leftBar}`} />
+                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500" />
                                     
-                                    <div className={`flex items-center gap-1.5 ${urgencyConf.text}`}>
-                                        <UrgencyIcon size={14} strokeWidth={3} />
+                                    <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+                                        <Shield size={14} strokeWidth={2.5} />
                                         <span className="text-[10px] font-black uppercase tracking-wider">
-                                            {selectedUrgency?.urgency_label || 'Critical'} Alert
+                                            Emergency Alert
                                         </span>
                                     </div>
                                     
@@ -360,11 +494,11 @@ export default function CreateAlertModal({ onClose, onSent }) {
                                      
                                     {/* Calculated structured details preview */}
                                     {(() => {
-                                        const selectedTarget = selectedTargets[0];
-                                        const targetCenter = selectedTarget?.type === 'center' ? centers.find(c => String(c.evacuation_center_id) === String(selectedTarget.id)) : null;
-                                        const targetEvent = selectedTarget?.type === 'event' ? events.find(e => String(e.event_id) === String(selectedTarget.id)) : (events[0] || null);
+                                        const selectedCenters = centers.filter(c => selectedTargets.some(t => t.type === 'center' && String(t.id) === String(c.evacuation_center_id)));
+                                        const targetCenter = selectedCenters[0] || null;
+                                        const targetEvent = events[0] || null;
                                         
-                                        const computedUrl = targetCenter 
+                                        const computedUrl = (!isAllSelected && targetCenter)
                                             ? `http://100.73.14.100:5173/evacuation-centers/${targetCenter.evacuation_center_id}` 
                                             : `http://100.73.14.100:5173/public`;
 
@@ -379,9 +513,13 @@ export default function CreateAlertModal({ onClose, onSent }) {
                                                     Event: <span className="text-slate-800 dark:text-slate-100 font-extrabold">{targetEvent?.name || 'General Emergency Alert'}</span>
                                                 </span>
                                                 <span className="font-bold text-slate-500">
-                                                    {targetCenter ? 'Center: ' : 'Centers: '}
+                                                    {(!isAllSelected && selectedCenters.length === 1) ? 'Center: ' : 'Centers: '}
                                                     <span className="text-slate-800 dark:text-slate-100 font-extrabold">
-                                                        {targetCenter ? targetCenter.name : 'All Evacuation Centers'}
+                                                        {isAllSelected 
+                                                            ? 'All Evacuation Centers' 
+                                                            : selectedCenters.length === 1 
+                                                            ? (targetCenter?.name || 'Assigned Center') 
+                                                            : `${selectedCenters.length} Centers Selected`}
                                                     </span>
                                                 </span>
                                                 <a 

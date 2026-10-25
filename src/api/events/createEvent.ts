@@ -5,7 +5,7 @@ import type { DisasterEvent } from "../types";
 export interface CreateEventPayload {
     name: string;
     type_id: number;
-    severity_id: number;
+    severity_id?: number;
 }
 
 export interface CreateEventResponse {

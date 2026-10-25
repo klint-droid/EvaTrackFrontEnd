@@ -1,11 +1,12 @@
-import { QrCode, AlertCircle, CheckCircle2 } from "lucide-react";
-import VerifyHouseholdTabs from "../components/verifyHousehold/VerifyHouseholdTabs";
+import React from "react";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import RegistrySearch from "../components/verifyHousehold/RegistrySearch";
 import ManualEntry from "../components/verifyHousehold/ManualEntry";
 import QrScannerModal from "../components/verifyHousehold/QrScannerModal";
 import AdmissionModal from "../components/verifyHousehold/AdmissionModal";
 import { useVerifyHousehold } from "../hooks/useVerifyHousehold";
-import { isAdmin, isSuperAdmin } from "../utils/roles";
+import { TableLayout } from "../components/ui/TableLayout";
+import { TableTabs } from "../components/ui/TableTabs";
 
 export default function VerifyHousehold() {
   const {
@@ -14,11 +15,13 @@ export default function VerifyHousehold() {
     searchType, setSearchType,
     results,
     headName, setHeadName,
+    householdName, setHouseholdName,
+    walkInMembers,
+    addWalkInMember, removeWalkInMember, updateWalkInMember,
+    lookups,
     contactNumber, setContactNumber,
     message,
     loading,
-    user,
-    centerName,
     centers,
     activeCenterId,
     setActiveCenterId,
@@ -42,54 +45,46 @@ export default function VerifyHousehold() {
     getActiveEvacuation,
   } = useVerifyHousehold();
 
-  const isUserAdmin = isAdmin() || isSuperAdmin();
+  const tabs = (
+    <TableTabs
+      tabs={[
+        { key: "admit", label: "Registry Admission (Search & QR)" },
+        { key: "manual", label: "On-Site Walk-In Registration" },
+      ]}
+      activeTab={tab}
+      onChange={setTab}
+    />
+  );
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
-      {/* Header matching Disaster Events style */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-slate-950 text-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md dark:shadow-none">
-            <QrCode className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 dark:text-slate-50 tracking-tight">
-              Household Verification
-            </h1>
-            {user && !isUserAdmin && (
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-800 font-semibold rounded-md text-xs border border-amber-100 mt-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                Station: {centerName ?? "---"}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Feedback Alert */}
+    <div className="w-full space-y-4 font-sans text-left animate-in fade-in duration-200">
+      {/* Feedback Toast */}
       {message && (
         <div
-          className={`flex items-center gap-3 p-4 rounded-2xl border animate-in zoom-in-95 duration-300 ${
+          className={`flex items-center gap-3 p-4 rounded-xl border animate-in zoom-in-95 duration-200 ${
             message.type === "error"
-              ? "bg-red-50 border-red-100 text-red-700"
-              : "bg-emerald-50 border-emerald-100 text-emerald-700"
+              ? "bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-950/60 dark:border-rose-900/60 dark:text-rose-300"
+              : "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/60 dark:border-emerald-900/60 dark:text-emerald-300"
           }`}
         >
           {message.type === "error" ? (
-            <AlertCircle size={20} />
+            <AlertCircle size={18} />
           ) : (
-            <CheckCircle2 size={20} />
+            <CheckCircle2 size={18} />
           )}
-          <span className="text-xs font-black uppercase tracking-wide">
+          <span className="text-xs font-bold uppercase tracking-wide">
             {message.text}
           </span>
         </div>
       )}
 
-      {/* Main Screen Wrapper: Card with tabs inside */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm dark:shadow-none overflow-hidden min-h-[380px] flex flex-col relative">
-        <VerifyHouseholdTabs tab={tab} setTab={setTab} />
-
+      {/* Main Screen Layout matching other pages */}
+      <TableLayout
+        title="Household Verification"
+        badgeText="SafeTrack Integrated"
+        subtitle="Search demographic registry, verify arriving households by QR pass, or register on-site walk-ins"
+        tabs={tabs}
+      >
         {tab === "admit" && (
           <RegistrySearch
             query={query}
@@ -110,15 +105,21 @@ export default function VerifyHousehold() {
           <ManualEntry
             headName={headName}
             setHeadName={setHeadName}
+            householdName={householdName}
+            setHouseholdName={setHouseholdName}
             contactNumber={contactNumber}
             setContactNumber={setContactNumber}
-            memberCount={memberCount}
-            setMemberCount={setMemberCount}
+            walkInMembers={walkInMembers}
+            addWalkInMember={addWalkInMember}
+            removeWalkInMember={removeWalkInMember}
+            updateWalkInMember={updateWalkInMember}
+            lookups={lookups}
+            calculateAge={calculateAge}
             handleCreate={handleCreate}
             loading={loading}
           />
         )}
-      </div>
+      </TableLayout>
 
       <QrScannerModal
         qrModalOpen={qrModalOpen}

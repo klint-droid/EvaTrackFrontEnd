@@ -7,7 +7,6 @@ import {
 import API from '../../api';
 import { createEvent } from '../../api/events/createEvent';
 import { getDisasterTypes } from '../../api/events/getDisasterTypes';
-import { getSeverityLevels } from '../../api/events/getSeverityLevels';
 
 const getIconForType = (typeName) => {
     const lower = (typeName || '').toLowerCase();
@@ -20,9 +19,8 @@ const getIconForType = (typeName) => {
 };
 
 export default function EventModal({ onClose, onCreated }) {
-    const [form, setForm] = useState({ name: '', type_id: '', severity_id: '' });
+    const [form, setForm] = useState({ name: '', type_id: '' });
     const [disasterTypes, setDisasterTypes] = useState([]);
-    const [severityLevels, setSeverityLevels] = useState([]);
     const [availableScopes, setAvailableScopes] = useState([]);
     const [selectedScopes, setSelectedScopes] = useState([]);
     const [typesLoading, setTypesLoading] = useState(true);
@@ -32,12 +30,10 @@ export default function EventModal({ onClose, onCreated }) {
     useEffect(() => {
         const fetchTypes = async () => {
             try {
-                const [typeRes, severityRes, brgyRes] = await Promise.all([
+                const [typeRes, brgyRes] = await Promise.all([
                     getDisasterTypes(), 
-                    getSeverityLevels(),
                     API.get('/api/barangays')
                 ]);
-                setSeverityLevels(severityRes.data || []);
                 setDisasterTypes(typeRes.data || []);
                 
                 const mambaling = (brgyRes.data || []).find(b => b.barangay_name.toLowerCase().includes('mambaling'));
@@ -62,7 +58,7 @@ export default function EventModal({ onClose, onCreated }) {
     }, []);
 
     const handleSubmit = async () => {
-        if (!form.name || !form.type_id || !form.severity_id) {
+        if (!form.name || !form.type_id) {
             setError('All fields are required.');
             return;
         }
@@ -151,36 +147,9 @@ export default function EventModal({ onClose, onCreated }) {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* 2. DECLARATION LEVEL */}
+                        {/* 2. EVENT NAME */}
                         <div className="space-y-3">
-                            <label className="text-xs font-black text-slate-500 dark:text-slate-400 tracking-widest uppercase">2. Severity Level</label>
-                            {typesLoading ? (
-                                <div className="text-sm text-slate-400">Loading levels...</div>
-                            ) : (
-                                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                                    {severityLevels.map(severity => {
-                                        const isSelected = form.severity_id === severity.severity_id;
-                                        return (
-                                            <button
-                                                key={severity.severity_id}
-                                                onClick={() => setForm({ ...form, severity_id: severity.severity_id })}
-                                                className={`flex-1 py-3.5 px-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all ${
-                                                    isSelected
-                                                        ? 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 shadow-sm dark:shadow-none ring-1 ring-slate-200/50'
-                                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200'
-                                                }`}
-                                            >
-                                                {severity.severity_label}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* 3. EVENT NAME */}
-                        <div className="space-y-3">
-                            <label className="text-xs font-black text-slate-500 dark:text-slate-400 tracking-widest uppercase">3. Event Name</label>
+                            <label className="text-xs font-black text-slate-500 dark:text-slate-400 tracking-widest uppercase">2. Event Name</label>
                             <input
                                 type="text"
                                 placeholder="e.g., Typhoon Aghon - May 2024"
@@ -190,9 +159,9 @@ export default function EventModal({ onClose, onCreated }) {
                             />
                         </div>
 
-                        {/* 4. GEOGRAPHIC SCOPE */}
+                        {/* 3. GEOGRAPHIC SCOPE */}
                         <div className="space-y-3">
-                            <label className="text-xs font-black text-slate-500 dark:text-slate-400 tracking-widest uppercase">4. Geographic Scope</label>
+                            <label className="text-xs font-black text-slate-500 dark:text-slate-400 tracking-widest uppercase">3. Geographic Scope</label>
                             <div className="w-full border-2 border-slate-200 dark:border-slate-700 rounded-xl p-3 min-h-[52px] bg-white dark:bg-slate-900 transition-all focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10">
                                 <div className="flex flex-wrap gap-2 mb-2">
                                     {selectedScopes.map(scope => (
@@ -242,7 +211,7 @@ export default function EventModal({ onClose, onCreated }) {
                     </button>
                     <button
                         onClick={handleSubmit}
-                        disabled={loading || typesLoading || !form.name || !form.type_id || !form.severity_id}
+                        disabled={loading || typesLoading || !form.name || !form.type_id}
                         className="px-6 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 active:scale-95 text-white text-sm font-bold rounded-xl shadow-md shadow-rose-600/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                         <Megaphone size={16} strokeWidth={2.5} />

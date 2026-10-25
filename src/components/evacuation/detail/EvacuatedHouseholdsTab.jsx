@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Phone, Home, Download, FileSpreadsheet } from 'lucide-react';
+import { Users, Phone, Home } from 'lucide-react';
 import { Table, TableHeader, TableRow, TableHead, TableCell, StatusBadge, Checkbox } from '../../../ui/Table';
 import { TableLayout } from '../../ui/TableLayout';
 import { Pagination } from '../../ui/Pagination';
@@ -30,11 +30,6 @@ export default function EvacuatedHouseholdsTab({
     canManage,
     canAdmit,
     onAdmit,
-    exportDropdown,
-    setExportDropdown,
-    exportRef,
-    handleExport,
-    exporting,
     setViewingHousehold,
     setDeleteRecordModal,
     formatDateTime,
@@ -52,7 +47,6 @@ export default function EvacuatedHouseholdsTab({
                     });
                     setSelectedHouseholds([]);
                 } : undefined}
-                onExport={() => setExportDropdown(prev => !prev)}
                 onAdd={canAdmit ? onAdmit : undefined}
                 addLabel="Admit Household"
                 pagination={
@@ -220,31 +214,6 @@ export default function EvacuatedHouseholdsTab({
                     </Table>
                 </div>
             </TableLayout>
-
-            {/* Export Dropdown Menu */}
-            {exportDropdown && (
-                <div
-                    ref={exportRef}
-                    className="absolute right-6 top-16 z-30 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg p-1.5 animate-in fade-in zoom-in-95 duration-100"
-                >
-                    <button
-                        onClick={() => handleExport('excel')}
-                        disabled={exporting}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
-                    >
-                        <FileSpreadsheet size={15} className="text-emerald-600" />
-                        <span>Export as Excel (.xlsx)</span>
-                    </button>
-                    <button
-                        onClick={() => handleExport('pdf')}
-                        disabled={exporting}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
-                    >
-                        <Download size={15} className="text-rose-600" />
-                        <span>Export as PDF</span>
-                    </button>
-                </div>
-            )}
         </div>
     );
 }

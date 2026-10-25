@@ -39,9 +39,15 @@ function Login() {
       });
 
       localStorage.setItem("token", response.data.token);
-      useUserStore.getState().setUser(response.data.user);
+      const loggedInUser = response.data.user;
+      useUserStore.getState().setUser(loggedInUser);
 
-      navigate("/dashboard");
+      // Super Admin's only function is account management
+      if (loggedInUser?.role === "super_admin") {
+        navigate("/user-management");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       console.error(err);
       setError(

@@ -4,7 +4,6 @@ import type { ResourceRequest } from '../types';
 export interface GetResourceRequestsParams {
     center_id?: string;
     status?: 'pending' | 'acknowledged' | 'approved' | 'rejected' | 'delivered';
-    urgency_id?: string | number;
     q?: string;
 }
 

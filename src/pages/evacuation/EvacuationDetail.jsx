@@ -82,13 +82,6 @@ export default function EvacuationDetail() {
         setDeleteRecordModal,
         isDeletingRecord,
 
-        // Export
-        exportDropdown,
-        setExportDropdown,
-        exporting,
-        exportRef,
-        handleExport,
-
         // Permissions
         canManage,
         canAdmit,
@@ -256,11 +249,6 @@ export default function EvacuationDetail() {
                     canManage={canManage}
                     canAdmit={canAdmit}
                     onAdmit={() => navigate('/household-verification')}
-                    exportDropdown={exportDropdown}
-                    setExportDropdown={setExportDropdown}
-                    exportRef={exportRef}
-                    handleExport={handleExport}
-                    exporting={exporting}
                     setViewingHousehold={setViewingHousehold}
                     setDeleteRecordModal={setDeleteRecordModal}
                     formatDateTime={formatDateTime}

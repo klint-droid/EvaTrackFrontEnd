@@ -197,7 +197,7 @@ const Landing = () => {
                   <AlertTriangle size={12} className="text-white" />
                 </div>
                 <span className="text-[13px] font-semibold text-white/95 tracking-wide uppercase">
-                  ACTIVE ALERT: {evt.name} — {evt.primary_type?.type_name || "Emergency"} ({evt.severity?.severity_label || "Active"})
+                  ACTIVE ALERT: {evt.name} — {evt.primary_type?.type_name || "Emergency"}
                 </span>
               </div>
             ))}
@@ -433,7 +433,7 @@ const Landing = () => {
                       </h3>
                     </div>
                     <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold tracking-wider uppercase bg-red-600 text-white animate-pulse">
-                      {event.severity?.severity_label || "Critical"} Alert
+                      Active Alert
                     </span>
                   </div>
 

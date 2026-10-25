@@ -8,7 +8,6 @@ import UserDetailsDrawer from "../components/userManagement/UserDetailsDrawer";
 import UserModal from "../components/userManagement/UserModal";
 import { useUserManagement } from "../hooks/useUserManagement";
 import { TableLayout } from "../components/ui/TableLayout";
-import { TableTabs } from "../components/ui/TableTabs";
 import { BulkActionBar } from "../components/ui/BulkActionBar";
 import { Pagination } from "../components/ui/Pagination";
 
@@ -28,7 +27,6 @@ const UserManagement = () => {
     assignConfirmState, setAssignConfirmState,
 
     search, setSearch,
-    roleFilter, setRoleFilter,
     
     newUser, setNewUser,
     roleOptions,
@@ -63,22 +61,6 @@ const UserManagement = () => {
     />
   );
 
-  const tabs = (
-    <TableTabs
-      tabs={[
-        { key: "all", label: "All" },
-        { key: "evac_admin", label: "Admin" },
-        { key: "super_admin", label: "Super Admin" },
-        { key: "evac_personnel", label: "Evac Personnel" },
-      ]}
-      activeTab={roleFilter || "all"}
-      onChange={(key) => {
-        setRoleFilter(key === "all" ? "" : key);
-        setSelectedUsers([]);
-      }}
-    />
-  );
-
   const perPage = pagination.per_page || 10;
   const currentPage = pagination.current_page || 1;
   const totalPages = pagination.last_page || Math.ceil(users.length / perPage) || 1;
@@ -90,7 +72,7 @@ const UserManagement = () => {
         totalPages={totalPages} 
         totalEntries={totalEntries}
         perPage={perPage}
-        onPageChange={(page) => fetchUsers(page, search, roleFilter)} 
+        onPageChange={(page) => fetchUsers(page, search)} 
     />
   );
 
@@ -117,23 +99,9 @@ const UserManagement = () => {
           selectedUsers.forEach((id) => triggerDeleteUser(id));
           setSelectedUsers([]);
         }}
-        onExport={() => {
-          const csvHeader = "User ID,Name,Contact,Role,Station Assignment\n";
-          const csvRows = users
-            .map((u) => `${u.user_id},"${u.first_name || u.name || ''} ${u.last_name || ''}",${u.contact_number || ''},${u.role || ''},"${u.assigned_center_id || 'Unassigned'}"`)
-            .join("\n");
-          const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
-          const link = document.createElement("a");
-          link.href = URL.createObjectURL(blob);
-          link.setAttribute("download", "personnel_report.csv");
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }}
-        onAdd={(isSuperAdminUser || isAdminUser) ? () => setShowCreateModal(true) : undefined}
+        onAdd={isSuperAdminUser ? () => setShowCreateModal(true) : undefined}
         addLabel="Add Personnel"
         stats={stats}
-        tabs={tabs}
         pagination={paginationComponent}
       >
 
@@ -254,7 +222,7 @@ const UserManagement = () => {
       />
 
       {/* ─── Floating Action Button ─── */}
-      {(isSuperAdminUser || isAdminUser) && (
+      {isSuperAdminUser && (
         <AnimatedFAB 
           icon={UserPlus}
           label="Add Personnel"

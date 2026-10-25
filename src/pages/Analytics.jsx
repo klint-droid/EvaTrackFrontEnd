@@ -27,13 +27,34 @@ export default function Analytics() {
     const [error, setError] = useState(null);
     const { showAlert } = useAlert();
 
+    // Default to Last 7 Days date range to avoid bloated initial payloads
+    const getDefaultDateRange = () => {
+        const end = new Date();
+        const start = new Date();
+        start.setDate(end.getDate() - 7);
+
+        const format = (d) => {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, "0");
+            const day = String(d.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+        };
+
+        return {
+            startDate: format(start),
+            endDate: format(end),
+        };
+    };
+
+    const initialDates = getDefaultDateRange();
+
     // Dynamic Filter State
     const initialCenterId = isPersonnel 
         ? (assignedCenter?.evacuation_center_id || assignedCenter?.id || storedUser?.assigned_center_id || "all")
         : "all";
     const [selectedCenterId, setSelectedCenterId] = useState(initialCenterId);
-    const [startDate, setStartDate] = useState("");
-    const [endDate, setEndDate] = useState("");
+    const [startDate, setStartDate] = useState(initialDates.startDate);
+    const [endDate, setEndDate] = useState(initialDates.endDate);
     const [centers, setCenters] = useState([]);
 
     // Export Dropdown State

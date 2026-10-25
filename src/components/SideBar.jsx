@@ -51,18 +51,18 @@ const Sidebar = ({ isOpen, onClose, isCollapsed: externalIsCollapsed }) => {
     };
 
     const navPrimary = [
-        { icon: Home, label: "For you", path: "/dashboard", roles: ["evac_personnel", "evac_admin", "super_admin"] },
+        { icon: Home, label: "For you", path: "/dashboard", roles: ["evac_personnel", "evac_admin"] },
     ];
 
     const navWorkspaces = [
-        { icon: Building2, label: "Evacuation Centers", path: "/evacuation-centers", roles: ["evac_personnel", "evac_admin", "super_admin"] },
-        { icon: Radio, label: "Disaster Events", path: "/events", roles: ["evac_admin", "super_admin"] },
-        { icon: Megaphone, label: "SMS & Push", path: "/evacuation-alerts", roles: ["evac_personnel", "evac_admin", "super_admin"] },
-        { icon: ClipboardList, label: "Issue Reports", path: "/center-issue-reports", roles: ["evac_admin", "evac_personnel", "super_admin"] },
-        { icon: Truck, label: "Resource Requests", path: "/resource-requests", roles: ["evac_personnel", "evac_admin", "super_admin"] },
-        { icon: Users, label: "Household Verification", path: "/household-verification", roles: ["evac_personnel", "evac_admin", "super_admin"] },
-        { icon: Home, label: "Households", path: "/households", roles: ["evac_admin", "evac_personnel", "super_admin"] },
-        { icon: BarChart3, label: "Reports & Analytics", path: "/analytics", roles: ["evac_personnel", "evac_admin", "super_admin"] },
+        { icon: Building2, label: "Evacuation Centers", path: "/evacuation-centers", roles: ["evac_personnel", "evac_admin"] },
+        { icon: Radio, label: "Disaster Events", path: "/events", roles: ["evac_admin"] },
+        { icon: Megaphone, label: "SMS & Push", path: "/evacuation-alerts", roles: ["evac_personnel", "evac_admin"] },
+        { icon: ClipboardList, label: "Issue Reports", path: "/center-issue-reports", roles: ["evac_admin", "evac_personnel"] },
+        { icon: Truck, label: "Resource Requests", path: "/resource-requests", roles: ["evac_personnel", "evac_admin"] },
+        { icon: Users, label: "Household Verification", path: "/household-verification", roles: ["evac_personnel"] },
+        { icon: Home, label: "Households", path: "/households", roles: ["evac_admin", "evac_personnel"] },
+        { icon: BarChart3, label: "Reports & Analytics", path: "/analytics", roles: ["evac_personnel", "evac_admin"] },
         { icon: UserCog, label: "User Management", path: "/user-management", roles: ["evac_admin", "super_admin"] },
         { icon: UserCircle, label: "My Profile", path: "/profile", roles: ["evac_personnel", "evac_admin", "super_admin"] },
     ];

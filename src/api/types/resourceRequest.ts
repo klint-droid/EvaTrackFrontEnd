@@ -1,6 +1,5 @@
 import type { User } from './user';
 import type { Center } from './evacuationCenter';
-import type { UrgencyLevel } from './urgencyLevel';
 
 export interface ResourceRequestStatus {
     status_id: number;
@@ -16,7 +15,6 @@ export interface ResourceRequest {
     resource_type: string;
     quantity: number;
     description: string | null;
-    urgency_id: number;
     status_id: number;
     created_at: string;
     updated_at: string;
@@ -25,6 +23,5 @@ export interface ResourceRequest {
     center?: Center;
     requester?: User;
     handler?: User | null;
-    urgency_level?: UrgencyLevel;
     status?: ResourceRequestStatus;
 }

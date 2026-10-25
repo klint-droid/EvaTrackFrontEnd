@@ -40,34 +40,34 @@ export default function DashboardCapacityArea({
                     </div>
                     <div className="flex items-center gap-4 text-xs font-medium text-slate-500 dark:text-slate-400">
                         <div className="flex items-center gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded bg-[#4472C4]" />
-                            <span>Max Capacity</span>
+                            <span className="w-2.5 h-2.5 rounded-xs bg-[#1E78C2]" />
+                            <span>Occupied</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded bg-[#ED7D31]" />
-                            <span>Occupancy</span>
+                            <span className="w-2.5 h-2.5 rounded-xs bg-[#F37021]" />
+                            <span>Available Capacity</span>
                         </div>
                     </div>
                 </div>
                 
                 {loading ? (
-                    <div className="h-[280px] flex items-end justify-between px-6 pb-2 pt-4 animate-pulse">
+                    <div className="h-[300px] sm:h-[350px] flex items-end justify-between px-6 pb-4 pt-6 animate-pulse">
                         {MOCK_BARS.map((bar, idx) => (
-                            <div key={idx} className="w-14 flex flex-col items-center gap-3">
-                                <div className="w-full flex items-end gap-1.5 h-44">
-                                    <div className="w-1/2 bg-slate-100 dark:bg-slate-800 rounded-t-md" style={{ height: bar.height1 }} />
-                                    <div className="w-1/2 bg-slate-200 dark:bg-slate-700 rounded-t-md" style={{ height: bar.height2 }} />
+                            <div key={idx} className="w-12 sm:w-14 flex flex-col items-center gap-3">
+                                <div className="w-full flex flex-col justify-end h-52">
+                                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-t-xs" style={{ height: bar.height2 }} />
+                                    <div className="w-full bg-slate-300 dark:bg-slate-800" style={{ height: bar.height1 }} />
                                 </div>
-                                <div className="w-10 h-3 bg-slate-100 dark:bg-slate-800 rounded-sm" />
+                                <div className="w-10 h-3 bg-slate-100 dark:bg-slate-800 rounded-xs" />
                             </div>
                         ))}
                     </div>
                 ) : chartData.length === 0 ? (
-                    <div className="h-[280px] flex items-center justify-center border border-dashed border-slate-200 dark:border-slate-800 rounded-lg bg-slate-50/50 dark:bg-slate-800/20">
+                    <div className="h-[300px] sm:h-[350px] flex items-center justify-center border border-dashed border-slate-200 dark:border-slate-800 rounded-lg bg-slate-50/50 dark:bg-slate-800/20">
                         <p className="text-xs text-slate-400 font-medium">No center capacity telemetry registered.</p>
                     </div>
                 ) : (
-                    <div className="h-[220px] sm:h-[280px] w-full">
+                    <div className="h-[300px] sm:h-[350px] w-full">
                         <CapacityChart data={chartData} />
                     </div>
                 )}

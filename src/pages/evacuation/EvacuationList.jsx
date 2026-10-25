@@ -40,9 +40,9 @@ export default function EvacuationList() {
   const [colFilters, setColFilters]           = useState({ name: '' });
   const { showAlert } = useAlert();
 
-  const canCreate = isAdmin() || isSuperAdmin();
-  const canEdit   = isAdmin() || isSuperAdmin();
-  const canDelete = isAdmin() || isSuperAdmin();
+  const canCreate = isAdmin();
+  const canEdit   = isAdmin();
+  const canDelete = isAdmin();
 
   useEffect(() => { fetchCenters(); }, []);
 
@@ -159,19 +159,6 @@ export default function EvacuationList() {
         badgeText={`${centers.length} Shelters`}
         subtitle="Real-time shelter capacity, occupancy monitoring, and evacuation unit management"
         actions={viewSwitcher}
-        onExport={() => {
-          const csvHeader = "Center ID,Name,Address,Occupancy,Capacity,Households\n";
-          const csvRows = filteredCenters
-            .map((c) => `${c.evacuation_center_id},"${c.name || ''}","${c.osm_address || ''}",${c.current_occupancy || 0},${c.capacity || 0},${c.household_count || 0}`)
-            .join("\n");
-          const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
-          const link = document.createElement("a");
-          link.href = URL.createObjectURL(blob);
-          link.setAttribute("download", "evacuation_centers_report.csv");
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }}
         onAdd={canCreate ? () => { setSelected(null); setModalOpen(true); } : undefined}
         addLabel="Add Center"
         stats={statsComponent}

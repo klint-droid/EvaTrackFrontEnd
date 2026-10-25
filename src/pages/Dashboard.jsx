@@ -11,6 +11,7 @@ import { getLastUpdated } from "../api/analytics/getLastUpdated";
 import { useUserStore } from "../store/useUserStore";
 
 import DashboardHeader from "../components/dashboard/DashboardHeader";
+import DashboardServicesGrid from "../components/dashboard/DashboardServicesGrid";
 import DashboardMetrics from "../components/dashboard/DashboardMetrics";
 import DashboardCapacityArea from "../components/dashboard/DashboardCapacityArea";
 import DashboardSidebar from "../components/dashboard/DashboardSidebar";
@@ -262,6 +263,13 @@ const Dashboard = () => {
                 assignedCenter={assignedCenter}
                 loading={loading}
                 user={user}
+            />
+
+            {/* ⚡ GCASH-STYLE QUICK SERVICES & OPERATIONS GRID */}
+            <DashboardServicesGrid 
+                hasActiveEvent={hasActiveEvent}
+                pendingRequests={displayPendingRequests}
+                openIssues={displayOpenIssues}
             />
 
             {/* 🔹 STREAMLINED METRICS GRID (COHESIVE LEFT-BORDER ACCENTS) */}

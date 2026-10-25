@@ -56,7 +56,6 @@ export const useHouseholdDetail = () => {
         staleTime: 1000 * 60 * 5,
     });
 
-    const isSuperAdminUser: boolean = user?.role === 'super_admin';
     const isAdminUser: boolean = user?.role === 'evac_admin';
     const isPersonnelUser: boolean = user?.role === 'evac_personnel';
     const assignedCenterId = user?.assigned_center?.id || user?.assigned_center_id;
@@ -101,11 +100,11 @@ export const useHouseholdDetail = () => {
 
     const povCenterId = isPersonnelUser ? assignedCenterId : targetCenterId;
 
-    const isHouseholdManageable: boolean = isSuperAdminUser || isAdminUser ||
+    const isHouseholdManageable: boolean = isAdminUser ||
         (isPersonnelUser && (!targetCenterId || String(targetCenterId) === String(assignedCenterId)));
 
     const canEdit: boolean = isHouseholdManageable;
-    const canDelete: boolean = isSuperAdminUser || isAdminUser;
+    const canDelete: boolean = isAdminUser;
     const isEvacuationContext: boolean = !!evacuationIdFromUrl;
 
     const openAdd = () => {
@@ -302,7 +301,7 @@ export const useHouseholdDetail = () => {
     }, [household?.members, memberSearch]);
 
     const canModifyMember = (memberId: string | number) => {
-        if (isSuperAdminUser || isAdminUser) return true;
+        if (isAdminUser) return true;
         if (!isPersonnelUser) return false;
 
         const memberEvac = memberEvacMap[memberId];
@@ -343,7 +342,7 @@ export const useHouseholdDetail = () => {
         memberSearch, setMemberSearch,
         checkInModal, setCheckInModal,
         
-        isSuperAdminUser, isAdminUser, isPersonnelUser,
+        isAdminUser, isPersonnelUser,
         povCenterId, canEdit, canDelete, isEvacuationContext,
         
         openAdd, openEdit, handleSave, handleDelete, handleMemberStatusChange, handleBack,

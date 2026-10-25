@@ -1,6 +1,5 @@
 import React from 'react';
 import { Archive, CheckCircle2 } from 'lucide-react';
-import SeverityBadge from './SeverityBadge';
 import { TableLayout } from '../ui/TableLayout';
 import { Table, TableHeader, TableRow, TableHead, TableCell, RowMenu } from '../../ui/Table';
 import { Pagination } from '../ui/Pagination';
@@ -14,19 +13,6 @@ export default function HistoricalEventsLog({
       title="Historical Operations Log"
       badgeText={`${historyPagination.total || historicalEvents.length} Archives`}
       subtitle="Past disaster events, emergency responses, and historical incident logs"
-      onExport={() => {
-        const csvHeader = "Event ID,Name,Type,Severity,Duration,Status\n";
-        const csvRows = historicalEvents
-          .map((e) => `${e.event_id},"${e.name || ''}",${e.primary_type?.type_name || ''},${e.severity || ''},Closed`)
-          .join("\n");
-        const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", "historical_events_report.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }}
       pagination={
         <Pagination
           currentPage={historyPagination.current_page || 1}
@@ -40,7 +26,6 @@ export default function HistoricalEventsLog({
       <Table>
         <TableHeader>
           <tr className="border-b border-slate-100 dark:border-slate-800">
-            <TableHead>Event ID</TableHead>
             <TableHead
               filterable
               filterValue={filters.q}
@@ -56,7 +41,6 @@ export default function HistoricalEventsLog({
             >
               Type
             </TableHead>
-            <TableHead>Severity</TableHead>
             <TableHead>Duration</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -66,10 +50,8 @@ export default function HistoricalEventsLog({
           {historyLoading ? (
             [...Array(5)].map((_, i) => (
               <TableRow key={i} className="animate-pulse">
-                <TableCell><div className="w-16 h-3 bg-slate-200 rounded" /></TableCell>
                 <TableCell><div className="w-32 h-3 bg-slate-200 rounded" /></TableCell>
                 <TableCell><div className="w-20 h-3 bg-slate-200 rounded" /></TableCell>
-                <TableCell><div className="w-16 h-5 bg-slate-200 rounded-full" /></TableCell>
                 <TableCell><div className="w-12 h-3 bg-slate-200 rounded" /></TableCell>
                 <TableCell><div className="w-16 h-3 bg-slate-200 rounded" /></TableCell>
                 <TableCell className="text-right"><div className="w-10 h-4 bg-slate-200 rounded ml-auto" /></TableCell>
@@ -77,7 +59,7 @@ export default function HistoricalEventsLog({
             ))
           ) : historicalEvents.length === 0 ? (
             <TableRow>
-              <TableCell colSpan="7" className="py-14 text-center text-slate-400 text-xs">
+              <TableCell colSpan="5" className="py-14 text-center text-slate-400 text-xs">
                 No historical operations recorded yet.
               </TableCell>
             </TableRow>
@@ -96,13 +78,9 @@ export default function HistoricalEventsLog({
 
               return (
                 <TableRow key={event.event_id}>
-                  <TableCell className="font-mono text-xs text-slate-400">{event.event_id}</TableCell>
                   <TableCell isBold>{event.name}</TableCell>
                   <TableCell className="text-xs text-slate-500 dark:text-slate-400">
                     {event.primary_type?.type_name || "—"}
-                  </TableCell>
-                  <TableCell>
-                    <SeverityBadge severity={event.severity} />
                   </TableCell>
                   <TableCell className="text-xs text-slate-500 dark:text-slate-400">{durationStr}</TableCell>
                   <TableCell>

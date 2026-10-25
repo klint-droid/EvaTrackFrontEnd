@@ -6,7 +6,6 @@ export interface CreateResourceRequestPayload {
     resource_type: string;
     quantity: number;
     description?: string | null;
-    urgency_id: number | string;
 }
 
 export interface CreateResourceRequestResponse {

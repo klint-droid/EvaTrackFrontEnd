@@ -13,7 +13,6 @@ import {
   Flame,
   Calendar
 } from 'lucide-react';
-import SeverityBadge from './SeverityBadge';
 import EndEventButton from './EndEventButton';
 
 const getIconForType = (typeName) => {
@@ -93,28 +92,22 @@ export default function ActiveEventsList({ activeEvents = [], fetchEvents }) {
                 className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm hover:shadow transition-all flex flex-col justify-between"
               >
                 {/* Card Top / Header */}
-                <div className="px-6 py-4.5 border-b border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/40">
+                <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/40">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center flex-shrink-0 shadow-sm shadow-rose-500/20">
                       <IconComponent className="w-5 h-5" />
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-base font-bold text-slate-900 dark:text-slate-50 tracking-tight">
-                          {event.name}
-                        </h3>
-                        <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60">
-                          EVT-{event.event_id}
-                        </span>
-                      </div>
-                      <p className="text-xs font-semibold text-slate-400 mt-0.5">
+                    <div className="space-y-0.5">
+                      <h3 className="text-base font-bold text-slate-900 dark:text-slate-50 tracking-tight leading-snug">
+                        {event.name}
+                      </h3>
+                      <p className="text-xs font-semibold text-slate-400">
                         {event.primary_type?.type_name || 'Disaster Event'}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <SeverityBadge severity={event.severity} />
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold rounded-lg text-xs border border-rose-200 dark:border-rose-900/60">
                       <span className="relative flex h-1.5 w-1.5">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75" />

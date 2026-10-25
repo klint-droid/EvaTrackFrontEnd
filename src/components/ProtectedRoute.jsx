@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import API from "../api";
 import { useUserStore } from "../store/useUserStore";
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, allowedRoles }) => {
   const user = useUserStore(state => state.user);
   const setUser = useUserStore(state => state.setUser);
   const [loading, setLoading] = useState(!user);
@@ -28,7 +28,15 @@ const ProtectedRoute = ({ children }) => {
 
   if (loading) return null;
 
-  if (!user) return <Navigate to="/" />;
+  if (!user) return <Navigate to="/login" replace />;
+
+  if (allowedRoles && Array.isArray(allowedRoles) && !allowedRoles.includes(user.role)) {
+    if (user.role === 'super_admin') {
+      return <Navigate to="/user-management" replace />;
+    }
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return children;
 };
 

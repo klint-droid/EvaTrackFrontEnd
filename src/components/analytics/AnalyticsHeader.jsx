@@ -52,12 +52,7 @@ export default function AnalyticsHeader({
                             <div className="max-h-96 overflow-y-auto">
                                 {[
                                     { key: "dromic", label: "DROMIC Master List", desc: "DSWD compliant evacuee profiling list", formats: ["csv", "pdf"] },
-                                    { key: "demographics", label: "Demographic Summary", desc: "Aggregated stats, age groups, gender details", formats: ["csv", "pdf"] },
-                                    { key: "utilization", label: "Center Utilization & Capacity", desc: "Occupancy rates, available slots per center", formats: ["csv", "pdf"] },
-                                    { key: "vulnerable", label: "Vulnerable Groups Care List", desc: "Targeted lists of PWDs, pregnant, seniors", formats: ["csv", "pdf"] },
-                                    { key: "resources", label: "Resource Requests Report", desc: "Logistic request status and urgency audits", formats: ["csv", "pdf"] },
-                                    { key: "issues", label: "Center Issues Log", desc: "Facility issues tracking and severity levels", formats: ["csv", "pdf"] },
-                                    { key: "daily-intake", label: "Daily Intake Trends", desc: "Tabular curve of daily evacuee intake", formats: ["csv"] }
+                                    { key: "utilization", label: "Center Utilization & Capacity", desc: "Occupancy rates, available slots per center", formats: ["csv", "pdf"] }
                                 ].map((report) => (
                                     <div key={report.key} className="p-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex flex-col gap-2">
                                         <div>

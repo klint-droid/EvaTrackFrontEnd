@@ -7,7 +7,6 @@ export default function EvacueeList({
     household,
     isEvacuated,
     isPersonnelUser,
-    isSuperAdminUser,
     isAdminUser,
     memberSearch,
     setMemberSearch,
@@ -40,7 +39,7 @@ export default function EvacueeList({
         const isStatusUpdating = statusUpdatingMemberId === member.member_id;
         const canModify = canModifyMember(member.member_id);
         
-        const effectivePovCenterId = (isSuperAdminUser || isAdminUser) ? activeEvacTab : povCenterId;
+        const effectivePovCenterId = isAdminUser ? activeEvacTab : povCenterId;
         const memberAtMyCenter = memberEvac && String(memberEvac.center_id) === String(effectivePovCenterId);
 
         return (
@@ -71,15 +70,15 @@ export default function EvacueeList({
                 </TableCell>
 
                 <TableCell className="text-sm text-slate-500 dark:text-slate-400">
-                    {member.gender?.label || '—'}
+                    {member.gender?.label || (typeof member.gender === 'string' ? member.gender : null) || '—'}
                 </TableCell>
 
                 <TableCell className="text-sm text-slate-500 dark:text-slate-400">
-                    {member.relationship?.label || '—'}
+                    {member.relationship?.label || member.relation || (typeof member.relationship === 'string' ? member.relationship : null) || '—'}
                 </TableCell>
 
                 <TableCell className="text-sm text-slate-500 dark:text-slate-400">
-                    {member.civil_status?.label || '—'}
+                    {member.civil_status?.label || (typeof member.civil_status === 'string' ? member.civil_status : null) || '—'}
                 </TableCell>
 
                 <TableCell>
@@ -110,10 +109,7 @@ export default function EvacueeList({
                         <TableCell className="text-center">
                             {(() => {
                             if (!isMemberEvacuated) {
-                                const canCheckIn = canModify && (
-                                    (isPersonnelUser && personnelEvacuation?.evacuation_id) || 
-                                    (!isPersonnelUser && allActiveEvacuations.length > 0)
-                                );
+                                const canCheckIn = isPersonnelUser && canModify && !!personnelEvacuation?.evacuation_id;
 
                                 if (!canCheckIn) {
                                     return (
@@ -136,7 +132,7 @@ export default function EvacueeList({
                             }
 
                             if (memberAtMyCenter) {
-                                if (canModify) {
+                                if (canModify && isPersonnelUser) {
                                     return (
                                         <select
                                             value="evacuated"

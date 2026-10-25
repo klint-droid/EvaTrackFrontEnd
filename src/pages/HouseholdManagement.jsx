@@ -6,7 +6,8 @@ import {
     Search,
     Trash2,
     Users,
-    Filter
+    Filter,
+    RefreshCw
 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -50,11 +51,12 @@ export default function HouseholdManagement() {
 
     const currentUser = useUserStore(state => state.user);
     const fetchFreshUser = useUserStore(state => state.fetchFreshUser);
-    const isSuperAdminUser = currentUser?.role === 'super_admin';
     const isAdminUser = currentUser?.role === 'evac_admin';
 
+    const [syncing, setSyncing] = useState(false);
+
     const canEditHousehold = (h) => {
-        if (isSuperAdminUser || isAdminUser) return true;
+        if (isAdminUser) return true;
         if (currentUser?.role === 'evac_personnel') {
             const currentEvac = h.current_evacuation || h.currentEvacuation;
             const currentCenterId = currentEvac?.center_id || currentEvac?.center?.evacuation_center_id;
@@ -64,7 +66,7 @@ export default function HouseholdManagement() {
         return false;
     };
 
-    const canDeleteHousehold = isSuperAdminUser || isAdminUser;
+    const canDeleteHousehold = isAdminUser;
 
     const fetchHouseholds = async (page = 1, overrideFilters = null) => {
         setLoading(true);
@@ -75,6 +77,7 @@ export default function HouseholdManagement() {
             if (activeFilters.status) params.status = activeFilters.status;
             if (activeFilters.center_id) params.center_id = activeFilters.center_id;
             if (activeFilters.event_id) params.event_id = activeFilters.event_id;
+            if (activeFilters.force_sync) params.force_sync = true;
 
             const res = await getHouseholds(page, params);
             setHouseholds(res.data);
@@ -83,6 +86,19 @@ export default function HouseholdManagement() {
             console.error(err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSyncExternal = async () => {
+        setSyncing(true);
+        try {
+            await fetchHouseholds(1, { ...filters, force_sync: true });
+            showAlert("Household data synchronized with external partner system.", "success");
+        } catch (err) {
+            console.error(err);
+            showAlert("Could not sync with external partner system.", "error");
+        } finally {
+            setSyncing(false);
         }
     };
 
@@ -286,24 +302,22 @@ export default function HouseholdManagement() {
                 title="Households"
                 badgeText={`${pagination.total || households.length} Households`}
                 subtitle="Manage registered family units, contact info, and evacuation statuses"
-                onExport={() => {
-                  const csvHeader = "Household ID,Household Name,Contact Number,Evacuated Members,Total Members,Status,Center,Unit\n";
-                  const csvRows = households
-                    .map((h) => {
-                      const prog = getEvacuationProgress(h);
-                      return `"${h.household_id}","${h.household_name || ''}","${h.contact_number || ''}",${prog.evacuated},${prog.total},"${prog.label}","${h.current_evacuation?.center?.name || ''}","${h.current_evacuation?.unit_allocation?.unit?.name || ''}"`;
-                    })
-                    .join("\n");
-                  const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
-                  const link = document.createElement("a");
-                  link.href = URL.createObjectURL(blob);
-                  link.setAttribute("download", "household_reports.csv");
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                }}
-                onAdd={(isAdminUser || isSuperAdminUser) ? () => navigate('/households/register') : undefined}
+                onAdd={isAdminUser ? () => navigate('/households/register') : undefined}
                 addLabel="Register Household"
+                actions={
+                    isAdminUser ? (
+                        <button
+                            type="button"
+                            onClick={handleSyncExternal}
+                            disabled={syncing}
+                            className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors shadow-xs disabled:opacity-50"
+                            title="Sync latest households from external partner system"
+                        >
+                            <RefreshCw size={14} className={syncing ? "animate-spin text-blue-600" : "text-slate-500"} />
+                            <span>{syncing ? "Syncing..." : "Sync Partner Data"}</span>
+                        </button>
+                    ) : undefined
+                }
                 stats={stats}
                 pagination={paginationComponent}
             >

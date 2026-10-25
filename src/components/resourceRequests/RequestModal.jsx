@@ -1,21 +1,13 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { X, Package, Users, MapPin, Send, Loader2, AlertTriangle, AlertCircle, Minus, ArrowDown } from 'lucide-react';
+import { X, Package, Users, MapPin, Send, Loader2 } from 'lucide-react';
 
 export default function RequestModal({
   modalOpen, setModalOpen, form, setForm,
-  urgencyLevels, canUpdateStatus, centers,
+  canChooseCenter, canUpdateStatus, centers,
   handleSubmit, saving
 }) {
   if (!modalOpen) return null;
-
-  const urgencyIcons = { critical: AlertTriangle, high: AlertCircle, medium: Minus, low: ArrowDown };
-  const urgencyColors = {
-    critical: 'border-rose-400 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400',
-    high:     'border-orange-400 bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400',
-    medium:   'border-amber-400 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400',
-    low:      'border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400',
-  };
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
@@ -82,7 +74,7 @@ export default function RequestModal({
           </div>
 
           {/* Center (Admin only) */}
-          {canUpdateStatus && centers.length > 0 && (
+          {canChooseCenter && centers.length > 0 && (
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide flex items-center gap-1">
                 <MapPin size={11} /> Evacuation Center

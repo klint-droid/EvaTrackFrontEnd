@@ -9,6 +9,7 @@ import { getCenters } from "../api/evacuation/getCenters";
 import { admitHousehold } from "../api/evacuationRecords/admitHousehold";
 import { getUnitsByCenter } from "../api/units/getUnitsByCenter";
 import { assignHousehold } from "../api/allocations/assignHousehold";
+import { getLookups } from "../api/lookups/getLookups";
 import { useAlert } from "../context/AlertContext";
 import { useUserStore } from "../store/useUserStore";
 
@@ -21,7 +22,24 @@ export const useVerifyHousehold = () => {
   const [searchType, setSearchType] = useState<'household' | 'member'>('household');
   const [results, setResults] = useState<any>(undefined);
   const [headName, setHeadName] = useState<string>("");
+  const [householdName, setHouseholdName] = useState<string>("");
   const [contactNumber, setContactNumber] = useState<string>("");
+  const [walkInMembers, setWalkInMembers] = useState<any[]>([
+    {
+      id: "head-1",
+      first_name: "",
+      middle_name: "",
+      last_name: "",
+      birth_date: "",
+      gender_id: "",
+      relationship_id: 1, // Head of Household
+      civil_status_id: "",
+      is_household_head: true,
+      is_pwd: false,
+      is_pregnant: false,
+      vulnerable_group_ids: [],
+    }
+  ]);
   const [message, setMessage] = useState<{ text: string; type: string } | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -41,6 +59,40 @@ export const useVerifyHousehold = () => {
   const [selectedUnitId, setSelectedUnitId] = useState<string>("");
   const { showConfirm, showAlert } = useAlert();
 
+  const addWalkInMember = () => {
+    setWalkInMembers(prev => [
+      ...prev,
+      {
+        id: `member-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        first_name: "",
+        middle_name: "",
+        last_name: prev[0]?.last_name || "",
+        birth_date: "",
+        gender_id: "",
+        relationship_id: "",
+        civil_status_id: "",
+        is_household_head: false,
+        is_pwd: false,
+        is_pregnant: false,
+        vulnerable_group_ids: [],
+      }
+    ]);
+  };
+
+  const removeWalkInMember = (id: string) => {
+    setWalkInMembers(prev => {
+      if (prev.length <= 1) return prev;
+      return prev.filter(m => m.id !== id);
+    });
+  };
+
+  const updateWalkInMember = (id: string, field: string, value: any) => {
+    setWalkInMembers(prev => prev.map(m => {
+      if (m.id !== id) return m;
+      return { ...m, [field]: value };
+    }));
+  };
+
   const getApiBody = (res: any) => {
     if (res?.data?.message || res?.data?.data) {
       return res.data;
@@ -58,7 +110,7 @@ export const useVerifyHousehold = () => {
     return body?.message || fallback;
   };
 
-  const isUserAdmin = user?.role === "evac_admin" || user?.role === "super_admin";
+  const isUserAdmin = user?.role === "evac_admin";
   const assignedId = user?.assigned_center?.id || user?.assigned_center_id;
 
   // 1. Centers Query (Cached)
@@ -94,6 +146,16 @@ export const useVerifyHousehold = () => {
       return res.data || [];
     },
     enabled: !!activeCenterId,
+  });
+
+  // 4. Lookups Query (Cached)
+  const { data: lookups = null } = useQuery<any>({
+    queryKey: ['lookups'],
+    queryFn: async () => {
+      const res = await getLookups();
+      return res;
+    },
+    staleTime: 1000 * 60 * 30,
   });
 
   const centerName = centerNameOverride || activeCenter?.name || activeCenter?.center_name || activeCenterId || null;
@@ -274,20 +336,74 @@ export const useVerifyHousehold = () => {
 
   const handleCreate = async () => {
     if (loading) return;
-    if (!headName.trim() || !memberCount || Number(memberCount) <= 0) {
-      showMessage("Please enter household name and number of members.", "error");
+
+    if (!walkInMembers || walkInMembers.length === 0) {
+      showMessage("Please add at least one household member.", "error");
       return;
     }
 
+    const missingFields: string[] = [];
+    walkInMembers.forEach((m, idx) => {
+      const role = m.is_household_head ? "Head of Household" : `Member #${idx + 1}`;
+      if (!m.first_name?.trim()) missingFields.push(`${role} (First Name)`);
+      if (!m.last_name?.trim()) missingFields.push(`${role} (Last Name)`);
+      if (!m.birth_date) missingFields.push(`${role} (Birth Date)`);
+    });
+
+    if (missingFields.length > 0) {
+      showMessage(`Please complete: ${missingFields.slice(0, 3).join(", ")}${missingFields.length > 3 ? '...' : ''}`, "error");
+      return;
+    }
+
+    const effectiveHead = walkInMembers[0];
+    const derivedHouseholdName = householdName.trim() || headName.trim() || `${effectiveHead.last_name || 'Walk-In'} Household`;
+
     const tempHousehold = {
-      household_id: "TBD",
-      household_name: headName,
+      household_id: "TBD (Walk-In)",
+      household_name: derivedHouseholdName,
       contact_number: contactNumber || undefined,
-      members: []
+      members: walkInMembers.map((m, idx) => {
+        const genObj = lookups?.genders?.find((g: any) => String(g.id) === String(m.gender_id));
+        const relObj = lookups?.relationships?.find((r: any) => String(r.id) === String(m.relationship_id));
+        const genLabel = genObj?.label || (m.gender_id == 1 ? "Male" : (m.gender_id == 2 ? "Female" : "—"));
+        const relLabel = relObj?.label || (m.is_household_head ? "Head of Household" : "Family Member");
+
+        return {
+          member_id: `temp-${idx}`,
+          first_name: m.first_name,
+          middle_name: m.middle_name,
+          last_name: m.last_name,
+          birth_date: m.birth_date,
+          gender_id: m.gender_id,
+          gender: {
+            gender_label: genLabel,
+            label: genLabel,
+          },
+          relationship_id: m.relationship_id,
+          relationshipDetail: {
+            relationship_name: relLabel,
+          },
+          relationship: {
+            relationship_label: relLabel,
+            label: relLabel,
+          },
+          civil_status_id: m.civil_status_id,
+          is_household_head: m.is_household_head,
+          is_pwd: m.is_pwd,
+          is_pregnant: m.is_pregnant,
+          vulnerable_group_ids: m.vulnerable_group_ids,
+        };
+      })
     };
 
-    showMessage("Please confirm admission details.");
-    setScannedData({ household: tempHousehold, isManualNew: true });
+    showMessage("Please confirm admission station and allocation details.");
+    setScannedData({
+      household: tempHousehold,
+      isManualNew: true,
+      pendingMembers: walkInMembers,
+    });
+    setSelectedMembers(tempHousehold.members.map((m: any) => m.member_id));
+    setMemberCount(walkInMembers.length);
     setModalError(null);
     setAssignmentModal(true);
   };
@@ -323,18 +439,40 @@ export const useVerifyHousehold = () => {
 
     try {
       let finalHouseholdId = scannedData?.household?.household_id;
+      let finalMemberIds: any[] = [];
 
       if (scannedData?.isManualNew) {
+        const membersToCreate = (scannedData.pendingMembers || scannedData.household?.members || []).map((m: any) => ({
+          first_name: m.first_name,
+          middle_name: m.middle_name || null,
+          last_name: m.last_name,
+          birth_date: m.birth_date,
+          gender_id: m.gender_id ? Number(m.gender_id) : null,
+          relationship_id: m.relationship_id ? Number(m.relationship_id) : (m.is_household_head ? 1 : null),
+          civil_status_id: m.civil_status_id ? Number(m.civil_status_id) : null,
+          is_household_head: m.is_household_head ? 1 : 0,
+          can_report_for_household: m.is_household_head ? 1 : 0,
+          is_pwd: m.is_pwd ? 1 : 0,
+          is_pregnant: m.is_pregnant ? 1 : 0,
+          vulnerable_group_ids: m.vulnerable_group_ids || [],
+        }));
+
         const createRes = await createHousehold({
           household_name: scannedData.household.household_name,
           contact_number: scannedData.household.contact_number,
+          members: membersToCreate,
         });
         const payload = getPayload(createRes);
         const createdHousehold = payload?.household || payload?.data || payload;
         finalHouseholdId = createdHousehold?.household_id;
 
         if (!finalHouseholdId) {
-            throw new Error("Failed to create household. No ID returned.");
+          throw new Error("Failed to create household. No ID returned.");
+        }
+
+        const createdMemberIds = (createdHousehold?.members || []).map((m: any) => m.member_id);
+        if (createdMemberIds.length > 0) {
+          finalMemberIds = createdMemberIds;
         }
       }
 
@@ -346,10 +484,14 @@ export const useVerifyHousehold = () => {
           center_id: activeCenterId,
         });
       } else {
+        const admitIds = finalMemberIds.length > 0
+          ? finalMemberIds
+          : (hasMembers ? selectedMembers : undefined);
+
         res = await admitHousehold({
           household_id: finalHouseholdId,
-          member_ids: hasMembers ? selectedMembers : undefined,
-          member_count: !hasMembers ? Number(memberCount) : undefined,
+          member_ids: admitIds,
+          member_count: (!admitIds || admitIds.length === 0) ? Number(memberCount) : undefined,
           center_id: activeCenterId,
         });
       }
@@ -381,7 +523,24 @@ export const useVerifyHousehold = () => {
 
       if (scannedData?.isManualNew) {
         setHeadName("");
+        setHouseholdName("");
         setContactNumber("");
+        setWalkInMembers([
+          {
+            id: "head-1",
+            first_name: "",
+            middle_name: "",
+            last_name: "",
+            birth_date: "",
+            gender_id: "",
+            relationship_id: 1,
+            civil_status_id: "",
+            is_household_head: true,
+            is_pwd: false,
+            is_pregnant: false,
+            vulnerable_group_ids: [],
+          }
+        ]);
       }
 
       const navPayload = {
@@ -461,6 +620,10 @@ export const useVerifyHousehold = () => {
     searchType, setSearchType,
     results, setResults,
     headName, setHeadName,
+    householdName, setHouseholdName,
+    walkInMembers, setWalkInMembers,
+    addWalkInMember, removeWalkInMember, updateWalkInMember,
+    lookups,
     contactNumber, setContactNumber,
     message, setMessage,
     loading, setLoading,

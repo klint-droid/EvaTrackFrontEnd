@@ -27,15 +27,7 @@ export default function AlertDetailModal({ notifId, onClose }) {
         return map[status] || 'warning';
     };
 
-    const urgencyStyle = (key) => {
-        const map = {
-            critical: 'danger',
-            high:     'warning',
-            medium:   'warning',
-            low:      'success',
-        };
-        return map[key] || 'success';
-    };
+
 
 
     /* delivery log counts */

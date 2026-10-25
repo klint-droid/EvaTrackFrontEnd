@@ -1,5 +1,5 @@
 import React from "react";
-import { Search, Download } from "lucide-react";
+import { Search } from "lucide-react";
 
 export default function UserFilters({ search, setSearch, fetchUsers, roleFilter }) {
     return (
@@ -20,9 +20,6 @@ export default function UserFilters({ search, setSearch, fetchUsers, roleFilter 
                     className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none"
                 />
             </div>
-            <button className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-medium text-sm whitespace-nowrap">
-                <Download size={16} /> Export
-            </button>
         </div>
     );
 }

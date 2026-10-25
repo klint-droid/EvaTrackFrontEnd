@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   AlertCircle, CheckCircle2, Plus, Inbox, Kanban, List as ListIcon,
-  Search, SlidersHorizontal, Building2, Droplet, Utensils, HeartPulse, 
-  Download, RefreshCw, AlertTriangle, MapPin, Layers, ChevronDown, X
+  Search, Building2,
+  RefreshCw, AlertTriangle, MapPin, Layers, ChevronDown, X
 } from 'lucide-react';
 import JiraListView from '../components/resourceRequests/JiraListView';
 import RequestModal from '../components/resourceRequests/RequestModal';
@@ -19,7 +19,6 @@ export default function ResourceRequests() {
 
   const {
     requests,
-    urgencyLevels,
     centers,
     activeEvents,
     selectedEventId, setSelectedEventId,
@@ -32,30 +31,26 @@ export default function ResourceRequests() {
     statusFilter, setStatusFilter,
     typeFilter, setTypeFilter,
     message,
+    canChooseCenter,
     canUpdateStatus, canCreate,
     displayedRequests,
     pendingCount, acknowledgedCount, deliveredCount,
-    criticalCount, highCount, mediumCount, lowCount,
     openModal, handleSubmit, handleStatusChange, handleDelete, fetchRequests,
     viewingRequest, setViewingRequest
   } = useResourceRequests();
 
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('rr_view_mode') || 'kanban');
   const [selectedCenterFilter, setSelectedCenterFilter] = useState('all');
-  const [quickFilter, setQuickFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [incomingModalOpen, setIncomingModalOpen] = useState(false);
-  const [filterOpen, setFilterOpen] = useState(false);
   const [centerOpen, setCenterOpen] = useState(false);
   const [selectedUserFilter, setSelectedUserFilter] = useState('all');
-  const filterRef = useRef(null);
   const centerRef = useRef(null);
   const perPage = 10;
 
   // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e) => {
-      if (filterRef.current && !filterRef.current.contains(e.target)) setFilterOpen(false);
       if (centerRef.current && !centerRef.current.contains(e.target)) setCenterOpen(false);
     };
     document.addEventListener('mousedown', handler);
@@ -89,9 +84,9 @@ export default function ResourceRequests() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, typeFilter, search, selectedEventId, selectedCenterFilter, quickFilter]);
+  }, [statusFilter, typeFilter, search, selectedEventId, selectedCenterFilter, selectedUserFilter]);
 
-  // Center-filtered, User-filtered, and Quick-filtered requests
+  // Center-filtered and User-filtered requests
   const filteredRequests = displayedRequests.filter((req) => {
     // Search filter
     if (search.trim()) {
@@ -117,13 +112,6 @@ export default function ResourceRequests() {
       if (uid !== selectedUserFilter) return false;
     }
 
-    // Quick Filters
-    if (quickFilter === 'critical') return req.urgency_level?.urgency_key === 'critical';
-    if (quickFilter === 'high') return req.urgency_level?.urgency_key === 'high' || req.urgency_level?.urgency_key === 'critical';
-    if (quickFilter === 'water') return (req.resource_type || '').toLowerCase().includes('water');
-    if (quickFilter === 'food') return (req.resource_type || '').toLowerCase().includes('food') || (req.resource_type || '').toLowerCase().includes('rice');
-    if (quickFilter === 'medical') return (req.resource_type || '').toLowerCase().includes('med') || (req.resource_type || '').toLowerCase().includes('aid');
-
     return true;
   });
 
@@ -142,15 +130,6 @@ export default function ResourceRequests() {
     }
   };
 
-  const getUrgencyClass = (key) => {
-    switch (key) {
-      case 'critical': return 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800';
-      case 'high':     return 'bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800';
-      case 'medium':   return 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800';
-      case 'low':      return 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800';
-      default:         return 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800';
-    }
-  };
 
   const formatDateTime = (value) => {
     if (!value) return '—';
@@ -159,20 +138,6 @@ export default function ResourceRequests() {
 
   const approvedCount = filteredRequests.filter(r => r.status?.status_key === 'approved' || r.status === 'approved').length;
   const rejectedCount = filteredRequests.filter(r => r.status?.status_key === 'rejected' || r.status === 'rejected').length;
-
-  const handleExportCSV = () => {
-    const csvHeader = "Request ID,Resource,Type,Quantity,Urgency,Status,Center,Created At\n";
-    const csvRows = filteredRequests
-      .map((r) => `${r.request_id},"${r.resource_type || ''}",${r.request_type || ''},${r.quantity || 0},${r.urgency_level?.urgency_label || ''},${r.status?.status_label || ''},"${r.center?.name || ''}","${r.created_at || ''}"`)
-      .join("\n");
-    const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute("download", "resource_requests.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   return (
     <div className="min-h-screen font-sans text-left pb-24 relative space-y-6">
@@ -248,19 +213,6 @@ export default function ResourceRequests() {
               </button>
             </div>
 
-
-
-            {/* Export CSV Button */}
-            <button
-              type="button"
-              onClick={handleExportCSV}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition-all"
-              title="Export CSV"
-            >
-              <Download size={14} />
-              <span className="hidden md:inline">Export</span>
-            </button>
-
             {/* New Request Button */}
             {canCreate && (
               <button
@@ -328,56 +280,10 @@ export default function ResourceRequests() {
             </div>
           )}
 
-          {/* Filter Dropdown Button */}
-          <div className="relative" ref={filterRef}>
-            <button
-              type="button"
-              onClick={() => setFilterOpen(prev => !prev)}
-              className={`h-8 inline-flex items-center gap-1.5 px-3 text-xs font-bold rounded-lg border transition-all ${
-                quickFilter !== 'all'
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400'
-                  : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
-              }`}
-            >
-              <SlidersHorizontal size={13} />
-              <span>Filter</span>
-              {quickFilter !== 'all' && (
-                <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center">1</span>
-              )}
-              <ChevronDown size={12} className={`transition-transform ${filterOpen ? 'rotate-180' : ''}`} />
-            </button>
 
-            {/* Filter Dropdown Panel */}
-            {filterOpen && (
-              <div className="absolute top-full left-0 mt-1.5 w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 p-2 animate-in fade-in zoom-in-95 duration-150">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2 py-1 mb-1">By Category</p>
-
-                {[{key:'all', label:'All Requests', icon:null, cls:'text-slate-600 dark:text-slate-300'},
-                  {key:'water',   label:'💧 Water',        icon:null, cls:'text-sky-600 dark:text-sky-400'},
-                  {key:'food',    label:'🍚 Food',         icon:null, cls:'text-amber-600 dark:text-amber-400'},
-                  {key:'medical', label:'🩹 Medical',      icon:null, cls:'text-rose-600 dark:text-rose-400'},
-                ].map(opt => (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    onClick={() => { setQuickFilter(opt.key); setFilterOpen(false); }}
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg transition-all text-left ${
-                      quickFilter === opt.key
-                        ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 font-black'
-                        : `hover:bg-slate-50 dark:hover:bg-slate-800 ${opt.cls}`
-                    }`}
-                  >
-                    <span>{opt.label}</span>
-                    {quickFilter === opt.key && <span className="ml-auto text-blue-500">✓</span>}
-                  </button>
-                ))}
-
-              </div>
-            )}
-          </div>
 
           {/* By Center Dropdown Button */}
-          {canUpdateStatus && centers.length > 0 && (
+          {canChooseCenter && centers.length > 0 && (
             <div className="relative" ref={centerRef}>
               <button
                 type="button"
@@ -422,11 +328,11 @@ export default function ResourceRequests() {
           )}
 
           {/* Active filter badge */}
-          {(quickFilter !== 'all' || selectedUserFilter !== 'all' || selectedCenterFilter !== 'all') && (
+          {(selectedUserFilter !== 'all' || selectedCenterFilter !== 'all' || search) && (
             <button
               type="button"
-              onClick={() => { setQuickFilter('all'); setSelectedUserFilter('all'); setSelectedCenterFilter('all'); setSearch(''); }}
-              className="h-8 inline-flex items-center gap-1 px-2.5 text-xs font-bold rounded-lg border border-rose-200 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 transition-all"
+              onClick={() => { setSelectedUserFilter('all'); setSelectedCenterFilter('all'); setSearch(''); }}
+              className="h-8 inline-flex items-center gap-1 px-2.5 text-xs font-bold rounded-lg border border-rose-200 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 transition-all cursor-pointer"
             >
               <X size={12} />
               <span>Clear filters</span>
@@ -448,7 +354,6 @@ export default function ResourceRequests() {
             openModal={openModal}
             handleStatusChange={handleStatusChange}
             handleDelete={handleDelete}
-            getUrgencyClass={getUrgencyClass}
             setViewingRequest={setViewingRequest}
           />
         </div>
@@ -460,7 +365,6 @@ export default function ResourceRequests() {
             canUpdateStatus={canUpdateStatus}
             handleStatusChange={handleStatusChange}
             handleDelete={handleDelete}
-            getUrgencyClass={getUrgencyClass}
             getStatusClass={getStatusClass}
             setViewingRequest={setViewingRequest}
           />
@@ -472,7 +376,6 @@ export default function ResourceRequests() {
         isOpen={incomingModalOpen}
         onClose={() => setIncomingModalOpen(false)}
         requests={requests}
-        getUrgencyClass={getUrgencyClass}
         getStatusClass={getStatusClass}
         onSelectRequest={(req) => {
           setViewingRequest(req);
@@ -485,7 +388,7 @@ export default function ResourceRequests() {
         setModalOpen={setModalOpen}
         form={form}
         setForm={setForm}
-        urgencyLevels={urgencyLevels}
+        canChooseCenter={canChooseCenter}
         canUpdateStatus={canUpdateStatus}
         centers={centers}
         handleSubmit={handleSubmit}
@@ -496,7 +399,6 @@ export default function ResourceRequests() {
       <ViewRequestDetailsModal 
         request={viewingRequest}
         onClose={() => setViewingRequest(null)}
-        getUrgencyClass={getUrgencyClass}
         getStatusClass={getStatusClass}
         canUpdateStatus={canUpdateStatus}
         handleStatusChange={handleStatusChange}

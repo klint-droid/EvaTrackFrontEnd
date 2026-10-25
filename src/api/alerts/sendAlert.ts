@@ -2,7 +2,6 @@ import API from '../../api';
 
 export interface SendAlertPayload {
     message: string;
-    urgency_level_id: number;
     channel: 'sms' | 'push' | 'both';
     target_filter: 'all' | 'evacuated' | 'not_evacuated';
     evacuation_event_id?: string | null;

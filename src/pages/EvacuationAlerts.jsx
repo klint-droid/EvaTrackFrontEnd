@@ -8,7 +8,7 @@ import {
 import { getAlerts } from '../api/alerts/getAlerts';
 import { cancelAlert } from '../api/alerts/cancelAlert';
 import { getEvents } from '../api/events/getEvents';
-import { isAdmin, isPersonnel, isSuperAdmin } from '../utils/roles';
+import { isAdmin, isPersonnel } from '../utils/roles';
 import CreateAlertModal from '../components/alerts/CreateAlertModal';
 import AlertDetailModal from '../components/alerts/AlertDetailModal';
 import { useAlert } from '../context/AlertContext';
@@ -33,12 +33,11 @@ export default function EvacuationAlerts() {
     
     // Search & Filter state
     const [searchTerm, setSearchTerm] = useState('');
-    const [urgencyFilter, setUrgencyFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [channelFilter, setChannelFilter] = useState('');
     const [showFilters, setShowFilters] = useState(false);
 
-    const canCreate = isSuperAdmin() || isAdmin() || isPersonnel();
+    const canCreate = isAdmin() || isPersonnel();
 
     const fetchAlerts = async (page = 1) => {
         setLoading(true);
@@ -79,15 +78,6 @@ export default function EvacuationAlerts() {
 
 
 
-    const getUrgencyStyle = (key) => {
-        const map = {
-            critical: 'bg-red-500/10 border-red-500/25 text-red-600 font-extrabold',
-            high:     'bg-orange-500/10 border-orange-500/25 text-orange-600',
-            medium:   'bg-yellow-500/10 border-yellow-500/25 text-yellow-700',
-            low:      'bg-green-500/10 border-green-500/25 text-green-600',
-        };
-        return map[key] || map.low;
-    };
 
 
     // Derived statistics
@@ -104,11 +94,10 @@ export default function EvacuationAlerts() {
     const filteredAlerts = alerts.filter(alert => {
         const matchesSearch = alert.message?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                               alert.notif_id?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesUrgency = !urgencyFilter || alert.urgency_level?.urgency_key === urgencyFilter;
         const matchesStatus = !statusFilter || alert.status === statusFilter;
         const matchesChannel = !channelFilter || alert.channel === channelFilter || (channelFilter === 'both' && alert.channel === 'both');
 
-        return matchesSearch && matchesUrgency && matchesStatus && matchesChannel;
+        return matchesSearch && matchesStatus && matchesChannel;
     });
 
     return (
@@ -164,19 +153,6 @@ export default function EvacuationAlerts() {
                 title="SMS & Push Alerts"
                 badgeText={`${pagination.total || alerts.length} Dispatches`}
                 subtitle="Broadcast emergency warnings, SMS notifications, and mobile push alerts"
-                onExport={() => {
-                  const csvHeader = "Notification ID,Message,Urgency,Recipients,Status,Timestamp\n";
-                  const csvRows = filteredAlerts
-                    .map((a) => `${a.notif_id},"${a.message || ''}",${a.urgency_level?.urgency_label || ''},${a.recipients_count || 0},${a.status || ''},"${a.created_at || ''}"`)
-                    .join("\n");
-                  const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
-                  const link = document.createElement("a");
-                  link.href = URL.createObjectURL(blob);
-                  link.setAttribute("download", "evacuation_alerts_report.csv");
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                }}
                 onAdd={canCreate ? () => setCreateModal(true) : undefined}
                 addLabel="Broadcast Alert"
                 pagination={

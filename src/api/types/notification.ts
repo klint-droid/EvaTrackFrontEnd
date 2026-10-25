@@ -1,6 +1,5 @@
 import type { User } from './user';
 import type { Household } from './household';
-import type { UrgencyLevel } from './urgencyLevel';
 
 /**
  * Represents an individual target recipient record for an alert.
@@ -60,7 +59,6 @@ export interface NotificationBase {
   sent_by: string | null;
   evacuation_event_id: string | null;
   evacuation_center_id: string | null;
-  urgency_level_id: number | null;
   scheduled_at: string | null;
   is_recurring: boolean;
   recurrence_type_id: number | null;
@@ -72,7 +70,6 @@ export interface NotificationBase {
   target_filter: string | null;
   recurrence_type: string | null;
   sender: User | null;
-  urgency_level: UrgencyLevel | null;
 }
 
 /**

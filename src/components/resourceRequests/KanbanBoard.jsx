@@ -94,7 +94,6 @@ export default function KanbanBoard({
   openModal,
   handleStatusChange,
   handleDelete,
-  getUrgencyClass,
   setViewingRequest
 }) {
   const [draggedRequestId, setDraggedRequestId] = useState(null);

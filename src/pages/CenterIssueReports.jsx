@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   AlertCircle, CheckCircle2, Plus, Kanban, List as ListIcon,
   Search, SlidersHorizontal, Building2, Wrench, HeartPulse, Shield, 
-  FileWarning, Download, RefreshCw, AlertTriangle, MapPin, ChevronDown, X
+  FileWarning, RefreshCw, AlertTriangle, MapPin, ChevronDown, X
 } from 'lucide-react';
 import IssuesKanbanBoard from '../components/centerIssueReports/IssuesKanbanBoard';
 import IssuesListView from '../components/centerIssueReports/IssuesListView';
@@ -147,20 +147,6 @@ export default function CenterIssueReports() {
     }
   };
 
-  const handleExportCSV = () => {
-    const csvHeader = "Report ID,Title,Category,Severity,Status,Center,Reported At\n";
-    const csvRows = filteredReports
-      .map((r) => `${r.report_id},"${r.title || ''}",${r.category || ''},${r.severity || ''},${r.status || ''},"${r.center?.name || ''}","${r.created_at || ''}"`)
-      .join("\n");
-    const blob = new Blob([csvHeader + csvRows], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute("download", "center_issues.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   return (
     <div className="min-h-screen font-sans text-left pb-24 relative space-y-6">
       
@@ -234,17 +220,6 @@ export default function CenterIssueReports() {
                 <span>List</span>
               </button>
             </div>
-
-            {/* Export CSV Button */}
-            <button
-              type="button"
-              onClick={handleExportCSV}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition-all"
-              title="Export CSV"
-            >
-              <Download size={14} />
-              <span className="hidden md:inline">Export</span>
-            </button>
 
             {/* Report Issue Button */}
             {canCreate && (

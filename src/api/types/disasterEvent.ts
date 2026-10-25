@@ -20,7 +20,7 @@ export interface DisasterEvent {
     event_id: string;
     name: string;
     type_id: number;
-    severity_level_id: number;
+    severity_level_id?: number | null;
     started_at: string;
     ended_at: string | null;
     created_at: string | null;
@@ -28,7 +28,7 @@ export interface DisasterEvent {
     deleted_at: string | null;
 
     primary_type?: DisasterType;
-    severity?: SeverityLevel;
+    severity?: SeverityLevel | null;
     types?: DisasterType[];
     evacuation_centers?: Center[];
 }

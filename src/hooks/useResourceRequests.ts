@@ -1,20 +1,18 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getResourceRequests } from '../api/resourceRequests/getResourceRequests';
-import { getUrgencyLevels } from '../api/resourceRequests/getUrgencyLevels';
 import { createResourceRequest } from '../api/resourceRequests/createResourceRequest';
 import { updateResourceRequestStatus } from '../api/resourceRequests/updateResourceRequestStatus';
 import { deleteResourceRequest } from '../api/resourceRequests/deleteResourceRequest';
 import { getCenters } from '../api/evacuation/getCenters';
 import { getEvents } from '../api/events/getEvents';
-import { isAdmin, isSuperAdmin, isPersonnel } from '../utils/roles';
+import { isAdmin, isPersonnel } from '../utils/roles';
 import { useAlert } from '../context/AlertContext';
 
 interface FormState {
   request_type: string;
   resource_type: string;
   quantity: number | string;
-  urgency_id: string;
   description: string;
   target_agency: string;
   evacuation_center_id: string;
@@ -24,7 +22,6 @@ const EMPTY_FORM: FormState = {
   request_type: 'resource',
   resource_type: '',
   quantity: 1,
-  urgency_id: '',
   description: '',
   target_agency: 'ResQperation',
   evacuation_center_id: '',
@@ -44,23 +41,14 @@ export const useResourceRequests = () => {
   const [message, setMessage] = useState<{ text: string; type: string } | null>(null);
   const [viewingRequest, setViewingRequest] = useState<any>(null);
 
-  const canUpdateStatus: boolean = isAdmin() || isSuperAdmin();
-  const canCreate: boolean = isAdmin() || isSuperAdmin() || isPersonnel();
+  const canChooseCenter: boolean = isAdmin();
+  const canUpdateStatus: boolean = false; // Admins cannot update status; handled by external system
+  const canCreate: boolean = isAdmin() || isPersonnel();
 
   const showMessage = (text: string, type: string = 'success') => {
     setMessage({ text, type });
     setTimeout(() => setMessage(null), 3500);
   };
-
-  // 1. Urgency levels query (cached)
-  const { data: urgencyLevels = [] } = useQuery<any[]>({
-    queryKey: ['urgencyLevels'],
-    queryFn: async () => {
-      const res = await getUrgencyLevels();
-      return res.data || [];
-    },
-    staleTime: Infinity,
-  });
 
   // 2. Centers query (shared cache with UserManagement)
   const { data: centers = [] } = useQuery<any[]>({
@@ -69,7 +57,7 @@ export const useResourceRequests = () => {
       const res: any = await getCenters();
       return Array.isArray(res) ? res : (res?.data ?? []);
     },
-    enabled: canUpdateStatus,
+    enabled: canChooseCenter,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -179,37 +167,20 @@ export const useResourceRequests = () => {
     ? summary.delivered_24h || 0
     : displayedRequests.filter((r: any) => r.status?.status_key === 'delivered' || r.status === 'delivered').length;
 
-  const criticalCount = selectedEventId === "all_history"
-    ? summary.critical || 0
-    : displayedRequests.filter((r: any) => r.urgency_level?.urgency_key === 'critical').length;
-
-  const highCount = selectedEventId === "all_history"
-    ? summary.high || 0
-    : displayedRequests.filter((r: any) => r.urgency_level?.urgency_key === 'high').length;
-
-  const mediumCount = selectedEventId === "all_history"
-    ? summary.medium || 0
-    : displayedRequests.filter((r: any) => r.urgency_level?.urgency_key === 'medium').length;
-
-  const lowCount = selectedEventId === "all_history"
-    ? summary.low || 0
-    : displayedRequests.filter((r: any) => r.urgency_level?.urgency_key === 'low').length;
-
   const openModal = () => {
     setForm({
       ...EMPTY_FORM,
-      urgency_id: urgencyLevels[0]?.urgency_id ? String(urgencyLevels[0].urgency_id) : '',
     });
     setModalOpen(true);
   };
 
   const handleSubmit = async () => {
-    if (!form.resource_type || !form.quantity || !form.urgency_id) {
+    if (!form.resource_type || !form.quantity) {
       showMessage('Please complete all required fields.', 'error');
       return;
     }
 
-    if (canUpdateStatus && !form.evacuation_center_id) {
+    if (canChooseCenter && !form.evacuation_center_id) {
       showMessage('Please select an evacuation center.', 'error');
       return;
     }
@@ -218,7 +189,6 @@ export const useResourceRequests = () => {
       request_type:  form.request_type,
       resource_type: form.resource_type,
       quantity:      Number(form.quantity),
-      urgency_id:    Number(form.urgency_id),
       description:   form.description,
       target_agency: form.target_agency || 'ResQperation',
       ...(form.evacuation_center_id && {
@@ -246,7 +216,6 @@ export const useResourceRequests = () => {
   return {
     requests,
     summary,
-    urgencyLevels,
     centers,
     activeEvents,
     selectedEventId, setSelectedEventId,
@@ -259,10 +228,10 @@ export const useResourceRequests = () => {
     statusFilter, setStatusFilter,
     typeFilter, setTypeFilter,
     message,
+    canChooseCenter,
     canUpdateStatus, canCreate,
     displayedRequests,
     pendingCount, acknowledgedCount, deliveredCount,
-    criticalCount, highCount, mediumCount, lowCount,
     openModal, handleSubmit, handleStatusChange, handleDelete, fetchRequests,
     viewingRequest, setViewingRequest
   };

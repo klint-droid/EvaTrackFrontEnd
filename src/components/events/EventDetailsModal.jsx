@@ -1,6 +1,5 @@
 import { createPortal } from 'react-dom';
 import { X, Clock, Calendar, Info, MapPin, Radio, ShieldAlert } from 'lucide-react';
-import SeverityBadge from './SeverityBadge';
 
 export default function EventDetailsModal({ event, onClose }) {
     if (!event) return null;
@@ -39,7 +38,7 @@ export default function EventDetailsModal({ event, onClose }) {
                                 Disaster Operation Record
                             </h2>
                             <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
-                                EVT-{event.event_id}
+                                {event.event_id?.startsWith?.('EVT-') ? event.event_id : (event.event_id ? `EVT-${event.event_id}` : '')}
                             </p>
                         </div>
                     </div>
@@ -63,19 +62,13 @@ export default function EventDetailsModal({ event, onClose }) {
                                 {event.name}
                             </p>
                         </div>
-                        <div className="col-span-2 sm:col-span-1">
+                        <div className="col-span-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">
                                 Category
                             </label>
                             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                                 {event.primary_type?.type_name || '—'}
                             </p>
-                        </div>
-                        <div className="col-span-2 sm:col-span-1">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">
-                                Severity Level
-                            </label>
-                            <SeverityBadge severity={event.severity} />
                         </div>
                     </div>
 

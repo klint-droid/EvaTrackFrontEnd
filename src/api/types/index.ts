@@ -1,7 +1,6 @@
 export * from './user';
 export * from './household';
 export * from './householdMember';
-export * from './urgencyLevel';
 export * from './evacuationCenter';
 export * from './notification';
 export * from './lookup';
