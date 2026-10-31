@@ -41,7 +41,8 @@ export const useEventManagement = () => {
     queryFn: async () => {
       const res = await getEvents();
       return res.data || [];
-    }
+    },
+    staleTime: 1000 * 30, // 30 seconds navigation cache
   });
 
   // 2. Disaster Types Query (Lookup data, cached for entire session)
@@ -66,6 +67,7 @@ export const useEventManagement = () => {
       return await getHistoryEvents(historyPage, filters);
     },
     placeholderData: keepPreviousData,
+    staleTime: 1000 * 30, // 30 seconds navigation cache
   });
 
   const historicalEvents = (historyPagination as any)?.data || [];

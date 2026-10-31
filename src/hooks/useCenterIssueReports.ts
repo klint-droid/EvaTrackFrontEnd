@@ -109,6 +109,7 @@ export const useCenterIssueReports = () => {
       });
       return res;
     },
+    staleTime: 1000 * 30, // 30 seconds navigation cache
   });
 
   const reports: any[] = reportsResponse?.data || [];

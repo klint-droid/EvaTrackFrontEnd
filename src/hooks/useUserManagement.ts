@@ -112,6 +112,7 @@ export const useUserManagement = () => {
       return res;
     },
     placeholderData: keepPreviousData,
+    staleTime: 1000 * 30, // 30 seconds navigation cache
   });
 
   const pagination = usersResponse;

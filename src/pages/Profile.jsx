@@ -11,6 +11,11 @@ import { updateProfile } from "../api/auth/updateProfile";
 import { updatePassword } from "../api/auth/updatePassword";
 import { useUserStore } from "../store/useUserStore";
 
+// Module-level cache to persist profile data across route navigation
+let profileCache = null;
+let profileCacheTime = 0;
+const CACHE_DURATION = 30000; // 30 seconds cache expiration
+
 export default function Profile() {
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -19,12 +24,12 @@ export default function Profile() {
     const initialTab = searchParams.get("tab") || "overview";
     const [activeTab, setActiveTab] = useState(initialTab);
     
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!profileCache);
     const [submitting, setSubmitting] = useState(false);
     const [message, setMessage] = useState(null);
 
     // Profile details state
-    const [profileData, setProfileData] = useState({
+    const [profileData, setProfileData] = useState(profileCache || {
         user_id: "",
         first_name: "",
         last_name: "",
@@ -56,13 +61,15 @@ export default function Profile() {
         setTimeout(() => setMessage(null), 4000);
     };
 
-    const fetchUserProfile = async () => {
-        setLoading(true);
+    const fetchUserProfile = async (forceLoading = false) => {
+        if (!profileCache || forceLoading) {
+            setLoading(true);
+        }
         try {
             const res = await getUser();
             const rawUser = res.data || res;
             
-            setProfileData({
+            const nextData = {
                 user_id: rawUser.user_id || "",
                 first_name: rawUser.first_name || "",
                 last_name: rawUser.last_name || "",
@@ -73,7 +80,10 @@ export default function Profile() {
                 assigned_center: rawUser.assigned_center || rawUser.assignedCenter || null,
                 profile_photo_url: rawUser.profile_photo_url || null,
                 cover_photo_url: rawUser.cover_photo_url || localStorage.getItem("profile_cover_photo") || null
-            });
+            };
+            setProfileData(nextData);
+            profileCache = nextData;
+            profileCacheTime = Date.now();
         } catch (err) {
             console.error(err);
             showMessage("Failed to load user profile.", "error");
@@ -83,7 +93,11 @@ export default function Profile() {
     };
 
     useEffect(() => {
-        fetchUserProfile();
+        const now = Date.now();
+        const isCacheExpired = !profileCacheTime || (now - profileCacheTime > CACHE_DURATION);
+        if (isCacheExpired || !profileCache) {
+            fetchUserProfile(!profileCache);
+        }
     }, []);
 
     useEffect(() => {
@@ -130,6 +144,7 @@ export default function Profile() {
                     ...prev,
                     profile_photo_url: updatedUser.profile_photo_url
                 }));
+                profileCache = null;
             }
 
             showMessage("Profile photo updated and saved successfully!");
@@ -201,6 +216,7 @@ export default function Profile() {
                 contact_number: updatedUser.contact_number || "",
                 profile_photo_url: updatedUser.profile_photo_url
             }));
+            profileCache = null;
             
             if (photoPreview) {
                 URL.revokeObjectURL(photoPreview);

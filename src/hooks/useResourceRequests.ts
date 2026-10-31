@@ -85,6 +85,7 @@ export const useResourceRequests = () => {
       } as any);
       return res;
     },
+    staleTime: 1000 * 30, // 30 seconds navigation cache
   });
 
   const requests: any[] = resourceRequestsData?.data || [];

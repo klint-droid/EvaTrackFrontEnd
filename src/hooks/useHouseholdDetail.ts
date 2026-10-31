@@ -72,6 +72,7 @@ export const useHouseholdDetail = () => {
             return res.data || res;
         },
         enabled: !!id,
+        staleTime: 1000 * 30, // 30 seconds navigation cache
     });
 
     // 3. Evacuation context query (if evacuation_id exists in URL)
@@ -86,6 +87,7 @@ export const useHouseholdDetail = () => {
             return res.data || res;
         },
         enabled: !!evacuationIdFromUrl,
+        staleTime: 1000 * 30, // 30 seconds navigation cache
     });
 
     const loading = isHouseholdLoading || (!!evacuationIdFromUrl && isEvacLoading);
