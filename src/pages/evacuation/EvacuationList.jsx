@@ -10,7 +10,7 @@ import { getCenters }    from "../../api/evacuation/getCenters";
 import { deleteCenter }  from "../../api/evacuation/deleteCenter";
 import { createCenter }  from "../../api/evacuation/createCenter";
 import { updateCenter }  from "../../api/evacuation/updateCenter";
-import { isAdmin, isSuperAdmin, isPersonnel, getAssignedCenterId } from "../../utils/roles";
+import { can, isPersonnel, getAssignedCenterId } from "../../utils/roles";
 
 import CenterModal  from "../../components/evacuation/CenterModal";
 import AssignPersonnelModal from "../../components/evacuation/AssignPersonnelModal";
@@ -40,9 +40,9 @@ export default function EvacuationList() {
   const [colFilters, setColFilters]           = useState({ name: '' });
   const { showAlert } = useAlert();
 
-  const canCreate = isAdmin();
-  const canEdit   = isAdmin();
-  const canDelete = isAdmin();
+  const canCreate = can('centers:manage');
+  const canEdit   = can('centers:manage');
+  const canDelete = can('centers:manage');
 
   useEffect(() => { fetchCenters(); }, []);
 

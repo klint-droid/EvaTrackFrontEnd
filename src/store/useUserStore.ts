@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { getUser as fetchApiUser } from '../api/auth/getUser';
-import { UserProfile, UserRole, normalizeRole } from '../utils/roles';
+import { UserProfile, UserRole, normalizeRole, can, registerUserGetter, type PermissionAction } from '../utils/roles';
 
 interface UserState {
   user: UserProfile | null;
@@ -10,6 +10,7 @@ interface UserState {
   isSuperAdmin: () => boolean;
   isAdmin: () => boolean;
   isPersonnel: () => boolean;
+  can: (action: PermissionAction) => boolean;
   getAssignedCenterId: () => string | null;
 }
 
@@ -77,5 +78,9 @@ export const useUserStore = create<UserState>((set, get) => ({
   isSuperAdmin: () => get().user?.role === 'super_admin',
   isAdmin: () => get().user?.role === 'evac_admin',
   isPersonnel: () => get().user?.role === 'evac_personnel',
+  can: (action: PermissionAction) => can(action, get().user),
   getAssignedCenterId: () => get().user?.assigned_center?.id || get().user?.assigned_center_id || null,
 }));
+
+// Invert dependency so roles.ts uses reactive store state
+registerUserGetter(() => useUserStore.getState().user);

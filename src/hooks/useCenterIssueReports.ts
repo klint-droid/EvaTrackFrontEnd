@@ -8,7 +8,7 @@ import { deleteCenterIssueReport } from '../api/centerIssueReports/deleteCenterI
 import { getUser } from '../api/auth/getUser';
 import { getCenters } from '../api/evacuation/getCenters';
 import { getEvents } from '../api/events/getEvents';
-import { isAdmin, isPersonnel } from '../utils/roles';
+import { can, isPersonnel } from '../utils/roles';
 import { useAlert } from '../context/AlertContext';
 
 interface FormState {
@@ -47,9 +47,9 @@ export const useCenterIssueReports = () => {
 
   const [message, setMessage] = useState<{ text: string; type: string } | null>(null);
 
-  const canCreate: boolean = isAdmin() || isPersonnel();
-  const canUpdateStatus: boolean = isAdmin();
-  const canChooseCenter: boolean = isAdmin();
+  const canCreate: boolean = can('issues:create');
+  const canUpdateStatus: boolean = can('issues:update_status');
+  const canChooseCenter: boolean = can('centers:choose');
 
   const showMessage = (text: string, type: string = 'success') => {
     setMessage({ text, type });
@@ -294,7 +294,7 @@ export const useCenterIssueReports = () => {
   };
 
   const canModifyReport = (report: any): boolean => {
-    if (isAdmin()) return true;
+    if (can('issues:update_status')) return true;
     if (isPersonnel()) {
       return report.status === 'open' && report.reported_by === user?.user_id;
     }

@@ -6,7 +6,7 @@ import { updateResourceRequestStatus } from '../api/resourceRequests/updateResou
 import { deleteResourceRequest } from '../api/resourceRequests/deleteResourceRequest';
 import { getCenters } from '../api/evacuation/getCenters';
 import { getEvents } from '../api/events/getEvents';
-import { isAdmin, isPersonnel } from '../utils/roles';
+import { can, isPersonnel } from '../utils/roles';
 import { useAlert } from '../context/AlertContext';
 
 interface FormState {
@@ -41,9 +41,9 @@ export const useResourceRequests = () => {
   const [message, setMessage] = useState<{ text: string; type: string } | null>(null);
   const [viewingRequest, setViewingRequest] = useState<any>(null);
 
-  const canChooseCenter: boolean = isAdmin();
+  const canChooseCenter: boolean = can('centers:choose');
   const canUpdateStatus: boolean = false; // Admins cannot update status; handled by external system
-  const canCreate: boolean = isAdmin() || isPersonnel();
+  const canCreate: boolean = can('requests:create');
 
   const showMessage = (text: string, type: string = 'success') => {
     setMessage({ text, type });

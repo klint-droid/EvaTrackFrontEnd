@@ -8,7 +8,7 @@ import {
 import { getAlerts } from '../api/alerts/getAlerts';
 import { cancelAlert } from '../api/alerts/cancelAlert';
 import { getEvents } from '../api/events/getEvents';
-import { isAdmin, isPersonnel } from '../utils/roles';
+import { can } from '../utils/roles';
 import CreateAlertModal from '../components/alerts/CreateAlertModal';
 import AlertDetailModal from '../components/alerts/AlertDetailModal';
 import { useAlert } from '../context/AlertContext';
@@ -40,7 +40,7 @@ export default function EvacuationAlerts() {
     const [channelFilter, setChannelFilter] = useState('');
     const [showFilters, setShowFilters] = useState(false);
 
-    const canCreate = isAdmin() || isPersonnel();
+    const canCreate = can('alerts:create');
 
     const fetchAlerts = async (page = 1, forceLoading = false) => {
         if (!alertsCache || forceLoading) {
