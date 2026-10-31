@@ -19,15 +19,19 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Megaphone } from "lucide-react";
 
+// Module-level cache to persist alerts data across route navigation
+let alertsCache = null;
+let alertsCacheTime = 0;
+const CACHE_DURATION = 30000; // 30 seconds cache expiration
 
 export default function EvacuationAlerts() {
-    const [alerts, setAlerts] = useState([]);
-    const [pagination, setPagination] = useState({});
-    const [loading, setLoading] = useState(true);
+    const [alerts, setAlerts] = useState(alertsCache?.alerts || []);
+    const [pagination, setPagination] = useState(alertsCache?.pagination || {});
+    const [loading, setLoading] = useState(!alertsCache);
     const [createModal, setCreateModal] = useState(false);
     const [detailId, setDetailId] = useState(null);
-    const [events, setEvents] = useState([]);
-    const [selectedEvent, setSelectedEvent] = useState('');
+    const [events, setEvents] = useState(alertsCache?.events || []);
+    const [selectedEvent, setSelectedEvent] = useState(alertsCache?.selectedEvent || '');
     const { showAlert, showConfirm } = useAlert();
     
     // Search & Filter state
@@ -38,12 +42,23 @@ export default function EvacuationAlerts() {
 
     const canCreate = isAdmin() || isPersonnel();
 
-    const fetchAlerts = async (page = 1) => {
-        setLoading(true);
+    const fetchAlerts = async (page = 1, forceLoading = false) => {
+        if (!alertsCache || forceLoading) {
+            setLoading(true);
+        }
         try {
             const res = await getAlerts(page, selectedEvent || undefined);
-            setAlerts(res.data || []);
+            const alertsList = res.data || [];
+            setAlerts(alertsList);
             setPagination(res);
+
+            alertsCache = {
+                alerts: alertsList,
+                pagination: res,
+                events: alertsCache?.events || events,
+                selectedEvent: selectedEvent || '',
+            };
+            alertsCacheTime = Date.now();
         } catch (err) {
             console.error(err);
         } finally {
@@ -52,10 +67,24 @@ export default function EvacuationAlerts() {
     };
 
     useEffect(() => {
-        getEvents().then(res => setEvents(res.data || []));
+        if (!alertsCache?.events?.length) {
+            getEvents().then(res => {
+                const list = res.data || [];
+                setEvents(list);
+                if (alertsCache) alertsCache.events = list;
+            });
+        }
     }, []);
 
-    useEffect(() => { fetchAlerts(); }, [selectedEvent]);
+    useEffect(() => {
+        const now = Date.now();
+        const isCacheExpired = !alertsCacheTime || (now - alertsCacheTime > CACHE_DURATION);
+        const eventChanged = alertsCache && alertsCache.selectedEvent !== (selectedEvent || '');
+
+        if (isCacheExpired || eventChanged || !alertsCache) {
+            fetchAlerts(1, !alertsCache || eventChanged);
+        }
+    }, [selectedEvent]);
 
     const handleCancel = async (id) => {
         showConfirm(
@@ -63,8 +92,9 @@ export default function EvacuationAlerts() {
             async () => {
                 try {
                     await cancelAlert(id);
+                    alertsCache = null;
                     showAlert('Alert record deleted successfully.', 'Success', 'success');
-                    fetchAlerts(pagination.current_page);
+                    fetchAlerts(pagination.current_page || 1, true);
                 } catch (err) {
                     showAlert(err.response?.data?.message || 'Failed to delete alert record.', 'Error', 'danger');
                 }
@@ -407,7 +437,10 @@ export default function EvacuationAlerts() {
             {createModal && (
                 <CreateAlertModal
                     onClose={() => setCreateModal(false)}
-                    onSent={() => fetchAlerts(1)}
+                    onSent={() => {
+                        alertsCache = null;
+                        fetchAlerts(1, true);
+                    }}
                 />
             )}
             {detailId && (

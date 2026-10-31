@@ -15,14 +15,19 @@ import CenterIssuesAnalytics from "../components/analytics/CenterIssuesAnalytics
 import { useUserStore } from "../store/useUserStore";
 import { useAlert } from "../context/AlertContext";
 
+// Module-level cache to persist analytics data across route navigation
+let analyticsCache = null;
+let analyticsCacheTime = 0;
+const CACHE_DURATION = 30000; // 30 seconds cache expiration
+
 export default function Analytics() {
     // Derive role context from Zustand for UI branching
     const storedUser = useUserStore(state => state.user) || {};
     const isPersonnel = storedUser?.role === "evac_personnel";
     const assignedCenter = storedUser?.assigned_center; // { id, name } or null
 
-    const [analytics, setAnalytics] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [analytics, setAnalytics] = useState(analyticsCache?.data || null);
+    const [loading, setLoading] = useState(!analyticsCache);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
     const { showAlert } = useAlert();
@@ -51,11 +56,11 @@ export default function Analytics() {
     // Dynamic Filter State
     const initialCenterId = isPersonnel 
         ? (assignedCenter?.evacuation_center_id || assignedCenter?.id || storedUser?.assigned_center_id || "all")
-        : "all";
+        : (analyticsCache?.selectedCenterId || "all");
     const [selectedCenterId, setSelectedCenterId] = useState(initialCenterId);
-    const [startDate, setStartDate] = useState(initialDates.startDate);
-    const [endDate, setEndDate] = useState(initialDates.endDate);
-    const [centers, setCenters] = useState([]);
+    const [startDate, setStartDate] = useState(analyticsCache?.startDate || initialDates.startDate);
+    const [endDate, setEndDate] = useState(analyticsCache?.endDate || initialDates.endDate);
+    const [centers, setCenters] = useState(analyticsCache?.centers || []);
 
     // Export Dropdown State
     const [exportDropdown, setExportDropdown] = useState(false);
@@ -97,15 +102,19 @@ export default function Analytics() {
             const res = await API.get("/api/evacuation-centers");
             const data = Array.isArray(res.data) ? res.data : (res.data?.data || []);
             setCenters(data);
+            if (analyticsCache) analyticsCache.centers = data;
         } catch (err) {
             console.error("Failed to load evacuation centers:", err);
         }
     };
 
     // Fetch the dashboard statistics (scoped by date range and evacuation center)
-    const fetchAnalytics = async (isRefresh = false) => {
-        if (isRefresh) setRefreshing(true);
-        else setLoading(true);
+    const fetchAnalytics = async (isRefresh = false, forceLoading = false) => {
+        if (isRefresh) {
+            setRefreshing(true);
+        } else if (!analyticsCache || forceLoading) {
+            setLoading(true);
+        }
 
         try {
             let queryParams = `event_id=all`;
@@ -121,8 +130,17 @@ export default function Analytics() {
 
             const res = await API.get(`/api/analytics/dashboard?${queryParams}`);
             if (res.data && res.data.success) {
-                setAnalytics(res.data.data);
+                const data = res.data.data;
+                setAnalytics(data);
                 setError(null);
+                analyticsCache = {
+                    data,
+                    centers: analyticsCache?.centers || centers,
+                    selectedCenterId,
+                    startDate,
+                    endDate,
+                };
+                analyticsCacheTime = Date.now();
             }
         } catch (err) {
             console.error("Failed to fetch analytics:", err);
@@ -134,15 +152,28 @@ export default function Analytics() {
     };
 
     useEffect(() => {
-        fetchCenters();
+        if (!analyticsCache?.centers?.length) {
+            fetchCenters();
+        }
     }, []);
 
     useEffect(() => {
-        fetchAnalytics();
+        const now = Date.now();
+        const isCacheExpired = !analyticsCacheTime || (now - analyticsCacheTime > CACHE_DURATION);
+        const paramsChanged = analyticsCache && (
+            analyticsCache.selectedCenterId !== selectedCenterId ||
+            analyticsCache.startDate !== startDate ||
+            analyticsCache.endDate !== endDate
+        );
+
+        if (isCacheExpired || paramsChanged || !analyticsCache) {
+            fetchAnalytics(false, !analyticsCache || paramsChanged);
+        }
     }, [selectedCenterId, startDate, endDate]);
 
     const handleRefresh = () => {
-        fetchAnalytics(true);
+        analyticsCache = null;
+        fetchAnalytics(true, true);
     };
 
     return (

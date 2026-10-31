@@ -28,26 +28,31 @@ import { StatCard } from "../components/ui/StatCard";
 import { Pagination } from "../components/ui/Pagination";
 import { TableTabs } from "../components/ui/TableTabs";
 
+// Module-level cache to persist households data across route navigation
+let householdsCache = null;
+let householdsCacheTime = 0;
+const CACHE_DURATION = 30000; // 30 seconds cache expiration
+
 export default function HouseholdManagement() {
     const navigate = useNavigate();
     const isMounted = useRef(false);
     const { showAlert, showConfirm } = useAlert();
 
-    const [households, setHouseholds] = useState([]);
-    const [centers, setCenters] = useState([]);
-    const [events, setEvents] = useState([]);
-    const [pagination, setPagination] = useState({});
-    const [loading, setLoading] = useState(true);
+    const [households, setHouseholds] = useState(householdsCache?.households || []);
+    const [centers, setCenters] = useState(householdsCache?.centers || []);
+    const [events, setEvents] = useState(householdsCache?.events || []);
+    const [pagination, setPagination] = useState(householdsCache?.pagination || {});
+    const [loading, setLoading] = useState(!householdsCache);
     const [editingHousehold, setEditingHousehold] = useState(null);
     const [showFilters, setShowFilters] = useState(false);
 
-    const [filters, setFilters] = useState({
+    const [filters, setFilters] = useState(householdsCache?.filters || {
         q: '',
         status: '',
         center_id: '',
         event_id: '',
     });
-    const [searchInput, setSearchInput] = useState('');
+    const [searchInput, setSearchInput] = useState(householdsCache?.filters?.q || '');
 
     const currentUser = useUserStore(state => state.user);
     const fetchFreshUser = useUserStore(state => state.fetchFreshUser);
@@ -68,8 +73,10 @@ export default function HouseholdManagement() {
 
     const canDeleteHousehold = isAdminUser;
 
-    const fetchHouseholds = async (page = 1, overrideFilters = null) => {
-        setLoading(true);
+    const fetchHouseholds = async (page = 1, overrideFilters = null, forceLoading = false) => {
+        if (!householdsCache || forceLoading) {
+            setLoading(true);
+        }
         try {
             const activeFilters = overrideFilters ?? filters;
             const params = {};
@@ -80,8 +87,18 @@ export default function HouseholdManagement() {
             if (activeFilters.force_sync) params.force_sync = true;
 
             const res = await getHouseholds(page, params);
-            setHouseholds(res.data);
+            const householdsList = res.data || [];
+            setHouseholds(householdsList);
             setPagination(res);
+
+            householdsCache = {
+                households: householdsList,
+                pagination: res,
+                centers: householdsCache?.centers || centers,
+                events: householdsCache?.events || events,
+                filters: activeFilters,
+            };
+            householdsCacheTime = Date.now();
         } catch (err) {
             console.error(err);
         } finally {
@@ -92,7 +109,8 @@ export default function HouseholdManagement() {
     const handleSyncExternal = async () => {
         setSyncing(true);
         try {
-            await fetchHouseholds(1, { ...filters, force_sync: true });
+            householdsCache = null;
+            await fetchHouseholds(1, { ...filters, force_sync: true }, true);
             showAlert("Household data synchronized with external partner system.", "success");
         } catch (err) {
             console.error(err);
@@ -107,6 +125,7 @@ export default function HouseholdManagement() {
             const res = await getCenters();
             const data = Array.isArray(res) ? res : (res?.data ?? []);
             setCenters(data);
+            if (householdsCache) householdsCache.centers = data;
         } catch (err) {
             console.error(err);
         }
@@ -117,6 +136,7 @@ export default function HouseholdManagement() {
             const res = await getEvents();
             const list = res.data || [];
             setEvents(list);
+            if (householdsCache) householdsCache.events = list;
         } catch (err) {
             console.error(err);
         }
@@ -124,9 +144,15 @@ export default function HouseholdManagement() {
 
     useEffect(() => {
         fetchFreshUser();
-        fetchHouseholds(1, filters);
-        fetchEvents();
-        fetchCenters();
+        const now = Date.now();
+        const isCacheExpired = !householdsCacheTime || (now - householdsCacheTime > CACHE_DURATION);
+
+        if (!householdsCache?.events?.length) fetchEvents();
+        if (!householdsCache?.centers?.length) fetchCenters();
+
+        if (isCacheExpired || !householdsCache) {
+            fetchHouseholds(1, filters, !householdsCache);
+        }
     }, []);
 
     // debounced search
@@ -167,6 +193,7 @@ export default function HouseholdManagement() {
                     h.household_id === editingHousehold.household_id ? res.data : h
                 )
             );
+            householdsCache = null;
             setEditingHousehold(null);
         } catch (err) {
             showAlert(err.response?.data?.message || 'Update failed.', 'Update Error', 'danger');
@@ -179,7 +206,8 @@ export default function HouseholdManagement() {
             async () => {
                 try{
                     await deleteHousehold(householdId);
-                    fetchHouseholds(pagination.current_page);
+                    householdsCache = null;
+                    fetchHouseholds(pagination.current_page || 1, null, true);
                 } catch (err) {
                     showAlert(err.response?.data?.message || 'Delete failed.', 'Delete Error', 'danger');
                 }
