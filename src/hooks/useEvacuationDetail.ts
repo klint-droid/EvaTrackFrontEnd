@@ -9,7 +9,7 @@ import { unassignHousehold } from '../api/allocations/unassignHousehold';
 import { getRecordsByCenter } from '../api/evacuationRecords/getRecordsByCenter';
 import { deleteRecord } from '../api/evacuationRecords/deleteRecord';
 import { getEvents } from '../api/events/getEvents';
-import { isAdmin, isPersonnel } from '../utils/roles';
+import { isAdmin, isSuperAdmin, isPersonnel } from '../utils/roles';
 import { useAlert } from '../context/AlertContext';
 
 export function useEvacuationDetail() {
@@ -57,9 +57,9 @@ export function useEvacuationDetail() {
     const [isDeletingRecord, setIsDeletingRecord] = useState(false);
 
     // Permissions
-    const canManage = isAdmin() || isPersonnel();
+    const canManage = isSuperAdmin() || isAdmin() || isPersonnel();
     const canAdmit = isPersonnel();
-    const canEditUnits = isAdmin();
+    const canEditUnits = isSuperAdmin() || isAdmin() || isPersonnel();
 
     // 1. Center Query
     const { data: center = null, isLoading: isCenterLoading } = useQuery<any>({

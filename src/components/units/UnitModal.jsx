@@ -16,7 +16,14 @@ export default function UnitModal({ centerId, unit, onClose, onSaved, units, cen
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        getAccommodationTypes().then(res => setTypes(res.data || []));
+        getAccommodationTypes()
+            .then(res => {
+                const list = Array.isArray(res) ? res : (res?.data || []);
+                setTypes(list);
+            })
+            .catch(err => {
+                console.error('Failed to load accommodation types:', err);
+            });
     }, []);
 
     const getTotalWithoutCurrent = () => {
@@ -54,10 +61,15 @@ export default function UnitModal({ centerId, unit, onClose, onSaved, units, cen
         setLoading(true);
         setError(null);
         try {
+            const payload = {
+                name: form.name.trim(),
+                type_id: Number(form.type_id),
+                max_capacity: newCapacity,
+            };
             if (unit) {
-                await updateUnit(centerId, unit.unit_id, form);
+                await updateUnit(centerId, unit.unit_id, payload);
             } else {
-                await createUnit(centerId, form);
+                await createUnit(centerId, payload);
             }
             onSaved();
             onClose();
