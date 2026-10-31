@@ -1,5 +1,6 @@
 import React from 'react';
-import { ShieldAlert, Plus, Radio } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
+import Button from '../../ui/Button';
 
 export default function EventHeader({ setShowModal }) {
   return (
@@ -19,13 +20,15 @@ export default function EventHeader({ setShowModal }) {
       </div>
 
       <div className="flex items-center gap-3">
-        <button
+        <Button
+          variant="danger"
+          size="lg"
+          leftIcon={<ShieldAlert className="w-4 h-4 text-white" />}
           onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 active:scale-95 text-white text-xs sm:text-sm font-bold shadow-md shadow-rose-600/20 hover:shadow-rose-600/30 transition-all cursor-pointer"
+          className="shadow-md shadow-rose-600/20 hover:shadow-rose-600/30 active:scale-95"
         >
-          <ShieldAlert className="w-4 h-4 text-white" />
-          <span>Declare Disaster Event</span>
-        </button>
+          Declare Disaster Event
+        </Button>
       </div>
     </div>
   );

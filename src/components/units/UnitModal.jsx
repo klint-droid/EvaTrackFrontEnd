@@ -4,6 +4,7 @@ import { X, AlertCircle } from 'lucide-react';
 import { getAccommodationTypes } from '../../api/units/getAccommodationTypes';
 import { createUnit } from '../../api/units/createUnit';
 import { updateUnit } from '../../api/units/updateUnit';
+import Button from '../../ui/Button';
 
 export default function UnitModal({ centerId, unit, onClose, onSaved, units, centerCapacity }) {
     const [types, setTypes] = useState([]);
@@ -92,12 +93,14 @@ export default function UnitModal({ centerId, unit, onClose, onSaved, units, cen
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                         Configure the unit details and its capacity limit.
                     </p>
-                    <button 
+                    <Button 
+                        variant="ghost"
+                        size="icon"
                         onClick={onClose} 
-                        className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:bg-slate-800 rounded-full transition-all"
+                        className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:text-slate-300 rounded-full"
                     >
                         <X size={20}/>
-                    </button>
+                    </Button>
                 </div>
 
                 <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
@@ -153,19 +156,21 @@ export default function UnitModal({ centerId, unit, onClose, onSaved, units, cen
                 </div>
 
                 <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
-                    <button 
+                    <Button 
+                        variant="ghost"
                         onClick={onClose} 
-                        className="px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:text-slate-50 transition-colors"
+                        className="font-bold text-slate-600 dark:text-slate-300"
                     >
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="primary"
                         onClick={handleSubmit}
-                        disabled={loading}
-                        className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-sm dark:shadow-none transition-all disabled:opacity-50 flex items-center justify-center min-w-[120px]"
+                        isLoading={loading}
+                        className="min-w-[120px]"
                     >
-                        {loading ? 'Saving...' : unit ? 'Save Changes' : 'Create Unit'}
-                    </button>
+                        {unit ? 'Save Changes' : 'Create Unit'}
+                    </Button>
                 </div>
             </div>
         </div>,

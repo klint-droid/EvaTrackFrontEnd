@@ -4,6 +4,7 @@ import {
     X, Wind, Activity, Droplets, Mountain, Flame, 
     MoreHorizontal, AlertTriangle, Megaphone 
 } from 'lucide-react';
+import Button from '../../ui/Button';
 import API from '../../api';
 import { createEvent } from '../../api/events/createEvent';
 import { getDisasterTypes } from '../../api/events/getDisasterTypes';
@@ -103,9 +104,14 @@ export default function EventModal({ onClose, onCreated }) {
                             Formalize crisis response and activate barangay-level command protocols.
                         </p>
                     </div>
-                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:bg-slate-800 rounded-lg transition-colors">
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={onClose} 
+                        className="text-slate-400 hover:text-slate-600 dark:text-slate-300 rounded-lg"
+                    >
                         <X size={20} />
-                    </button>
+                    </Button>
                 </div>
 
                 {/* Body */}
@@ -203,20 +209,24 @@ export default function EventModal({ onClose, onCreated }) {
 
                 {/* Footer */}
                 <div className="px-8 py-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 shrink-0 flex items-center justify-end gap-3 rounded-b-xl">
-                    <button 
+                    <Button 
+                        variant="outline"
+                        size="md"
                         onClick={onClose}
-                        className="px-6 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:bg-slate-800/50 hover:text-slate-900 dark:text-slate-50 transition-all"
                     >
                         Save as Draft
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="danger"
+                        size="md"
+                        leftIcon={<Megaphone size={16} strokeWidth={2.5} />}
                         onClick={handleSubmit}
-                        disabled={loading || typesLoading || !form.name || !form.type_id}
-                        className="px-6 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 active:scale-95 text-white text-sm font-bold rounded-xl shadow-md shadow-rose-600/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        isLoading={loading}
+                        disabled={typesLoading || !form.name || !form.type_id}
+                        className="shadow-md shadow-rose-600/20 active:scale-95"
                     >
-                        <Megaphone size={16} strokeWidth={2.5} />
-                        {loading ? 'Declaring...' : 'Declare Event'}
-                    </button>
+                        Declare Event
+                    </Button>
                 </div>
             </div>
         </div>,
