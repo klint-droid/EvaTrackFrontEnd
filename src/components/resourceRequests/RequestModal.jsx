@@ -1,12 +1,80 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Package, Users, MapPin, Send, Loader2 } from 'lucide-react';
+import { X, Package, Users, MapPin, Send, Loader2, Sparkles } from 'lucide-react';
+
+const SUPPLY_PRESETS = [
+  'Food Packs / Relief Goods',
+  'Drinking Water',
+  'Medicines & First Aid Kits',
+  'Hygiene & Sanitation Kits',
+  'Bedding, Mats & Blankets',
+  'Power, Generators & Flashlights',
+  'Infant Care & Diapers',
+  'Cooking & Kitchen Utensils',
+];
+
+const PERSONNEL_PRESETS = [
+  'Medical Team (Doctors / Nurses)',
+  'Search & Rescue (SAR) Team',
+  'Security & Peacekeeping (PNP / Tanod)',
+  'Logistics & Transportation Drivers',
+  'Relief Distribution Volunteers',
+  'Psychosocial & Mental Health Support',
+  'Facility Maintenance & Technicians',
+];
 
 export default function RequestModal({
   modalOpen, setModalOpen, form, setForm,
   canChooseCenter, canUpdateStatus, centers,
   handleSubmit, saving
 }) {
+  const [selectedPreset, setSelectedPreset] = useState('');
+  const [customType, setCustomType] = useState('');
+
+  const currentPresets = form.request_type === 'personnel' ? PERSONNEL_PRESETS : SUPPLY_PRESETS;
+
+  // Synchronize preset and custom input with form.resource_type
+  useEffect(() => {
+    if (!modalOpen) {
+      setSelectedPreset('');
+      setCustomType('');
+      return;
+    }
+
+    if (!form.resource_type) {
+      setSelectedPreset('');
+      setCustomType('');
+    } else if (currentPresets.includes(form.resource_type)) {
+      setSelectedPreset(form.resource_type);
+      setCustomType('');
+    } else {
+      setSelectedPreset('OTHER');
+      setCustomType(form.resource_type);
+    }
+  }, [modalOpen, form.request_type]);
+
+  const handleTypeToggle = (key) => {
+    setSelectedPreset('');
+    setCustomType('');
+    setForm({ ...form, request_type: key, resource_type: '' });
+  };
+
+  const handlePresetChange = (val) => {
+    setSelectedPreset(val);
+    if (val === 'OTHER') {
+      setForm({ ...form, resource_type: customType });
+    } else {
+      setCustomType('');
+      setForm({ ...form, resource_type: val });
+    }
+  };
+
+  const handleCustomChange = (e) => {
+    const val = e.target.value;
+    setCustomType(val);
+    setForm({ ...form, resource_type: val });
+  };
+
   if (!modalOpen) return null;
 
   return createPortal(
@@ -35,7 +103,7 @@ export default function RequestModal({
               <button
                 key={key}
                 type="button"
-                onClick={() => setForm({ ...form, request_type: key })}
+                onClick={() => handleTypeToggle(key)}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-md transition-all ${
                   form.request_type === key
                     ? 'bg-white dark:bg-[#0f1623] text-blue-600 dark:text-blue-400 shadow-sm border border-slate-200 dark:border-[#263047]'
@@ -47,31 +115,60 @@ export default function RequestModal({
             ))}
           </div>
 
-          {/* Resource Type + Quantity */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Resource Type Dropdown + Quantity */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
                 {form.request_type === 'resource' ? 'Resource Type' : 'Personnel Type'}
               </label>
-              <input
-                value={form.resource_type}
-                onChange={(e) => setForm({ ...form, resource_type: e.target.value })}
-                placeholder={form.request_type === 'resource' ? 'e.g. Food Packs' : 'e.g. Medical Team'}
-                className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#1e2a3d] border border-slate-200 dark:border-[#263047] text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-all"
-              />
+              <select
+                value={selectedPreset}
+                onChange={(e) => handlePresetChange(e.target.value)}
+                className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#1e2a3d] border border-slate-200 dark:border-[#263047] text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 transition-all cursor-pointer"
+              >
+                <option value="">Select {form.request_type === 'resource' ? 'Supply Type' : 'Personnel Type'}...</option>
+                {currentPresets.map(preset => (
+                  <option key={preset} value={preset}>{preset}</option>
+                ))}
+                <option value="OTHER">✨ Other (Specify custom)</option>
+              </select>
             </div>
+
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">Quantity</label>
+              <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                Quantity
+              </label>
               <input
                 type="number"
                 min="1"
                 value={form.quantity}
                 onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-                placeholder="e.g. 500"
+                placeholder="e.g. 50"
                 className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#1e2a3d] border border-slate-200 dark:border-[#263047] text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-all"
               />
             </div>
           </div>
+
+          {/* Custom Specification Input when 'OTHER' is selected */}
+          {selectedPreset === 'OTHER' && (
+            <div className="space-y-1.5 p-3 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-800/40 animate-in fade-in slide-in-from-top-1 duration-150">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wide flex items-center gap-1.5">
+                  <Sparkles size={12} className="text-amber-500" />
+                  <span>Specify {form.request_type === 'resource' ? 'Supply' : 'Personnel'} Name</span>
+                </label>
+                <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">Custom Type</span>
+              </div>
+              <input
+                type="text"
+                value={customType}
+                onChange={handleCustomChange}
+                placeholder={form.request_type === 'resource' ? 'e.g. Generator Fuel, Water Filtration Kit' : 'e.g. Structural Engineers, Boat Drivers'}
+                className="w-full px-3 py-2 text-sm rounded-lg bg-white dark:bg-[#0f1623] border border-amber-300 dark:border-amber-700/60 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                autoFocus
+              />
+            </div>
+          )}
 
           {/* Center (Admin only) */}
           {canChooseCenter && centers.length > 0 && (

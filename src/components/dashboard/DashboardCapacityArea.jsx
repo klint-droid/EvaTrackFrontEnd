@@ -38,7 +38,7 @@ export default function DashboardCapacityArea({
                             <p className="text-xs text-slate-400 font-medium">{isPersonnel && assignedCenter ? `${assignedCenter.name} occupancy` : 'Active shelter occupancy ratios'}</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-4 text-xs font-medium text-slate-500 dark:text-slate-400 flex-wrap">
                         <div className="flex items-center gap-1.5">
                             <span className="w-2.5 h-2.5 rounded-xs bg-[#1E78C2]" />
                             <span>Occupied</span>
@@ -51,7 +51,7 @@ export default function DashboardCapacityArea({
                 </div>
                 
                 {loading ? (
-                    <div className="h-[300px] sm:h-[350px] flex items-end justify-between px-6 pb-4 pt-6 animate-pulse">
+                    <div className="h-[320px] sm:h-[370px] flex items-end justify-between px-6 pb-4 pt-6 animate-pulse">
                         {MOCK_BARS.map((bar, idx) => (
                             <div key={idx} className="w-12 sm:w-14 flex flex-col items-center gap-3">
                                 <div className="w-full flex flex-col justify-end h-52">
@@ -63,11 +63,11 @@ export default function DashboardCapacityArea({
                         ))}
                     </div>
                 ) : chartData.length === 0 ? (
-                    <div className="h-[300px] sm:h-[350px] flex items-center justify-center border border-dashed border-slate-200 dark:border-slate-800 rounded-lg bg-slate-50/50 dark:bg-slate-800/20">
+                    <div className="h-[320px] sm:h-[370px] flex items-center justify-center border border-dashed border-slate-200 dark:border-slate-800 rounded-lg bg-slate-50/50 dark:bg-slate-800/20">
                         <p className="text-xs text-slate-400 font-medium">No center capacity telemetry registered.</p>
                     </div>
                 ) : (
-                    <div className="h-[300px] sm:h-[350px] w-full">
+                    <div className="h-[320px] sm:h-[370px] w-full">
                         <CapacityChart data={chartData} />
                     </div>
                 )}

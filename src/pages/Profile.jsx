@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { 
-    User, Lock, Shield, Phone, Building, Save, Key, Loader2, Sparkles, MapPin, 
+    User, Lock, Shield, Phone, Mail, Building, Save, Key, Loader2, Sparkles, MapPin, 
     CheckCircle2, AlertCircle, Settings, Camera, Clock, Activity, FileText, CheckSquare,
     Building2, ArrowRight, ExternalLink
 } from "lucide-react";
@@ -66,7 +66,7 @@ export default function Profile() {
                 user_id: rawUser.user_id || "",
                 first_name: rawUser.first_name || "",
                 last_name: rawUser.last_name || "",
-                email: rawUser.email || "klintruales11@gmail.com",
+                email: rawUser.email || "",
                 contact_number: rawUser.contact_number || "",
                 role: rawUser.role?.role_key || rawUser.role || "",
                 role_label: rawUser.role?.role_name || "Evacuation Personnel",
@@ -162,8 +162,8 @@ export default function Profile() {
             return;
         }
 
-        if (!profileData.contact_number.trim()) {
-            showMessage("Contact number is required.", "error");
+        if (!profileData.contact_number.trim() && !profileData.email.trim()) {
+            showMessage("Please provide a contact number or email address.", "error");
             return;
         }
 
@@ -173,6 +173,7 @@ export default function Profile() {
             formData.append("first_name", profileData.first_name);
             formData.append("last_name", profileData.last_name);
             formData.append("contact_number", profileData.contact_number);
+            formData.append("email", profileData.email || "");
             if (selectedPhoto) {
                 formData.append("profile_photo", selectedPhoto);
             }
@@ -185,6 +186,8 @@ export default function Profile() {
                 ...storedUser,
                 first_name: updatedUser.first_name,
                 last_name: updatedUser.last_name,
+                email: updatedUser.email,
+                contact_number: updatedUser.contact_number,
                 name: updatedUser.name || `${updatedUser.first_name} ${updatedUser.last_name}`,
                 profile_photo_url: updatedUser.profile_photo_url
             };
@@ -194,7 +197,8 @@ export default function Profile() {
                 ...prev,
                 first_name: updatedUser.first_name,
                 last_name: updatedUser.last_name,
-                contact_number: updatedUser.contact_number,
+                email: updatedUser.email || "",
+                contact_number: updatedUser.contact_number || "",
                 profile_photo_url: updatedUser.profile_photo_url
             }));
             
@@ -583,11 +587,20 @@ export default function Profile() {
                             </div>
 
                             <Input
-                                label="Contact Number"
+                                label="Contact Number (for SMS OTP)"
                                 icon={Phone}
                                 value={profileData.contact_number}
                                 onChange={e => setProfileData(prev => ({ ...prev, contact_number: e.target.value }))}
                                 placeholder="e.g. 09123456789"
+                            />
+
+                            <Input
+                                label="Email Address (for Email OTP)"
+                                type="email"
+                                icon={Mail}
+                                value={profileData.email}
+                                onChange={e => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+                                placeholder="e.g. user@evatrack.gov.ph"
                             />
 
                             <div className="pt-2 flex justify-end">

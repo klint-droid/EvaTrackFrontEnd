@@ -10,7 +10,6 @@ import KanbanBoard from '../components/resourceRequests/KanbanBoard';
 import { useResourceRequests } from '../hooks/useResourceRequests';
 import ViewRequestDetailsModal from '../components/resourceRequests/ViewRequestDetailsModal';
 import IncomingRequestsModal from '../components/resourceRequests/IncomingRequestsModal';
-import AnimatedFAB from '../components/ui/AnimatedFAB';
 import { useUserStore } from '../store/useUserStore';
 
 export default function ResourceRequests() {
@@ -139,8 +138,18 @@ export default function ResourceRequests() {
   const approvedCount = filteredRequests.filter(r => r.status?.status_key === 'approved' || r.status === 'approved').length;
   const rejectedCount = filteredRequests.filter(r => r.status?.status_key === 'rejected' || r.status === 'rejected').length;
 
+  const activeViewingRequest = viewingRequest
+    ? displayedRequests.find((r) => r.request_id === viewingRequest.request_id) || viewingRequest
+    : null;
+
   return (
-    <div className="min-h-screen font-sans text-left pb-24 relative space-y-6">
+    <div className="flex items-start min-h-[calc(100vh-3.5rem)] font-sans text-left relative">
+      {/* ─── Left Column: Main Content (shifts left when detail panel is open) ─── */}
+      <div
+        className={`flex-1 min-w-0 p-4 sm:p-6 pb-24 lg:pb-8 space-y-6 transition-all duration-300 ${
+          activeViewingRequest ? 'max-w-none' : 'max-w-6xl mx-auto'
+        }`}
+      >
       
       {/* Toast / Notification Alert */}
       {message && (
@@ -354,6 +363,7 @@ export default function ResourceRequests() {
             openModal={openModal}
             handleStatusChange={handleStatusChange}
             handleDelete={handleDelete}
+            viewingRequest={activeViewingRequest}
             setViewingRequest={setViewingRequest}
           />
         </div>
@@ -366,10 +376,22 @@ export default function ResourceRequests() {
             handleStatusChange={handleStatusChange}
             handleDelete={handleDelete}
             getStatusClass={getStatusClass}
+            viewingRequest={activeViewingRequest}
             setViewingRequest={setViewingRequest}
           />
         </div>
       )}
+      </div>
+
+      {/* ─── View & Update Details Inline Side Panel (Jira-Style) ─── */}
+      <ViewRequestDetailsModal 
+        request={activeViewingRequest}
+        onClose={() => setViewingRequest(null)}
+        getStatusClass={getStatusClass}
+        canUpdateStatus={canUpdateStatus}
+        handleStatusChange={handleStatusChange}
+        handleDelete={handleDelete}
+      />
 
       {/* ─── Incoming Requests List Modal ─── */}
       <IncomingRequestsModal
@@ -394,20 +416,6 @@ export default function ResourceRequests() {
         handleSubmit={handleSubmit}
         saving={saving}
       />
-
-      {/* ─── View & Update Details Modal ─── */}
-      <ViewRequestDetailsModal 
-        request={viewingRequest}
-        onClose={() => setViewingRequest(null)}
-        getStatusClass={getStatusClass}
-        canUpdateStatus={canUpdateStatus}
-        handleStatusChange={handleStatusChange}
-        handleDelete={handleDelete}
-      />
-
-      {canCreate && (
-        <AnimatedFAB onClick={openModal} icon={Plus} label="New Request" />
-      )}
     </div>
   );
 }

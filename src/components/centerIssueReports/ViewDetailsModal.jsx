@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import {
   X, ExternalLink, Wrench, HeartPulse, Shield, FileWarning, AlertTriangle,
   MapPin, Clock, Activity, CheckCircle2, ShieldCheck, ArrowRight,
@@ -29,6 +28,7 @@ const getCategoryLabel = (category = '') => {
     case 'health_issue':   return 'Health Issue';
     case 'safety_issue':   return 'Safety Issue';
     case 'incident':       return 'Incident Report';
+    case 'other':          return 'Other Issue';
     default:               return 'General Issue';
   }
 };
@@ -119,16 +119,16 @@ export default function ViewDetailsModal({
     setStatusChanging(false);
   };
 
-  return createPortal(
+  return (
     <>
-      {/* Translucent backdrop */}
+      {/* Mobile-only translucent backdrop */}
       <div
-        className="fixed inset-0 bg-black/20 dark:bg-black/40 z-[9998] transition-opacity duration-200"
+        className="fixed inset-0 top-14 bg-black/20 dark:bg-black/40 z-30 md:hidden transition-opacity duration-200"
         onClick={onClose}
       />
 
-      {/* Right-side Drawer */}
-      <div className="fixed top-0 right-0 h-full w-full max-w-[420px] bg-white dark:bg-[#0f1623] border-l border-slate-200 dark:border-[#1e2a3d] shadow-2xl z-[9999] flex flex-col animate-in slide-in-from-right duration-200 overflow-hidden">
+      {/* Jira-Style Inline Right Detail Panel */}
+      <aside className="fixed inset-x-0 top-14 bottom-0 z-40 md:sticky md:top-0 md:inset-auto md:h-[calc(100vh-3.5rem)] w-full md:w-[350px] xl:w-[400px] shrink-0 bg-white dark:bg-[#0f1623] border-l border-slate-200 dark:border-[#1e2a3d] shadow-xl md:shadow-none flex flex-col animate-in slide-in-from-right duration-200 overflow-hidden">
 
         {/* ── Drawer Top Bar ── */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-[#1e2a3d] bg-slate-50/80 dark:bg-[#141b29]/80 backdrop-blur-sm">
@@ -364,8 +364,7 @@ export default function ViewDetailsModal({
             </div>
           </div>
         )}
-      </div>
-    </>,
-    document.body
+      </aside>
+    </>
   );
 }

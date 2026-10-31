@@ -15,7 +15,6 @@ import DashboardServicesGrid from "../components/dashboard/DashboardServicesGrid
 import DashboardMetrics from "../components/dashboard/DashboardMetrics";
 import DashboardCapacityArea from "../components/dashboard/DashboardCapacityArea";
 import DashboardSidebar from "../components/dashboard/DashboardSidebar";
-import EmergencyAnnouncementBanner from "../components/dashboard/EmergencyAnnouncementBanner";
 
 // Module-level cache to persist dashboard metrics across route navigation
 let dashboardCache = null;
@@ -253,10 +252,6 @@ const Dashboard = () => {
 
     return (
         <div className="space-y-5 sm:space-y-8 animate-in fade-in duration-500 text-left">
-            
-            {/* 🚨 LIVE DISASTER ANNOUNCEMENT SLIDING BANNER */}
-            <EmergencyAnnouncementBanner activeEvents={activeEvents} />
-
             {/* 👋 WELCOME BANNER WITH COHESIVE COMPLEMENTARY DESIGN */}
             <DashboardHeader 
                 isPersonnel={isPersonnel}

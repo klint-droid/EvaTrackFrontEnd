@@ -54,10 +54,11 @@ const formatTimeAgo = (dateString) => {
 import ActionMenu from '../ui/ActionMenu';
 
 const STATUS_MENU_OPTIONS = [
-  { key: 'pending', label: 'Incoming' },
-  { key: 'acknowledged', label: 'In Progress' },
-  { key: 'approved', label: 'In Review' },
-  { key: 'delivered', label: 'Done' },
+  { key: 'pending', label: 'Pending' },
+  { key: 'acknowledged', label: 'Acknowledged' },
+  { key: 'approved', label: 'Approved' },
+  { key: 'rejected', label: 'Rejected' },
+  { key: 'delivered', label: 'Delivered' },
 ];
 
 export default function JiraListView({
@@ -67,6 +68,7 @@ export default function JiraListView({
   handleStatusChange,
   handleDelete,
   getStatusClass,
+  viewingRequest,
   setViewingRequest
 }) {
   // Sort by newest request first (created_at descending)
@@ -123,11 +125,15 @@ export default function JiraListView({
           const resourceTheme = getResourceTheme(req.resource_type);
           const initials = (req.requester?.first_name?.[0] || req.requester?.name?.[0] || 'U').toUpperCase();
 
+          const isSelected = viewingRequest?.request_id === req.request_id;
+
           return (
             <div
               key={req.request_id}
               onClick={() => setViewingRequest(req)}
-              className="grid grid-cols-12 gap-3 px-6 py-4 items-center hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors cursor-pointer group text-left"
+              className={`grid grid-cols-12 gap-3 px-6 py-4 items-center hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors cursor-pointer group text-left ${
+                isSelected ? 'bg-blue-50/50 dark:bg-blue-950/30' : ''
+              }`}
             >
               {/* Ticket ID */}
               <div className="col-span-2 flex items-center gap-2">

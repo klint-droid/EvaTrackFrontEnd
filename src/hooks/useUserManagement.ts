@@ -152,8 +152,12 @@ export const useUserManagement = () => {
   });
 
   const triggerCreateUser = () => {
-    if (!newUser.first_name || !newUser.last_name || !newUser.email || !newUser.password) {
-      showAlert("Please fill in all required fields.", "Validation Error", "danger");
+    if (!newUser.first_name || !newUser.last_name || !newUser.password) {
+      showAlert("Please fill in first name, last name, and password.", "Validation Error", "danger");
+      return;
+    }
+    if (!newUser.contact_number && !newUser.email) {
+      showAlert("Please provide at least a mobile number or an email address.", "Validation Error", "danger");
       return;
     }
     setCreateConfirmState({ isOpen: true, isLoading: false });
@@ -217,8 +221,12 @@ export const useUserManagement = () => {
       showAlert("You cannot change your own role", "Validation Error", "warning");
       return;
     }
-    if (!editingUser.first_name || !editingUser.last_name || !editingUser.email) {
-      showAlert("Please fill in all required fields.", "Validation Error", "danger");
+    if (!editingUser.first_name || !editingUser.last_name) {
+      showAlert("Please fill in first name and last name.", "Validation Error", "danger");
+      return;
+    }
+    if (!editingUser.contact_number && !editingUser.email) {
+      showAlert("Please provide at least a mobile number or an email address.", "Validation Error", "danger");
       return;
     }
     setUpdateConfirmState({ isOpen: true, isLoading: false });

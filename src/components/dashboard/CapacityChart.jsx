@@ -20,31 +20,25 @@ const formatNumber = (num) => {
     return n.toLocaleString();
 };
 
-// Multi-line formatter for complete evacuation center names (no abbreviations or shortcuts)
+// Multi-line formatter for evacuation center names so each line stays short (~13 chars max) and never overlaps adjacent bars
 const getCompleteCenterLines = (fullName) => {
     if (!fullName) return ["Center"];
     const trimmed = fullName.trim();
 
-    // Specific clean splits for compound facility names
-    if (trimmed.toLowerCase().includes("gymnasium / covered court")) {
-        const prefix = trimmed.replace(/gymnasium \/ covered court/i, "").trim();
-        return [prefix, "Gymnasium /", "Covered Court"].filter(Boolean);
-    }
+    // Clean short lines (<= 13 chars per line) so 7+ bars never collide horizontally
+    const words = trimmed
+        .replace(/\s*\/\s*/g, " / ")
+        .split(/\s+/)
+        .filter(Boolean);
 
-    // Split after first word (locality/barangay e.g. "Mambaling", "Alaska")
-    const words = trimmed.split(/\s+/);
-    if (words.length <= 1) return [trimmed];
-    if (words.length === 2) return [words[0], words[1]];
-    if (words.length === 3) return [words[0], `${words[1]} ${words[2]}`];
-    if (words.length === 4) return [words[0], `${words[1]} ${words[2]} ${words[3]}`];
-
-    // Fallback: wrap every ~16-18 characters
+    const MAX_LINE_LEN = 13;
     const lines = [];
     let current = "";
+
     for (const w of words) {
         if (!current) {
             current = w;
-        } else if ((current + " " + w).length <= 18) {
+        } else if ((current + " " + w).length <= MAX_LINE_LEN) {
             current += " " + w;
         } else {
             lines.push(current);
@@ -52,10 +46,15 @@ const getCompleteCenterLines = (fullName) => {
         }
     }
     if (current) lines.push(current);
+
+    // Cap at 4 lines maximum so it fits cleanly in XAxis height
+    if (lines.length > 4) {
+        return [...lines.slice(0, 3), lines.slice(3).join(" ").slice(0, 13) + "…"];
+    }
     return lines;
 };
 
-// Custom inside label for stacked bar segments (Occupied / Available)
+// Custom inside label for stacked bar segments (only rendered when the bar is split between Occupied and Available)
 const renderInsideLabel = (props) => {
     const { x, y, width, height, value } = props;
     if (!value || height < 18) return null;
@@ -66,7 +65,7 @@ const renderInsideLabel = (props) => {
             fill="#ffffff"
             textAnchor="middle"
             dominantBaseline="central"
-            fontSize={width < 45 ? 11 : 12}
+            fontSize={10.5}
             fontWeight={700}
             className="select-none pointer-events-none drop-shadow-xs"
         >
@@ -83,9 +82,8 @@ const renderTopTotalLabel = (props) => {
         <text
             x={x + width / 2}
             y={y - 8}
-            fill="#334155"
             textAnchor="middle"
-            fontSize={width < 45 ? 11 : 12}
+            fontSize={11}
             fontWeight={800}
             className="fill-slate-700 dark:fill-slate-200 select-none pointer-events-none"
         >
@@ -94,7 +92,7 @@ const renderTopTotalLabel = (props) => {
     );
 };
 
-// Custom X-Axis Tick: horizontal (not slanted), centered, complete name without shortcuts
+// Custom X-Axis Tick: horizontal, centered, tightly wrapped per word so adjacent bars never overlap
 const renderCustomXAxisTick = (props) => {
     const { x, y, payload } = props;
     if (!payload || payload.value === undefined) return null;
@@ -106,11 +104,11 @@ const renderCustomXAxisTick = (props) => {
             <text
                 x={0}
                 y={0}
-                dy={9}
+                dy={10}
                 textAnchor="middle"
                 fontSize={8.5}
                 fontWeight={600}
-                className="fill-slate-600 dark:fill-slate-300 select-none"
+                className="fill-slate-600 dark:fill-slate-400 select-none"
             >
                 {lines.map((line, idx) => (
                     <tspan key={idx} x={0} dy={idx === 0 ? 0 : 10.5}>
@@ -186,10 +184,14 @@ const CapacityChart = ({ data = [] }) => {
         const avail = Math.max(rawCap - rawOcc, 0);
         const total = rawCap > 0 ? rawCap : rawOcc;
 
+        const isSplit = rawOcc > 0 && avail > 0;
+
         return {
             name: center.name,
             occupied: rawOcc,
             available: avail,
+            occupiedLabel: isSplit ? rawOcc : 0,
+            availableLabel: isSplit ? avail : 0,
             totalCapacity: total,
             rawCapacity: rawCap,
             rawCount: rawOcc,
@@ -198,41 +200,33 @@ const CapacityChart = ({ data = [] }) => {
     });
 
     const maxVal = Math.max(...chartData.map((d) => d.totalCapacity), 10);
-    const domainMax = Math.ceil(maxVal * 1.15);
+    // Round domainMax up to a clean step (e.g. 500 -> 600 instead of 575)
+    const rawMax = maxVal * 1.15;
+    const step = rawMax > 500 ? 100 : rawMax > 100 ? 50 : 10;
+    const domainMax = Math.ceil(rawMax / step) * step;
 
     return (
         <ResponsiveContainer width="100%" height="100%">
             <BarChart
                 data={chartData}
-                margin={{ top: 25, right: 20, left: 0, bottom: 6 }}
-                barCategoryGap="25%"
-                barSize={55}
+                margin={{ top: 24, right: 12, left: -12, bottom: 12 }}
+                barCategoryGap="28%"
+                maxBarSize={44}
             >
                 {/* Subtle horizontal grid lines */}
                 <CartesianGrid
                     strokeDasharray="3 3"
                     vertical={false}
-                    stroke="#e2e8f0"
-                    opacity={0.7}
+                    stroke="#334155"
+                    opacity={0.25}
                 />
 
                 {/* Left Y-Axis */}
                 <YAxis
                     tickFormatter={formatNumber}
                     tick={{ fontSize: 11, fill: "#64748b", fontWeight: 500 }}
-                    axisLine={{ stroke: "#cbd5e1" }}
-                    tickLine={{ stroke: "#cbd5e1" }}
-                    domain={[0, domainMax]}
-                />
-
-                {/* Right Y-Axis (matching user reference image style) */}
-                <YAxis
-                    yAxisId="right"
-                    orientation="right"
-                    tickFormatter={formatNumber}
-                    tick={{ fontSize: 11, fill: "#64748b", fontWeight: 500 }}
-                    axisLine={{ stroke: "#cbd5e1" }}
-                    tickLine={{ stroke: "#cbd5e1" }}
+                    axisLine={false}
+                    tickLine={false}
                     domain={[0, domainMax]}
                 />
 
@@ -240,10 +234,10 @@ const CapacityChart = ({ data = [] }) => {
                 <XAxis
                     dataKey="name"
                     interval={0}
-                    height={42}
+                    height={56}
                     tick={renderCustomXAxisTick}
-                    axisLine={{ stroke: "#cbd5e1" }}
-                    tickLine={{ stroke: "#cbd5e1" }}
+                    axisLine={{ stroke: "#334155", opacity: 0.35 }}
+                    tickLine={false}
                 />
 
                 {/* Interactive Tooltip */}
@@ -260,7 +254,7 @@ const CapacityChart = ({ data = [] }) => {
                     radius={[0, 0, 0, 0]}
                 >
                     <LabelList
-                        dataKey="occupied"
+                        dataKey="occupiedLabel"
                         content={renderInsideLabel}
                     />
                 </Bar>
@@ -270,10 +264,10 @@ const CapacityChart = ({ data = [] }) => {
                     dataKey="available"
                     stackId="capacityStack"
                     fill="#F37021"
-                    radius={[2, 2, 0, 0]}
+                    radius={[6, 6, 0, 0]}
                 >
                     <LabelList
-                        dataKey="available"
+                        dataKey="availableLabel"
                         content={renderInsideLabel}
                     />
                     {/* Total capacity labeled above the top of the bar */}

@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import { UserPlus } from "lucide-react";
-import AnimatedFAB from "../components/ui/AnimatedFAB";
 import AlertConfirmModal from "../components/AlertConfirmModal";
 import UserStats from "../components/userManagement/UserStats";
 import UserTable from "../components/userManagement/UserTable";
@@ -220,15 +218,6 @@ const UserManagement = () => {
         onConfirm={handleAssignCenter}
         onClose={() => setAssignConfirmState({ isOpen: false, userId: null, centerId: null, isLoading: false })}
       />
-
-      {/* ─── Floating Action Button ─── */}
-      {isSuperAdminUser && (
-        <AnimatedFAB 
-          icon={UserPlus}
-          label="Add Personnel"
-          onClick={() => setShowCreateModal(true)}
-        />
-      )}
     </div>
   );
 };

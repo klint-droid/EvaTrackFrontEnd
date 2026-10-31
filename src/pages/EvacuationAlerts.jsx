@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
     Bell, Plus, Eye, Trash2, Clock, RefreshCw,
-    Loader2, ChevronLeft, ChevronRight, MoreHorizontal,
+    ChevronLeft, ChevronRight, MoreHorizontal,
     TrendingUp, Search, Filter, CheckCircle2, Play, XCircle
 } from 'lucide-react';
 
@@ -17,7 +17,6 @@ import { TableLayout } from '../components/ui/TableLayout';
 import Pagination from '../components/ui/Pagination';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
-import AnimatedFAB from "../components/ui/AnimatedFAB";
 import { Megaphone } from "lucide-react";
 
 
@@ -112,46 +111,67 @@ export default function EvacuationAlerts() {
                     </p>
                 </div>
                 {canCreate && (
-                    <AnimatedFAB onClick={() => setCreateModal(true)} icon={Megaphone} label="Create Broadcast Alert" />
+                    <button type="button" onClick={() => setCreateModal(true)} className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 transition-all active:scale-[0.98]"><Megaphone size={15} /><span>Create Broadcast Alert</span></button>
                 )}
             </div>
 
             {/* ── Stats Cards Row ── */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 {/* Alerts Sent (24h) */}
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-5 flex flex-col gap-1 ">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-5 flex flex-col gap-1">
                     <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Alerts Sent (24h)</p>
-                    <div className="flex items-baseline gap-3">
-                        <p className="text-4xl font-black text-slate-900 dark:text-slate-50 tracking-tight leading-none">{stats.total.toLocaleString()}</p>
-                        <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                            <TrendingUp size={12} />
-                            {stats.rate > 0 ? `${stats.rate}%` : '—'}
-                        </span>
-                    </div>
+                    {loading ? (
+                        <div className="flex items-baseline gap-3 mt-1 animate-pulse">
+                            <div className="h-9 w-24 bg-slate-200 dark:bg-slate-700/80 rounded-lg" />
+                            <div className="h-4 w-12 bg-slate-100 dark:bg-slate-800 rounded" />
+                        </div>
+                    ) : (
+                        <div className="flex items-baseline gap-3">
+                            <p className="text-4xl font-black text-slate-900 dark:text-slate-50 tracking-tight leading-none">{stats.total.toLocaleString()}</p>
+                            <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                                <TrendingUp size={12} />
+                                {stats.rate > 0 ? `${stats.rate}%` : '—'}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Delivery Rate */}
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-5 flex flex-col gap-1 ">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-5 flex flex-col gap-1">
                     <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Delivery Rate</p>
-                    <div className="flex items-baseline gap-3">
-                        <p className="text-4xl font-black text-slate-900 dark:text-slate-50 tracking-tight leading-none">{stats.rate}%</p>
-                        <span className="text-xs font-medium text-slate-400">Network avg</span>
-                    </div>
+                    {loading ? (
+                        <div className="flex items-baseline gap-3 mt-1 animate-pulse">
+                            <div className="h-9 w-20 bg-slate-200 dark:bg-slate-700/80 rounded-lg" />
+                            <div className="h-4 w-20 bg-slate-100 dark:bg-slate-800 rounded" />
+                        </div>
+                    ) : (
+                        <div className="flex items-baseline gap-3">
+                            <p className="text-4xl font-black text-slate-900 dark:text-slate-50 tracking-tight leading-none">{stats.rate}%</p>
+                            <span className="text-xs font-medium text-slate-400">Network avg</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Active Broadcasts */}
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-5 flex flex-col gap-1  border-l-4 border-l-red-500">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-5 flex flex-col gap-1 border-l-4 border-l-red-500">
                     <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Active Broadcasts</p>
-                    <div className="flex items-baseline gap-3">
-                        <p className="text-4xl font-black text-slate-900 dark:text-slate-50 tracking-tight leading-none">{alerts.filter(a => a.status === 'sent').length}</p>
-                        <span className="text-xs font-medium text-slate-400">Ongoing scenarios</span>
-                    </div>
+                    {loading ? (
+                        <div className="flex items-baseline gap-3 mt-1 animate-pulse">
+                            <div className="h-9 w-16 bg-slate-200 dark:bg-slate-700/80 rounded-lg" />
+                            <div className="h-4 w-28 bg-slate-100 dark:bg-slate-800 rounded" />
+                        </div>
+                    ) : (
+                        <div className="flex items-baseline gap-3">
+                            <p className="text-4xl font-black text-slate-900 dark:text-slate-50 tracking-tight leading-none">{alerts.filter(a => a.status === 'sent').length}</p>
+                            <span className="text-xs font-medium text-slate-400">Ongoing scenarios</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
             <TableLayout
                 title="SMS & Push Alerts"
-                badgeText={`${pagination.total || alerts.length} Dispatches`}
+                badgeText={loading ? <span className="inline-block w-16 h-3 bg-blue-200/70 dark:bg-blue-800/60 rounded animate-pulse align-middle" /> : `${pagination.total || alerts.length} Dispatches`}
                 subtitle="Broadcast emergency warnings, SMS notifications, and mobile push alerts"
                 onAdd={canCreate ? () => setCreateModal(true) : undefined}
                 addLabel="Broadcast Alert"
@@ -203,153 +223,185 @@ export default function EvacuationAlerts() {
                             <TableHead className="text-right">Actions</TableHead>
                         </tr>
                     </TableHeader>
-                        <tbody className="divide-y divide-slate-100">
-                            {loading ? (
-                                <TableRow>
-                                    <TableCell colSpan="7" className="py-24 text-center">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <Loader2 className="animate-spin text-slate-300" size={32} />
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">querying system registry...</span>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {loading ? (
+                            [...Array(6)].map((_, i) => (
+                                <TableRow key={i} className="animate-pulse">
+                                    <TableCell className="max-w-xs">
+                                        <div className="space-y-1.5 py-1">
+                                            <div className={`h-3.5 bg-slate-200 dark:bg-slate-700/80 rounded ${
+                                                i % 3 === 0 ? 'w-56' : i % 3 === 1 ? 'w-48' : 'w-64'
+                                            }`} />
+                                            <div className="h-2.5 bg-slate-100 dark:bg-slate-800 rounded w-24" />
                                         </div>
                                     </TableCell>
-                                </TableRow>
-                            ) : filteredAlerts.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan="7" className="py-24 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">
-                                        No matching dispatches found.
-                                    </TableCell>
-                                </TableRow>
-                            ) : filteredAlerts.map(alert => (
-                                <TableRow key={alert.notif_id} className="group">
-                                    <TableCell className="max-w-xs">
-                                        <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate leading-snug">
-                                            {alert.message}
-                                        </p>
-                                        <p className="text-[9px] text-slate-400 font-mono mt-1 font-bold">
-                                            UID: {alert.notif_id}
-                                        </p>
+                                    <TableCell>
+                                        <div className={`h-5 bg-slate-100 dark:bg-slate-800 rounded-full ${
+                                            i % 2 === 0 ? 'w-24' : 'w-20'
+                                        }`} />
                                     </TableCell>
                                     <TableCell>
-                                        {alert.event ? (
-                                            <a
-                                                href="/events"
-                                                className="px-2.5 py-1 text-[8px] font-black uppercase tracking-widest rounded-full border bg-sky-500/10 border-sky-500/25 text-sky-600 hover:underline inline-block"
-                                            >
-                                                {alert.event.name}
-                                            </a>
-                                        ) : (
-                                            <span className="text-[9px] text-slate-400 font-bold">—</span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        {(alert.center?.evacuation_center_id || alert.evacuation_center_id) ? (
-                                            <a
-                                                href={`/evacuation-centers/${alert.center?.evacuation_center_id || alert.evacuation_center_id}`}
-                                                className="text-xs font-bold text-blue-600 hover:underline hover:text-blue-700"
-                                            >
-                                                {alert.center?.name || alert.evacuation_center?.name || 'Evacuation Center'}
-                                            </a>
-                                        ) : (
-                                            <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
-                                                {alert.target_filter === 'evacuated'
-                                                    ? 'Evacuated Households'
-                                                    : alert.target_filter === 'not_evacuated'
-                                                        ? 'Non-Evacuated'
-                                                        : 'Public Broadcast'
-                                                }
-                                            </span>
-                                        )}
+                                        <div className={`h-3.5 bg-slate-200 dark:bg-slate-700/80 rounded ${
+                                            i % 2 === 0 ? 'w-32' : 'w-28'
+                                        }`} />
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-1.5">
-                                            <div className="w-5 h-5 bg-blue-50 rounded-md flex items-center justify-center">
-                                                <Bell size={10} className="text-blue-600" />
-                                            </div>
-                                            <span className="text-xs font-black text-slate-800 dark:text-slate-100 font-mono">
-                                                {alert.recipients_count || 0}
-                                            </span>
+                                            <div className="w-5 h-5 bg-slate-100 dark:bg-slate-800 rounded-md" />
+                                            <div className="w-8 h-3.5 bg-slate-200 dark:bg-slate-700/80 rounded" />
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <div>
-                                            {alert.status === 'sent' && (
-                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
-                                                    <CheckCircle2 size={14} />
-                                                    Delivered
-                                                </span>
-                                            )}
-                                            {alert.status === 'scheduled' && (
-                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                                                    <Clock size={14} />
-                                                    Scheduled
-                                                </span>
-                                            )}
-                                            {alert.status === 'pending' && (
-                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-blue-600">
-                                                    <Play size={14} className="fill-blue-600" />
-                                                    Sending...
-                                                </span>
-                                            )}
-                                            {alert.status === 'failed' && (
-                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-rose-600">
-                                                    <XCircle size={14} />
-                                                    Failed
-                                                </span>
-                                            )}
-                                            {alert.status === 'completed' && (
-                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-sky-600">
-                                                    <CheckCircle2 size={14} />
-                                                    Completed
-                                                </span>
-                                            )}
-                                            {alert.status === 'cancelled' && (
-                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-                                                    <XCircle size={14} />
-                                                    Stopped
-                                                </span>
-                                            )}
-                                            {alert.is_recurring && (
-                                                <p className={`text-[8px] font-extrabold mt-1.5 flex items-center gap-1 ${
-                                                    alert.status === 'cancelled' || alert.status === 'failed' || alert.status === 'completed'
-                                                        ? 'text-slate-400'
-                                                        : 'text-blue-600'
-                                                }`}>
-                                                    {alert.status === 'scheduled' ? (
-                                                        <RefreshCw size={8} className="animate-spin duration-1000" />
-                                                    ) : (
-                                                        <RefreshCw size={8} />
-                                                    )}
-                                                    <span className="uppercase tracking-widest">{alert.recurrence_type}</span>
-                                                </p>
-                                            )}
-                                            {alert.status === 'scheduled' && alert.scheduled_at && (
-                                                <p className="text-[9px] font-medium text-slate-400 mt-1 flex items-center gap-1">
-                                                    {new Date(alert.scheduled_at).toLocaleString()}
-                                                </p>
-                                            )}
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="w-3.5 h-3.5 bg-slate-200 dark:bg-slate-700/80 rounded-full" />
+                                            <div className="w-16 h-3 bg-slate-200 dark:bg-slate-700/80 rounded" />
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-                                        {alert.created_at
-                                            ? new Date(alert.created_at).toLocaleString()
-                                            : '—'}
+                                    <TableCell>
+                                        <div className="w-28 h-3 bg-slate-100 dark:bg-slate-800 rounded" />
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <RowMenu
-                                            onView={() => setDetailId(alert.notif_id)}
-                                            actions={
-                                                alert.is_recurring && alert.status === 'scheduled' && canCreate
-                                                    ? [{ label: "Stop Recurring Broadcast", danger: true, onClick: () => handleCancel(alert.notif_id) }]
-                                                    : []
-                                            }
-                                            onDelete={canCreate ? () => handleCancel(alert.notif_id) : undefined}
-                                        />
+                                        <div className="w-7 h-7 bg-slate-100 dark:bg-slate-800 rounded-lg ml-auto" />
                                     </TableCell>
                                 </TableRow>
-                            ))}
-                        </tbody>
-                    </Table>
-                </TableLayout>
+                            ))
+                        ) : filteredAlerts.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan="7" className="py-24 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                    No matching dispatches found.
+                                </TableCell>
+                            </TableRow>
+                        ) : filteredAlerts.map(alert => (
+                            <TableRow key={alert.notif_id} className="group">
+                                <TableCell className="max-w-xs">
+                                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate leading-snug">
+                                        {alert.message}
+                                    </p>
+                                    <p className="text-[9px] text-slate-400 font-mono mt-1 font-bold">
+                                        UID: {alert.notif_id}
+                                    </p>
+                                </TableCell>
+                                <TableCell>
+                                    {alert.event ? (
+                                        <a
+                                            href="/events"
+                                            className="px-2.5 py-1 text-[8px] font-black uppercase tracking-widest rounded-full border bg-sky-500/10 border-sky-500/25 text-sky-600 hover:underline inline-block"
+                                        >
+                                            {alert.event.name}
+                                        </a>
+                                    ) : (
+                                        <span className="text-[9px] text-slate-400 font-bold">—</span>
+                                    )}
+                                </TableCell>
+                                <TableCell>
+                                    {(alert.center?.evacuation_center_id || alert.evacuation_center_id) ? (
+                                        <a
+                                            href={`/evacuation-centers/${alert.center?.evacuation_center_id || alert.evacuation_center_id}`}
+                                            className="text-xs font-bold text-blue-600 hover:underline hover:text-blue-700"
+                                        >
+                                            {alert.center?.name || alert.evacuation_center?.name || 'Evacuation Center'}
+                                        </a>
+                                    ) : (
+                                        <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                                            {alert.target_filter === 'evacuated'
+                                                ? 'Evacuated Households'
+                                                : alert.target_filter === 'not_evacuated'
+                                                    ? 'Non-Evacuated'
+                                                    : 'Public Broadcast'
+                                            }
+                                        </span>
+                                    )}
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-5 h-5 bg-blue-50 rounded-md flex items-center justify-center">
+                                            <Bell size={10} className="text-blue-600" />
+                                        </div>
+                                        <span className="text-xs font-black text-slate-800 dark:text-slate-100 font-mono">
+                                            {alert.recipients_count || 0}
+                                        </span>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <div>
+                                        {alert.status === 'sent' && (
+                                            <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                                                <CheckCircle2 size={14} />
+                                                Delivered
+                                            </span>
+                                        )}
+                                        {alert.status === 'scheduled' && (
+                                            <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                                <Clock size={14} />
+                                                Scheduled
+                                            </span>
+                                        )}
+                                        {alert.status === 'pending' && (
+                                            <span className="flex items-center gap-1.5 text-xs font-semibold text-blue-600">
+                                                <Play size={14} className="fill-blue-600" />
+                                                Sending...
+                                            </span>
+                                        )}
+                                        {alert.status === 'failed' && (
+                                            <span className="flex items-center gap-1.5 text-xs font-semibold text-rose-600">
+                                                <XCircle size={14} />
+                                                Failed
+                                            </span>
+                                        )}
+                                        {alert.status === 'completed' && (
+                                            <span className="flex items-center gap-1.5 text-xs font-semibold text-sky-600">
+                                                <CheckCircle2 size={14} />
+                                                Completed
+                                            </span>
+                                        )}
+                                        {alert.status === 'cancelled' && (
+                                            <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+                                                <XCircle size={14} />
+                                                Stopped
+                                            </span>
+                                        )}
+                                        {alert.is_recurring && (
+                                            <p className={`text-[8px] font-extrabold mt-1.5 flex items-center gap-1 ${
+                                                alert.status === 'cancelled' || alert.status === 'failed' || alert.status === 'completed'
+                                                    ? 'text-slate-400'
+                                                    : 'text-blue-600'
+                                            }`}>
+                                                {alert.status === 'scheduled' ? (
+                                                    <RefreshCw size={8} className="animate-spin duration-1000" />
+                                                ) : (
+                                                    <RefreshCw size={8} />
+                                                )}
+                                                <span className="uppercase tracking-widest">{alert.recurrence_type}</span>
+                                            </p>
+                                        )}
+                                        {alert.status === 'scheduled' && alert.scheduled_at && (
+                                            <p className="text-[9px] font-medium text-slate-400 mt-1 flex items-center gap-1">
+                                                {new Date(alert.scheduled_at).toLocaleString()}
+                                            </p>
+                                        )}
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                                    {alert.created_at
+                                        ? new Date(alert.created_at).toLocaleString()
+                                        : '—'}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <RowMenu
+                                        onView={() => setDetailId(alert.notif_id)}
+                                        actions={
+                                            alert.is_recurring && alert.status === 'scheduled' && canCreate
+                                                ? [{ label: "Stop Recurring Broadcast", danger: true, onClick: () => handleCancel(alert.notif_id) }]
+                                                : []
+                                        }
+                                        onDelete={canCreate ? () => handleCancel(alert.notif_id) : undefined}
+                                    />
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </tbody>
+                </Table>
+            </TableLayout>
 
             {/* Modals */}
             {createModal && (

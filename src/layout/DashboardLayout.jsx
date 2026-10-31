@@ -84,6 +84,10 @@ const DashboardLayout = () => {
 
     const userInitials = (user?.first_name || user?.name || "IA").slice(0, 2).toUpperCase();
 
+    const isSplitViewPage =
+        location.pathname.startsWith("/center-issue-reports") ||
+        location.pathname.startsWith("/resource-requests");
+
     return (
         <div className="flex flex-col h-screen bg-[#f8fafc] dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">
             
@@ -322,9 +326,13 @@ const DashboardLayout = () => {
 
                 {/* MAIN CONTENT AREA (pb-24 on mobile prevents bottom nav overlap) */}
                 <main className="flex-1 overflow-y-auto bg-[#f8fafc] dark:bg-slate-950 transition-colors duration-300 text-left">
-                    <div className="max-w-6xl mx-auto p-4 sm:p-6 pb-24 lg:pb-8 space-y-8">
+                    {isSplitViewPage ? (
                         <Outlet />
-                    </div>
+                    ) : (
+                        <div className="max-w-6xl mx-auto p-4 sm:p-6 pb-24 lg:pb-8 space-y-8">
+                            <Outlet />
+                        </div>
+                    )}
                 </main>
             </div>
 

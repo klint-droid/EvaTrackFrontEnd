@@ -9,7 +9,6 @@ import IssuesListView from '../components/centerIssueReports/IssuesListView';
 import ReportModal from '../components/centerIssueReports/ReportModal';
 import ViewDetailsModal from '../components/centerIssueReports/ViewDetailsModal';
 import { useCenterIssueReports } from '../hooks/useCenterIssueReports';
-import AnimatedFAB from '../components/ui/AnimatedFAB';
 import { useUserStore } from '../store/useUserStore';
 
 const AVATAR_COLORS = [
@@ -121,6 +120,7 @@ export default function CenterIssueReports() {
     if (quickFilter === 'health') return rep.category === 'health_issue';
     if (quickFilter === 'safety') return rep.category === 'safety_issue';
     if (quickFilter === 'incident') return rep.category === 'incident';
+    if (quickFilter === 'other') return rep.category === 'other';
 
     return true;
   });
@@ -147,8 +147,18 @@ export default function CenterIssueReports() {
     }
   };
 
+  const activeViewingReport = viewingReport
+    ? displayedReports.find((r) => r.report_id === viewingReport.report_id) || viewingReport
+    : null;
+
   return (
-    <div className="min-h-screen font-sans text-left pb-24 relative space-y-6">
+    <div className="flex items-start min-h-[calc(100vh-3.5rem)] font-sans text-left relative">
+      {/* ─── Left Column: Main Content (shifts left when detail panel is open) ─── */}
+      <div
+        className={`flex-1 min-w-0 p-4 sm:p-6 pb-24 lg:pb-8 space-y-6 transition-all duration-300 ${
+          activeViewingReport ? 'max-w-none' : 'max-w-6xl mx-auto'
+        }`}
+      >
       
       {/* Toast Notification Alert */}
       {message && (
@@ -318,6 +328,7 @@ export default function CenterIssueReports() {
                   { key: 'health',   label: '❤️ Health',        cls: 'text-emerald-600 dark:text-emerald-400' },
                   { key: 'safety',   label: '🛡️ Safety',        cls: 'text-orange-600 dark:text-orange-400' },
                   { key: 'incident', label: '⚠️ Incident',      cls: 'text-rose-600 dark:text-rose-400' },
+                  { key: 'other',    label: '📌 Other',         cls: 'text-amber-600 dark:text-amber-400' },
                 ].map(opt => (
                   <button
                     key={opt.key}
@@ -413,6 +424,7 @@ export default function CenterIssueReports() {
             handleStatusChange={handleStatusChange}
             handleDelete={handleDelete}
             getSeverityClass={getSeverityClass}
+            viewingReport={activeViewingReport}
             setViewingReport={setViewingReport}
           />
         </div>
@@ -426,10 +438,22 @@ export default function CenterIssueReports() {
             handleDelete={handleDelete}
             getSeverityClass={getSeverityClass}
             getStatusClass={getStatusClass}
+            viewingReport={activeViewingReport}
             setViewingReport={setViewingReport}
           />
         </div>
       )}
+      </div>
+
+      {/* ─── View & Update Details Inline Side Panel (Jira-Style) ─── */}
+      <ViewDetailsModal
+        report={activeViewingReport}
+        onClose={() => setViewingReport(null)}
+        canUpdateStatus={canUpdateStatus}
+        handleStatusChange={handleStatusChange}
+        handleDelete={handleDelete}
+        openEditModal={openEditModal}
+      />
 
       {/* ─── Create / Edit Issue Modal ─── */}
       <ReportModal
@@ -443,21 +467,6 @@ export default function CenterIssueReports() {
         handleSubmit={handleSubmit}
         saving={saving}
       />
-
-      {/* ─── View & Update Details Side Drawer ─── */}
-      <ViewDetailsModal
-        report={viewingReport}
-        onClose={() => setViewingReport(null)}
-        canUpdateStatus={canUpdateStatus}
-        handleStatusChange={handleStatusChange}
-        handleDelete={handleDelete}
-        openEditModal={openEditModal}
-      />
-
-      {/* ─── Floating Action Button ─── */}
-      {canCreate && (
-        <AnimatedFAB onClick={openCreateModal} icon={Plus} label="Report Issue" />
-      )}
     </div>
   );
 }

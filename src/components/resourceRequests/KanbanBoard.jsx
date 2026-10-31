@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { 
   Plus, ArrowRight, ArrowLeft,
   MapPin, Droplet, Utensils, HeartPulse, Home, Box,
-  Clock, Sparkles, CheckCircle2, Inbox
+  Clock, Sparkles, CheckCircle2, Inbox, XCircle
 } from 'lucide-react';
 import ActionMenu from '../ui/ActionMenu';
 
 const COLUMNS = [
   {
     id: 'pending',
-    title: 'Incoming',
+    title: 'Pending',
     icon: Inbox,
     color: 'amber',
     badgeClass: 'bg-amber-500/10 text-amber-500 dark:text-amber-400 border-amber-500/20',
@@ -17,7 +17,7 @@ const COLUMNS = [
   },
   {
     id: 'acknowledged',
-    title: 'In Progress',
+    title: 'Acknowledged',
     icon: Sparkles,
     color: 'blue',
     badgeClass: 'bg-blue-500/10 text-blue-500 dark:text-blue-400 border-blue-500/20',
@@ -25,15 +25,23 @@ const COLUMNS = [
   },
   {
     id: 'approved',
-    title: 'In Review',
+    title: 'Approved',
     icon: Clock,
     color: 'indigo',
     badgeClass: 'bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 border-indigo-500/20',
     dotBg: 'bg-indigo-500'
   },
   {
+    id: 'rejected',
+    title: 'Rejected',
+    icon: XCircle,
+    color: 'rose',
+    badgeClass: 'bg-rose-500/10 text-rose-500 dark:text-rose-400 border-rose-500/20',
+    dotBg: 'bg-rose-500'
+  },
+  {
     id: 'delivered',
-    title: 'Done',
+    title: 'Delivered',
     icon: CheckCircle2,
     color: 'emerald',
     badgeClass: 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border-emerald-500/20',
@@ -42,10 +50,11 @@ const COLUMNS = [
 ];
 
 const STATUS_MENU_OPTIONS = [
-  { key: 'pending', label: 'Incoming' },
-  { key: 'acknowledged', label: 'In Progress' },
-  { key: 'approved', label: 'In Review' },
-  { key: 'delivered', label: 'Done' },
+  { key: 'pending', label: 'Pending' },
+  { key: 'acknowledged', label: 'Acknowledged' },
+  { key: 'approved', label: 'Approved' },
+  { key: 'rejected', label: 'Rejected' },
+  { key: 'delivered', label: 'Delivered' },
 ];
 
 const getResourceTheme = (resourceType = '') => {
@@ -94,6 +103,7 @@ export default function KanbanBoard({
   openModal,
   handleStatusChange,
   handleDelete,
+  viewingRequest,
   setViewingRequest
 }) {
   const [draggedRequestId, setDraggedRequestId] = useState(null);
@@ -126,8 +136,8 @@ export default function KanbanBoard({
 
   return (
     <div className="w-full overflow-x-auto">
-      {/* 4-equal-column grid — no fixed height, columns grow with content */}
-      <div className="grid grid-cols-4 gap-2.5 min-w-[780px]">
+      {/* 5-equal-column grid matching resource_request_status — no fixed height, columns grow with content */}
+      <div className="grid grid-cols-5 gap-2.5 min-w-[750px]">
         {COLUMNS.map((column) => {
           const colRequests = requests.filter(r => {
             const sk = r.status?.status_key || r.status || 'pending';
@@ -183,13 +193,19 @@ export default function KanbanBoard({
                     const prevStatus = getPrevStatus(column.id);
                     const initials = (req.requester?.first_name?.[0] || req.requester?.name?.[0] || 'U').toUpperCase();
 
+                    const isSelected = viewingRequest?.request_id === req.request_id;
+
                     return (
                       <div
                         key={req.request_id}
                         draggable={canUpdateStatus}
                         onDragStart={(e) => handleDragStart(e, req.request_id)}
                         onClick={() => setViewingRequest(req)}
-                        className="group relative bg-white dark:bg-[#1e2a3d] rounded-lg border border-slate-200/80 dark:border-[#263047] p-2.5 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer text-left"
+                        className={`group relative bg-white dark:bg-[#1e2a3d] rounded-lg border p-2.5 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer text-left ${
+                          isSelected
+                            ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20 shadow-sm'
+                            : 'border-slate-200/80 dark:border-[#263047]'
+                        }`}
                       >
                         {/* Category pill + time + 3-dot action menu */}
                         <div className="flex items-center justify-between gap-1 mb-1.5">

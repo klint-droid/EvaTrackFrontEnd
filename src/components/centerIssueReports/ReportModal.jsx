@@ -10,6 +10,7 @@ const CATEGORY_ITEMS = [
   { value: 'health_issue',   label: 'Health',   icon: HeartPulse },
   { value: 'safety_issue',   label: 'Safety',   icon: Shield },
   { value: 'incident',       label: 'Incident', icon: FileWarning },
+  { value: 'other',          label: 'Other',    icon: AlertTriangle },
 ];
 
 const SEVERITY_ITEMS = [
@@ -57,7 +58,7 @@ export default function ReportModal({
             <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
               Category
             </label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
               {CATEGORY_ITEMS.map(({ value, label, icon: Icon }) => {
                 const isSelected = form.category === value;
                 return (
@@ -65,18 +66,25 @@ export default function ReportModal({
                     key={value}
                     type="button"
                     onClick={() => setForm({ ...form, category: value })}
-                    className={`flex flex-col items-center py-2.5 border rounded-lg cursor-pointer transition-all text-center ${
+                    className={`flex flex-col items-center py-2 px-1 border rounded-lg cursor-pointer transition-all text-center ${
                       isSelected
                         ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-black shadow-xs'
                         : 'border-slate-200 dark:border-[#263047] text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:bg-[#1e2a3d]'
                     }`}
                   >
                     <Icon size={16} className="mb-1" />
-                    <span className="text-[10px] font-bold">{label}</span>
+                    <span className="text-[10px] font-bold truncate max-w-full">{label}</span>
                   </button>
                 );
               })}
             </div>
+
+            {form.category === 'other' && (
+              <div className="p-2.5 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-800/40 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2 animate-in fade-in duration-150">
+                <AlertTriangle size={14} className="text-amber-500 flex-shrink-0" />
+                <span>Selected category is <strong>Other</strong>. Please specify details in the <strong>Title</strong> and <strong>Description</strong> below.</span>
+              </div>
+            )}
           </div>
 
           {/* Center (Admin only) */}

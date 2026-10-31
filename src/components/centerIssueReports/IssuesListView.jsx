@@ -50,6 +50,7 @@ export default function IssuesListView({
   handleDelete,
   getSeverityClass,
   getStatusClass,
+  viewingReport,
   setViewingReport
 }) {
   // Sort newest first
@@ -96,11 +97,15 @@ export default function IssuesListView({
           const reporterName = report.reporter?.name || report.reported_by_user?.name || report.reporter?.first_name || 'Officer';
           const initials = (report.reporter?.first_name?.[0] || report.reporter?.name?.[0] || reporterName?.[0] || 'U').toUpperCase();
 
+          const isSelected = viewingReport?.report_id === report.report_id;
+
           return (
             <div
               key={report.report_id}
               onClick={() => setViewingReport(report)}
-              className="grid grid-cols-12 gap-3 px-5 py-3.5 items-center hover:bg-blue-50/30 dark:hover:bg-blue-950/20 transition-all cursor-pointer group text-left"
+              className={`grid grid-cols-12 gap-3 px-5 py-3.5 items-center hover:bg-blue-50/30 dark:hover:bg-blue-950/20 transition-all cursor-pointer group text-left ${
+                isSelected ? 'bg-blue-50/50 dark:bg-blue-950/30' : ''
+              }`}
             >
               {/* Ticket ID */}
               <div className="col-span-2 flex items-center gap-2">

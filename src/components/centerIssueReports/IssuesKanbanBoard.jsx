@@ -101,6 +101,7 @@ export default function IssuesKanbanBoard({
   handleStatusChange,
   handleDelete,
   getSeverityClass,
+  viewingReport,
   setViewingReport
 }) {
   const [draggedReportId, setDraggedReportId] = useState(null);
@@ -143,7 +144,7 @@ export default function IssuesKanbanBoard({
   return (
     <div className="w-full overflow-x-auto">
       {/* 4-equal-column grid — auto-height columns, all fit on screen */}
-      <div className="grid grid-cols-4 gap-2.5 min-w-[780px]">
+      <div className="grid grid-cols-4 gap-2.5 min-w-[600px]">
         {COLUMNS.map((column) => {
           const colReports = reports.filter(r => {
             const sk = typeof r.status === 'object' ? r.status?.status_key : r.status || 'open';
@@ -200,13 +201,19 @@ export default function IssuesKanbanBoard({
                     const reporterName = report.reporter?.name || report.reported_by_user?.name || report.reporter?.first_name || 'Officer';
                     const initials = (report.reporter?.first_name?.[0] || report.reporter?.name?.[0] || reporterName?.[0] || 'U').toUpperCase();
 
+                    const isSelected = viewingReport?.report_id === report.report_id;
+
                     return (
                       <div
                         key={report.report_id}
                         draggable={canUpdateStatus}
                         onDragStart={(e) => handleDragStart(e, report.report_id)}
                         onClick={() => setViewingReport(report)}
-                        className="group relative bg-white dark:bg-[#1e2a3d] rounded-lg border border-slate-200/80 dark:border-[#263047] p-2.5 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer text-left"
+                        className={`group relative bg-white dark:bg-[#1e2a3d] rounded-lg border p-2.5 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer text-left ${
+                          isSelected
+                            ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20 shadow-sm'
+                            : 'border-slate-200/80 dark:border-[#263047]'
+                        }`}
                       >
                         {/* Category pill + time + 3-dot action menu */}
                         <div className="flex items-center justify-between gap-1 mb-1.5">

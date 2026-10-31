@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, CheckCircle, XCircle, Clock, Loader2, RefreshCw, User, Hash, Radio } from 'lucide-react';
+import { X, CheckCircle, XCircle, Clock, RefreshCw, User, Hash, Radio } from 'lucide-react';
 import { getAlertDetail } from '../../api/alerts/getAlertDetail';
 import { Modal } from '../../ui/Modal';
 import { Badge } from '../../ui/Badge';
@@ -44,15 +44,47 @@ export default function AlertDetailModal({ notifId, onClose }) {
             title={
                 <div>
                     Alert Details
-                    {alert && <span className="block text-[10px] font-mono text-slate-400 mt-0.5">{alert.notif_id}</span>}
+                    {alert ? (
+                        <span className="block text-[10px] font-mono text-slate-400 mt-0.5">{alert.notif_id}</span>
+                    ) : loading ? (
+                        <span className="block w-28 h-2.5 bg-slate-200 dark:bg-slate-700 rounded mt-1 animate-pulse" />
+                    ) : null}
                 </div>
             }
         >
             <div className="max-h-[70vh] overflow-y-auto space-y-5 pr-2">
 
                     {loading ? (
-                        <div className="flex justify-center py-12">
-                            <Loader2 className="animate-spin text-slate-300" size={28} />
+                        <div className="space-y-5 animate-pulse py-1">
+                            {/* Badges row skeleton */}
+                            <div className="flex flex-wrap gap-2">
+                                <div className="h-6 w-20 bg-slate-200 dark:bg-slate-700/80 rounded-full" />
+                                <div className="h-6 w-36 bg-slate-200 dark:bg-slate-700/80 rounded-full" />
+                                <div className="h-6 w-16 bg-slate-200 dark:bg-slate-700/80 rounded-full" />
+                            </div>
+
+                            {/* Message card skeleton */}
+                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800 space-y-3">
+                                <div className="h-2.5 w-36 bg-slate-200 dark:bg-slate-700/80 rounded" />
+                                <div className="space-y-2">
+                                    <div className="h-3.5 bg-slate-200 dark:bg-slate-700/80 rounded w-full" />
+                                    <div className="h-3.5 bg-slate-200 dark:bg-slate-700/80 rounded w-4/5" />
+                                </div>
+                                <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 space-y-2">
+                                    <div className="h-3 w-40 bg-slate-200 dark:bg-slate-700/80 rounded" />
+                                    <div className="h-3 w-48 bg-slate-200 dark:bg-slate-700/80 rounded" />
+                                </div>
+                            </div>
+
+                            {/* Meta grid skeleton */}
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                                {[1, 2, 3, 4].map((i) => (
+                                    <div key={i} className="space-y-1.5">
+                                        <div className="h-2.5 w-16 bg-slate-200 dark:bg-slate-700/80 rounded" />
+                                        <div className="h-4 w-28 bg-slate-200 dark:bg-slate-700/80 rounded" />
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     ) : !alert ? (
                         <p className="text-sm text-red-500 py-4 text-center">Failed to load alert details.</p>
