@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  Home, MapPin, Users, Plus, Search,
+  Home, MapPin, Users, Search,
   ChevronRight, DoorOpen, AlertCircle, UserCheck, ShieldAlert, Eye,
   LayoutGrid, TableProperties, Map as MapIcon
 } from "lucide-react";
@@ -20,7 +20,6 @@ import { useAlert } from "../../context/AlertContext";
 import { TableLayout } from "../../components/ui/TableLayout";
 import { Table, TableHeader, TableRow, TableHead, TableCell, StatusBadge, RowMenu } from "../../ui/Table";
 import { StatCard } from "../../components/ui/StatCard";
-import AnimatedFAB from "../../components/ui/AnimatedFAB";
 import EvacuationCenterCard from "../../components/evacuation/EvacuationCenterCard";
 import EvacuationCenterMap from "../../components/evacuation/EvacuationCenterMap";
 
@@ -470,17 +469,6 @@ export default function EvacuationList() {
         onConfirm={handleConfirmSubmit}
         onClose={() => setSaveConfirmState({ isOpen: false, formData: null, isLoading: false })}
       />
-
-      {canCreate && (
-        <AnimatedFAB
-          icon={Plus}
-          label="Add Center"
-          onClick={() => {
-            setSelected(null);
-            setModalOpen(true);
-          }}
-        />
-      )}
     </div>
   );
 }
