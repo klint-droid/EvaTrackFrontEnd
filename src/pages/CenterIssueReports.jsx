@@ -8,6 +8,7 @@ import IssuesKanbanBoard from '../components/centerIssueReports/IssuesKanbanBoar
 import IssuesListView from '../components/centerIssueReports/IssuesListView';
 import ReportModal from '../components/centerIssueReports/ReportModal';
 import ViewDetailsModal from '../components/centerIssueReports/ViewDetailsModal';
+import IssuesTriageSummary from '../components/centerIssueReports/IssuesTriageSummary';
 import { useCenterIssueReports } from '../hooks/useCenterIssueReports';
 import { useUserStore } from '../store/useUserStore';
 
@@ -411,6 +412,9 @@ export default function CenterIssueReports() {
           )}
         </div>
       </div>
+
+      {/* ─── Triage Summary Insight Bar ─── */}
+      <IssuesTriageSummary reports={filteredReports} />
 
       {/* ─── MAIN CONTENT VIEW (KANBAN BOARD OR LIST) ─── */}
       {viewMode === 'kanban' ? (
