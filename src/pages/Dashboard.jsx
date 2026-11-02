@@ -11,6 +11,7 @@ import { getLastUpdated } from "../api/analytics/getLastUpdated";
 import { useUserStore } from "../store/useUserStore";
 
 import DashboardHeader from "../components/dashboard/DashboardHeader";
+import EmergencyAnnouncementBanner from "../components/dashboard/EmergencyAnnouncementBanner";
 import DashboardServicesGrid from "../components/dashboard/DashboardServicesGrid";
 import DashboardMetrics from "../components/dashboard/DashboardMetrics";
 import DashboardCapacityArea from "../components/dashboard/DashboardCapacityArea";
@@ -258,6 +259,14 @@ const Dashboard = () => {
                 assignedCenter={assignedCenter}
                 loading={loading}
                 user={user}
+                onRefresh={() => loadDashboard(true)}
+                lastUpdatedTime={lastUpdatedTime}
+                hasActiveEvent={hasActiveEvent}
+                activeEvent={activeEvent}
+            />
+
+            {/* 📢 EMERGENCY ANNOUNCEMENT BANNER */}
+            <EmergencyAnnouncementBanner activeEvents={activeEvents}
             />
 
             {/* ⚡ GCASH-STYLE QUICK SERVICES & OPERATIONS GRID */}
