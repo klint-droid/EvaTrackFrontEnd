@@ -5,6 +5,7 @@ import { useEvacuationDetail } from '../../hooks/useEvacuationDetail';
 import EvacuationHeader from '../../components/evacuation/detail/EvacuationHeader';
 import EvacuationStats from '../../components/evacuation/detail/EvacuationStats';
 import UnitsTableTab from '../../components/evacuation/detail/UnitsTableTab';
+import UnitsOccupancySummary from '../../components/evacuation/detail/UnitsOccupancySummary';
 import EvacuatedHouseholdsTab from '../../components/evacuation/detail/EvacuatedHouseholdsTab';
 import EvacuationModals from '../../components/evacuation/detail/EvacuationModals';
 
@@ -202,6 +203,8 @@ export default function EvacuationDetail() {
 
             {/* Tab Panel: Accommodation Units */}
             {activeTab === 'units' && (
+              <div className="space-y-6">
+                <UnitsOccupancySummary units={units} />
                 <UnitsTableTab
                     units={units}
                     filteredUnits={filteredUnits}
@@ -227,6 +230,7 @@ export default function EvacuationDetail() {
                     setDeleteUnitModal={setDeleteUnitModal}
                     setUnassignModal={setUnassignModal}
                 />
+              </div>
             )}
 
             {/* Tab Panel: Evacuated Households */}
