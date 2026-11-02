@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   AlertCircle, CheckCircle2, Plus, Inbox, Kanban, List as ListIcon,
   Search, Building2,
-  RefreshCw, AlertTriangle, MapPin, Layers, ChevronDown, X
+  RefreshCw, AlertTriangle, MapPin, Layers, ChevronDown, X, Download
 } from 'lucide-react';
 import JiraListView from '../components/resourceRequests/JiraListView';
 import RequestModal from '../components/resourceRequests/RequestModal';
@@ -135,8 +135,50 @@ export default function ResourceRequests() {
     return new Date(value).toLocaleString();
   };
 
-  const approvedCount = filteredRequests.filter(r => r.status?.status_key === 'approved' || r.status === 'approved').length;
-  const rejectedCount = filteredRequests.filter(r => r.status?.status_key === 'rejected' || r.status === 'rejected').length;
+  const approvedCount = requests.filter(r => r.status?.status_key === 'approved' || r.status === 'approved').length;
+  const rejectedCount = requests.filter(r => r.status?.status_key === 'rejected' || r.status === 'rejected').length;
+
+  const statusStats = [
+    { key: 'all', label: 'All Requests', count: requests.length, color: 'text-slate-800 dark:text-slate-100', bg: 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700' },
+    { key: 'pending', label: 'Pending Triage', count: pendingCount, color: 'text-amber-700 dark:text-amber-300', bg: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800' },
+    { key: 'acknowledged', label: 'Acknowledged', count: acknowledgedCount, color: 'text-blue-700 dark:text-blue-300', bg: 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800' },
+    { key: 'approved', label: 'Approved', count: approvedCount, color: 'text-indigo-700 dark:text-indigo-300', bg: 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800' },
+    { key: 'delivered', label: 'Delivered', count: deliveredCount, color: 'text-emerald-700 dark:text-emerald-300', bg: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800' },
+    { key: 'rejected', label: 'Rejected', count: rejectedCount, color: 'text-rose-700 dark:text-rose-300', bg: 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800' },
+  ];
+
+  const handleStatusFilterToggle = (key) => {
+    if (key === 'all' || statusFilter === key) {
+      setStatusFilter('');
+    } else {
+      setStatusFilter(key);
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (!filteredRequests.length) return;
+
+    const headers = ["Request ID", "Center", "Type", "Resource/Personnel", "Quantity", "Status", "Requested By", "Date"];
+    const rows = filteredRequests.map(r => [
+      `"${r.request_id || ''}"`,
+      `"${r.center?.name || r.evacuation_center_id || ''}"`,
+      `"${r.request_type || 'resource'}"`,
+      `"${(r.resource_type || '').replace(/"/g, '""')}"`,
+      r.quantity || 1,
+      `"${r.status?.status_key || r.status || ''}"`,
+      `"${r.requester?.name || `${r.requester?.first_name || ''} ${r.requester?.last_name || ''}`.trim()}"`,
+      `"${r.created_at ? new Date(r.created_at).toLocaleDateString() : ''}"`
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `resource_requests_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const activeViewingRequest = viewingRequest
     ? displayedRequests.find((r) => r.request_id === viewingRequest.request_id) || viewingRequest
@@ -194,6 +236,34 @@ export default function ResourceRequests() {
           {/* Top Actions: Incoming Requests + View Toggle + New Request */}
           <div className="flex items-center gap-2.5 flex-wrap">
             
+            {/* Incoming Requests Inbox Modal Trigger */}
+            <button
+              type="button"
+              onClick={() => setIncomingModalOpen(true)}
+              className="relative inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs transition-all cursor-pointer"
+              title="View incoming requests inbox"
+            >
+              <Inbox size={14} className="text-blue-600 dark:text-blue-400" />
+              <span>Inbox</span>
+              {pendingCount > 0 && (
+                <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-black bg-amber-500 text-white">
+                  {pendingCount}
+                </span>
+              )}
+            </button>
+
+            {/* Export CSV Button */}
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              disabled={filteredRequests.length === 0}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              title="Export filtered requests to CSV"
+            >
+              <Download size={14} />
+              <span className="hidden sm:inline">Export CSV</span>
+            </button>
+
             {/* View Mode Switcher: Kanban vs Table */}
             <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
               <button
@@ -351,6 +421,38 @@ export default function ResourceRequests() {
       </div>
 
 
+
+      {/* ─── Interactive Status KPI Summary Bar ─── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+        {statusStats.map((item) => {
+          const isActive = item.key === 'all' ? !statusFilter : statusFilter === item.key;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => handleStatusFilterToggle(item.key)}
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                isActive
+                  ? `${item.bg} ring-2 ring-blue-500 shadow-sm`
+                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
+                  {item.label}
+                </span>
+                {isActive && <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
+              </div>
+              <div className="mt-1 flex items-baseline gap-1.5">
+                <span className={`text-xl font-extrabold ${item.color}`}>
+                  {item.count}
+                </span>
+                <span className="text-[10px] text-slate-400 font-medium">requests</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
 
       {/* ─── MAIN CONTENT VIEW (KANBAN BOARD OR DATA TABLE) ─── */}
       {viewMode === 'kanban' ? (
