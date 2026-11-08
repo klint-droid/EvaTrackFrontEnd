@@ -30,6 +30,7 @@ export default function EvacuatedHouseholdsTab({
     canManage,
     canAdmit,
     onAdmit,
+    viewingHousehold,
     setViewingHousehold,
     setDeleteRecordModal,
     formatDateTime,
@@ -134,14 +135,17 @@ export default function EvacuatedHouseholdsTab({
                             ) : (
                                 paginatedHouseholds.map(record => {
                                     const isChecked = selectedHouseholds.includes(record.evacuation_id);
+                                    const isViewing = viewingHousehold?.evacuation_id === record.evacuation_id;
                                     const unitName = record.unit_allocation?.unit?.name || record.unit_allocations?.[0]?.unit?.name || record.unit?.name;
 
                                     return (
                                         <TableRow 
                                             key={record.evacuation_id} 
-                                            isSelected={isChecked}
+                                            isSelected={isChecked || isViewing}
                                             onClick={() => setViewingHousehold(record)}
-                                            className="cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors"
+                                            className={`cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors ${
+                                                isViewing ? 'bg-blue-50/50 dark:bg-blue-950/30' : ''
+                                            }`}
                                         >
                                             <TableCell onClick={(e) => e.stopPropagation()}>
                                                 <Checkbox

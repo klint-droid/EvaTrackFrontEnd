@@ -86,7 +86,9 @@ const DashboardLayout = () => {
 
     const isSplitViewPage =
         location.pathname.startsWith("/center-issue-reports") ||
-        location.pathname.startsWith("/resource-requests");
+        location.pathname.startsWith("/resource-requests") ||
+        location.pathname.startsWith("/user-management") ||
+        location.pathname.startsWith("/evacuation-centers/");
 
     return (
         <div className="flex flex-col h-screen bg-[#f8fafc] dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">

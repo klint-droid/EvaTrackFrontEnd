@@ -1,26 +1,21 @@
-import { AlertTriangle, Trash2, CheckCircle2, Info, X } from "lucide-react";
+import React from "react";
+import { createPortal } from "react-dom";
+import { AlertTriangle, Trash2, CheckCircle2, Info, X, Loader2 } from "lucide-react";
 
 /**
  * AlertConfirmModal Component
- * 
- * Replaces standard browser default `window.confirm()` and `window.alert()` dialogs
- * with a high-end, responsive, and highly aesthetic React modal.
- * 
- * Props:
- * - isOpen (boolean): Controls visibility.
- * - title (string): Modal title header.
- * - message (string): Detail message body text.
- * - confirmText (string): Label of the confirm button. Defaults to "Confirm".
- * - cancelText (string): Label of the cancel button. Defaults to "Cancel".
- * - type (string): Visual variant. Values: "danger" | "warning" | "success" | "info". Defaults to "danger".
- * - onConfirm (function): Triggered when confirm button is clicked.
- * - onClose (function): Triggered when cancel/close is clicked.
- * - isLoading (boolean): Disables buttons and shows a spinner on the confirm button.
+ *
+ * Matches the RequestModal / ReportModal design language across EvaTrack:
+ * - Compact header with title, subtitle, and close button
+ * - Clean body with status badge/icon, message, and optional custom children
+ * - Right-aligned footer action buttons
  */
 function AlertConfirmModal({
   isOpen,
   title,
+  subtitle,
   message,
+  children,
   confirmText = "Confirm",
   cancelText = "Cancel",
   type = "danger",
@@ -30,106 +25,124 @@ function AlertConfirmModal({
 }) {
   if (!isOpen) return null;
 
-  // Configuration map for color styles, icons, and visual tokens
   const config = {
     danger: {
-      bgIcon: "bg-red-50 text-red-600 border-red-100",
-      buttonConfirm: "bg-red-600 hover:bg-red-500 focus:ring-red-500/20 shadow-red-500/10",
-      icon: <Trash2 size={24} className="animate-bounce-short" />,
+      defaultSubtitle: "This action is permanent and cannot be undone",
+      iconWrap: "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/60",
+      cardWrap: "bg-rose-50/50 dark:bg-rose-950/20 border-rose-200/80 dark:border-rose-800/40",
+      buttonConfirm: "bg-rose-600 hover:bg-rose-700 shadow-rose-600/20",
+      icon: <Trash2 size={16} />,
     },
     warning: {
-      bgIcon: "bg-amber-50 text-amber-600 border-amber-100",
-      buttonConfirm: "bg-amber-500 hover:bg-amber-400 focus:ring-amber-500/20 shadow-amber-500/10",
-      icon: <AlertTriangle size={24} />,
+      defaultSubtitle: "Please review carefully before proceeding",
+      iconWrap: "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/60",
+      cardWrap: "bg-amber-50/50 dark:bg-amber-950/20 border-amber-200/80 dark:border-amber-800/40",
+      buttonConfirm: "bg-amber-500 hover:bg-amber-600 shadow-amber-500/20",
+      icon: <AlertTriangle size={16} />,
     },
     success: {
-      bgIcon: "bg-emerald-50 text-emerald-600 border-emerald-100",
-      buttonConfirm: "bg-emerald-600 hover:bg-emerald-500 focus:ring-emerald-500/20 shadow-emerald-500/10",
-      icon: <CheckCircle2 size={24} />,
+      defaultSubtitle: "Confirm the details below to complete this action",
+      iconWrap: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60",
+      cardWrap: "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-800/40",
+      buttonConfirm: "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20",
+      icon: <CheckCircle2 size={16} />,
     },
     info: {
-      bgIcon: "bg-blue-50 text-blue-600 border-blue-100",
-      buttonConfirm: "bg-blue-600 hover:bg-blue-500 focus:ring-blue-500/20 shadow-blue-500/10",
-      icon: <Info size={24} />,
+      defaultSubtitle: "Review and confirm the details below",
+      iconWrap: "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/60",
+      cardWrap: "bg-slate-50 dark:bg-[#1e2a3d] border-slate-200 dark:border-[#263047]",
+      buttonConfirm: "bg-blue-600 hover:bg-blue-700 shadow-blue-600/20",
+      icon: <Info size={16} />,
     },
   };
 
   const activeStyle = config[type] || config.danger;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
-      {/* ── BACKDROP OVERLAY ── */}
-      <div 
-        onClick={!isLoading ? onClose : undefined} 
-        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in"
+      {/* Backdrop */}
+      <div
+        onClick={!isLoading ? onClose : undefined}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
       />
 
-      {/* ── MODAL BODY CONTAINER ── */}
-      <div className="relative w-full max-w-[440px] bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-2xl p-6 md:p-8 flex flex-col items-center text-center transform scale-100 transition-all duration-300 animate-in zoom-in-95 duration-200">
-        
-        {/* Close Button top right */}
-        {!isLoading && (
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:bg-slate-800/50 transition-colors"
-            aria-label="Close modal"
-          >
-            <X size={18} />
-          </button>
-        )}
+      {/* Modal Container (matches RequestModal style) */}
+      <div className="relative bg-white dark:bg-[#0f1623] border border-slate-200 dark:border-[#1e2a3d] rounded-xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in-95 duration-150 overflow-hidden text-left font-sans">
 
-        {/* Dynamic Visual Status Icon */}
-        <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center mb-5 ${activeStyle.bgIcon}`}>
-          {activeStyle.icon}
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-[#1e2a3d]">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0 ${activeStyle.iconWrap}`}>
+              {activeStyle.icon}
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm font-black text-slate-900 dark:text-white truncate">
+                {title}
+              </h2>
+              <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+                {subtitle || activeStyle.defaultSubtitle}
+              </p>
+            </div>
+          </div>
+          {!isLoading && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1e2a3d] transition-colors flex-shrink-0"
+              aria-label="Close modal"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
 
-        {/* Header Title */}
-        <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight leading-snug px-2">
-          {title}
-        </h3>
+        {/* Body */}
+        <div className="p-5 space-y-4">
+          {message && (
+            <div className={`p-3.5 rounded-lg border text-xs sm:text-sm text-slate-700 dark:text-slate-200 font-medium leading-relaxed ${activeStyle.cardWrap}`}>
+              {message}
+            </div>
+          )}
 
-        {/* Informational Message */}
-        <p className="text-xs text-slate-500 dark:text-slate-400 font-bold leading-relaxed mt-2.5 px-2">
-          {message}
-        </p>
+          {children}
+        </div>
 
-        {/* ── FOOTER ACTIONS ── */}
-        <div className="flex items-center gap-3 w-full mt-7">
-          {/* Cancel Control */}
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2.5 px-5 py-3.5 border-t border-slate-100 dark:border-[#1e2a3d]">
           {cancelText && (
             <button
               type="button"
               disabled={isLoading}
               onClick={onClose}
-              className="flex-1 h-12 rounded-xl text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 font-bold text-xs transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
+              className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-[#1e2a3d] hover:bg-slate-200 dark:hover:bg-[#263047] rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {cancelText}
             </button>
           )}
 
-          {/* Confirm Control */}
           <button
             type="button"
             disabled={isLoading}
             onClick={() => onConfirm?.()}
-            className={`flex-1 h-12 rounded-xl text-white font-bold text-xs transition active:scale-[0.98] shadow-md dark:shadow-none flex items-center justify-center gap-2 ${activeStyle.buttonConfirm} disabled:opacity-75 disabled:pointer-events-none`}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg text-white shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed ${activeStyle.buttonConfirm}`}
           >
             {isLoading ? (
-              <span className="flex items-center gap-2">
-                <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Processing...
-              </span>
+              <>
+                <Loader2 size={13} className="animate-spin" />
+                <span>Processing...</span>
+              </>
             ) : (
-              confirmText
+              <>
+                {activeStyle.icon}
+                <span>{confirmText}</span>
+              </>
             )}
           </button>
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

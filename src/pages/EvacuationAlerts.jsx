@@ -24,6 +24,23 @@ let alertsCache = null;
 let alertsCacheTime = 0;
 const CACHE_DURATION = 30000; // 30 seconds cache expiration
 
+const formatRecurrence = (alert) => {
+    if (!alert.is_recurring) return '';
+    if (alert.recurrence_type === 'custom') {
+        if (alert.recurrence_interval_value && alert.recurrence_interval_unit) {
+            return `EVERY ${alert.recurrence_interval_value} ${alert.recurrence_interval_unit.toUpperCase()}`;
+        }
+        if (alert.recurrence_interval_minutes) {
+            const mins = alert.recurrence_interval_minutes;
+            if (mins % 1440 === 0) return `EVERY ${mins / 1440} DAYS`;
+            if (mins % 60 === 0) return `EVERY ${mins / 60} HOURS`;
+            return `EVERY ${mins} MINS`;
+        }
+        return 'CUSTOM';
+    }
+    return alert.recurrence_type || 'RECURRING';
+};
+
 export default function EvacuationAlerts() {
     const [alerts, setAlerts] = useState(alertsCache?.alerts || []);
     const [pagination, setPagination] = useState(alertsCache?.pagination || {});
@@ -401,7 +418,7 @@ export default function EvacuationAlerts() {
                                                 ) : (
                                                     <RefreshCw size={8} />
                                                 )}
-                                                <span className="uppercase tracking-widest">{alert.recurrence_type}</span>
+                                                <span className="uppercase tracking-widest">{formatRecurrence(alert)}</span>
                                             </p>
                                         )}
                                         {alert.status === 'scheduled' && alert.scheduled_at && (

@@ -109,7 +109,11 @@ export default function AlertDetailModal({ notifId, onClose }) {
                                 {alert.is_recurring && (
                                     <Badge variant="primary">
                                         <RefreshCw size={10} className="inline mr-1" />
-                                        {alert.recurrence_type}
+                                        {alert.recurrence_type === 'custom'
+                                            ? (alert.recurrence_interval_value && alert.recurrence_interval_unit
+                                                ? `Every ${alert.recurrence_interval_value} ${alert.recurrence_interval_unit}`
+                                                : (alert.recurrence_interval_minutes ? `Every ${alert.recurrence_interval_minutes} mins` : 'Custom Interval'))
+                                            : (alert.recurrence_type ? alert.recurrence_type.toUpperCase() : 'RECURRING')}
                                     </Badge>
                                 )}
                             </div>

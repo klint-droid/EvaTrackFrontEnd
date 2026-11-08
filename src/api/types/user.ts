@@ -7,7 +7,12 @@ export type UserRole = 'super_admin' | 'evac_admin' | 'evac_personnel';
 
 export interface AssignedCenterSummary {
     id: string;
+    evacuation_center_id?: string;
     name: string;
+    osm_address?: string | null;
+    capacity?: number;
+    current_occupancy?: number;
+    household_count?: number;
 }
 
 export interface User {

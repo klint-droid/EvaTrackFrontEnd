@@ -20,6 +20,11 @@ let analyticsCache = null;
 let analyticsCacheTime = 0;
 const CACHE_DURATION = 30000; // 30 seconds cache expiration
 
+export const clearAnalyticsCache = () => {
+    analyticsCache = null;
+    analyticsCacheTime = 0;
+};
+
 export default function Analytics() {
     // Derive role context from Zustand for UI branching
     const storedUser = useUserStore(state => state.user) || {};

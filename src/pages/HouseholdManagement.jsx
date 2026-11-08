@@ -27,11 +27,18 @@ import { TableLayout } from "../components/ui/TableLayout";
 import { StatCard } from "../components/ui/StatCard";
 import { Pagination } from "../components/ui/Pagination";
 import { TableTabs } from "../components/ui/TableTabs";
+import { clearDashboardCache } from "./Dashboard";
+import { clearAnalyticsCache } from "./Analytics";
 
 // Module-level cache to persist households data across route navigation
 let householdsCache = null;
 let householdsCacheTime = 0;
 const CACHE_DURATION = 30000; // 30 seconds cache expiration
+
+export const clearHouseholdsCache = () => {
+    householdsCache = null;
+    householdsCacheTime = 0;
+};
 
 export default function HouseholdManagement() {
     const navigate = useNavigate();
@@ -193,7 +200,9 @@ export default function HouseholdManagement() {
                     h.household_id === editingHousehold.household_id ? res.data : h
                 )
             );
-            householdsCache = null;
+            clearHouseholdsCache();
+            clearDashboardCache();
+            clearAnalyticsCache();
             setEditingHousehold(null);
         } catch (err) {
             showAlert(err.response?.data?.message || 'Update failed.', 'Update Error', 'danger');
@@ -206,7 +215,9 @@ export default function HouseholdManagement() {
             async () => {
                 try{
                     await deleteHousehold(householdId);
-                    householdsCache = null;
+                    clearHouseholdsCache();
+                    clearDashboardCache();
+                    clearAnalyticsCache();
                     fetchHouseholds(pagination.current_page || 1, null, true);
                 } catch (err) {
                     showAlert(err.response?.data?.message || 'Delete failed.', 'Delete Error', 'danger');

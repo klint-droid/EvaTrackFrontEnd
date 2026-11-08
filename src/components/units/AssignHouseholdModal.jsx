@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle, Check, Loader2, Users } from 'lucide-react';
 import { getUnassignedHouseholds } from '../../api/allocations/getUnassignedHouseholds';
 import { assignHousehold } from '../../api/allocations/assignHousehold';
 
@@ -38,60 +38,68 @@ export default function AssignHouseholdModal({ centerId, unit, onClose, onAssign
         }
     };
 
-    // separate into fits and doesnt fit
     const fits = households.filter(r => r.evacuated_count <= available);
     const doesNotFit = households.filter(r => r.evacuated_count > available);
-    const sorted = [...fits, ...doesNotFit]; // fits first, disabled ones at bottom
+    const sorted = [...fits, ...doesNotFit];
 
     return createPortal(
-        <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9999] p-4 overflow-y-auto">
-            <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm fixed" onClick={onClose} />
-            <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700 my-auto">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+
+            <div className="relative bg-white dark:bg-[#0f1623] border border-slate-200 dark:border-[#1e2a3d] rounded-xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in-95 duration-150 overflow-hidden text-left font-sans">
+
                 {/* Header */}
-                <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-700/60 relative">
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-slate-50">Assign Household</h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
-                        <span className="font-semibold text-slate-700 dark:text-slate-200">{unit.name}</span>
-                        <span className="text-slate-300">•</span>
-                        <span className={`font-semibold ${available <= 0 ? 'text-red-500' : 'text-blue-600'}`}>
-                            {available} slots available
-                        </span>
-                    </p>
-                    <button 
-                        onClick={onClose} 
-                        className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:bg-slate-800 rounded-full transition-all"
+                <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-[#1e2a3d]">
+                    <div>
+                        <h2 className="text-sm font-black text-slate-900 dark:text-white">
+                            Assign Household to {unit.name}
+                        </h2>
+                        <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5">
+                            <span>Select an unassigned household</span>
+                            <span>•</span>
+                            <span className={`font-bold ${available <= 0 ? 'text-rose-500' : 'text-blue-600 dark:text-blue-400'}`}>
+                                {available} slots available
+                            </span>
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1e2a3d] transition-colors"
                     >
-                        <X size={20}/>
+                        <X size={16} />
                     </button>
                 </div>
 
-                <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+                {/* Body */}
+                <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
                     {error && (
-                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-                            <AlertCircle className="text-red-500 flex-shrink-0 mt-0.5" size={16} />
-                            <p className="text-sm text-red-600">{error}</p>
+                        <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-lg flex items-start gap-2.5">
+                            <AlertCircle className="text-rose-500 flex-shrink-0 mt-0.5" size={15} />
+                            <p className="text-xs font-semibold text-rose-600 dark:text-rose-300">{error}</p>
                         </div>
                     )}
 
                     {available <= 0 ? (
-                        <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex flex-col items-center justify-center text-center">
-                            <AlertCircle className="text-red-400 mb-2" size={24} />
-                            <p className="text-sm font-medium text-red-700">This unit is full.</p>
-                            <p className="text-xs text-red-500 mt-1">There are no available slots for new households.</p>
+                        <div className="p-4 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/60 rounded-lg flex flex-col items-center justify-center text-center">
+                            <AlertCircle className="text-rose-400 mb-2" size={22} />
+                            <p className="text-xs font-bold text-rose-700 dark:text-rose-300">This unit is full.</p>
+                            <p className="text-[11px] text-rose-500 mt-0.5">There are no available slots for new households.</p>
                         </div>
                     ) : null}
 
                     {loading ? (
                         <div className="py-8 flex justify-center items-center">
-                            <div className="animate-pulse flex flex-col items-center gap-3">
-                                <div className="h-4 w-32 bg-slate-200 rounded"></div>
-                                <div className="h-3 w-48 bg-slate-100 dark:bg-slate-800 rounded"></div>
+                            <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
+                                <Loader2 size={15} className="animate-spin text-blue-500" />
+                                <span>Loading unassigned households...</span>
                             </div>
                         </div>
                     ) : households.length === 0 ? (
-                        <div className="py-8 text-center border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl">
-                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No unassigned households</p>
-                            <p className="text-xs text-slate-400 mt-1">All households in this center have been assigned.</p>
+                        <div className="py-8 text-center border border-dashed border-slate-200 dark:border-[#263047] bg-slate-50/50 dark:bg-[#1e2a3d]/50 rounded-xl">
+                            <Users className="mx-auto text-slate-300 dark:text-slate-600 mb-2" size={24} />
+                            <p className="text-xs font-bold text-slate-600 dark:text-slate-300">No unassigned households</p>
+                            <p className="text-[11px] text-slate-400 mt-1">All households in this center have been assigned.</p>
                         </div>
                     ) : (
                         <div className="space-y-2">
@@ -102,13 +110,13 @@ export default function AssignHouseholdModal({ centerId, unit, onClose, onAssign
                                 return (
                                     <label
                                         key={record.evacuation_id}
-                                        className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all
-                                            ${exceedsCapacity
-                                                ? 'opacity-50 cursor-not-allowed bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
+                                        className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                                            exceedsCapacity
+                                                ? 'opacity-50 cursor-not-allowed bg-slate-50 dark:bg-[#141b29] border-slate-200 dark:border-[#1e2a3d]'
                                                 : isSelected
-                                                    ? 'border-blue-500 bg-blue-50/50 shadow-[0_0_0_1px_rgba(59,130,246,1)] cursor-pointer'
-                                                    : 'hover:border-slate-300 dark:border-slate-600 border-slate-200 dark:border-slate-700 cursor-pointer bg-white dark:bg-slate-900'
-                                            }`}
+                                                ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 shadow-[0_0_0_1px_rgba(59,130,246,1)] cursor-pointer'
+                                                : 'hover:border-slate-300 dark:hover:border-slate-600 border-slate-200 dark:border-[#263047] cursor-pointer bg-slate-50/50 dark:bg-[#1e2a3d]'
+                                        }`}
                                     >
                                         <input
                                             type="radio"
@@ -120,15 +128,15 @@ export default function AssignHouseholdModal({ centerId, unit, onClose, onAssign
                                             className="w-4 h-4 text-blue-600 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 focus:ring-blue-500"
                                         />
                                         <div className="flex-1 min-w-0">
-                                            <p className={`text-sm font-bold ${isSelected ? 'text-blue-900' : 'text-slate-800 dark:text-slate-100'}`}>
+                                            <p className={`text-xs font-extrabold truncate ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-slate-800 dark:text-slate-100'}`}>
                                                 {record.household?.household_name}
                                             </p>
-                                            <p className={`text-xs mt-0.5 ${isSelected ? 'text-blue-600/80' : 'text-slate-500 dark:text-slate-400'}`}>
+                                            <p className="text-[11px] text-slate-400 mt-0.5">
                                                 {record.evacuated_count} people · ID: {record.evacuation_id}
                                             </p>
                                         </div>
                                         {exceedsCapacity && (
-                                            <span className="text-xs text-red-500 font-semibold bg-red-50 px-2 py-1 rounded-md whitespace-nowrap">
+                                            <span className="text-[10px] text-rose-600 dark:text-rose-400 font-bold bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-800/60 whitespace-nowrap">
                                                 Needs {record.evacuated_count} slots
                                             </span>
                                         )}
@@ -138,27 +146,30 @@ export default function AssignHouseholdModal({ centerId, unit, onClose, onAssign
                         </div>
                     )}
 
-                    {/* legend */}
                     {doesNotFit.length > 0 && available > 0 && (
-                        <p className="text-[11px] font-medium text-slate-400 text-center pt-2">
+                        <p className="text-[11px] font-medium text-slate-400 text-center pt-1">
                             * Grayed out households require more slots than available.
                         </p>
                     )}
                 </div>
 
-                <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
+                {/* Footer */}
+                <div className="flex items-center justify-end gap-2.5 px-5 py-3.5 border-t border-slate-100 dark:border-[#1e2a3d]">
                     <button
+                        type="button"
                         onClick={onClose}
-                        className="px-5 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:text-slate-50 transition-colors"
+                        className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-[#1e2a3d] hover:bg-slate-200 dark:hover:bg-[#263047] rounded-lg transition-all"
                     >
                         Cancel
                     </button>
                     <button
+                        type="button"
                         onClick={handleAssign}
                         disabled={saving || loading || !selected || available <= 0}
-                        className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-sm dark:shadow-none transition-all disabled:opacity-50 flex items-center justify-center min-w-[120px]"
+                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {saving ? 'Assigning...' : 'Assign Household'}
+                        {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                        <span>{saving ? 'Assigning...' : 'Assign Household'}</span>
                     </button>
                 </div>
             </div>

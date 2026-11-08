@@ -64,7 +64,7 @@ export function useEvacuationDetail() {
     centerId: id,
     selectedEventId,
     onMutationSuccess: async (action, data) => {
-      if (action === 'unassign' && data?.unitId) {
+      if ((action === 'unassign' || action === 'assign') && data?.unitId) {
         await unitsDomain.fetchAllocations(data.unitId);
       } else if (action === 'deleteRecord' && unitsDomain.expandedUnit) {
         await unitsDomain.fetchAllocations(unitsDomain.expandedUnit);
@@ -170,6 +170,10 @@ export function useEvacuationDetail() {
     // Household Modals
     viewingHousehold: householdsDomain.viewingHousehold,
     setViewingHousehold: householdsDomain.setViewingHousehold,
+    assignUnitModal: householdsDomain.assignUnitModal,
+    setAssignUnitModal: householdsDomain.setAssignUnitModal,
+    isAssigningUnit: householdsDomain.isAssigningUnit,
+    confirmAssignUnit: householdsDomain.confirmAssignUnit,
     unassignModal: householdsDomain.unassignModal,
     setUnassignModal: householdsDomain.setUnassignModal,
     isUnassigning: householdsDomain.isUnassigning,

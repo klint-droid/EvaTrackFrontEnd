@@ -12,6 +12,9 @@ import { assignHousehold } from "../api/allocations/assignHousehold";
 import { getLookups } from "../api/lookups/getLookups";
 import { useAlert } from "../context/AlertContext";
 import { useUserStore } from "../store/useUserStore";
+import { clearDashboardCache } from "../pages/Dashboard";
+import { clearHouseholdsCache } from "../pages/HouseholdManagement";
+import { clearAnalyticsCache } from "../pages/Analytics";
 
 export const useVerifyHousehold = () => {
   const navigate = useNavigate();
@@ -110,8 +113,8 @@ export const useVerifyHousehold = () => {
     return body?.message || fallback;
   };
 
-  const isUserAdmin = user?.role === "evac_admin";
-  const assignedId = user?.assigned_center?.id || user?.assigned_center_id;
+  const isUserAdmin = user?.role === "evac_admin" || user?.role === "super_admin";
+  const assignedId = user?.assigned_center?.evacuation_center_id || user?.assigned_center?.id || user?.assigned_center_id;
 
   // 1. Centers Query (Cached)
   const { data: centers = [] } = useQuery<any[]>({
@@ -211,10 +214,13 @@ export const useVerifyHousehold = () => {
 
   useEffect(() => {
     if (!user) return;
-    if (assignedId && !activeCenterId) {
+    if (!isUserAdmin && assignedId && activeCenterId !== assignedId) {
+      setActiveCenterId(assignedId);
+      setSelectedUnitId("");
+    } else if (assignedId && !activeCenterId) {
       setActiveCenterId(assignedId);
     }
-  }, [user, assignedId, activeCenterId]);
+  }, [user, isUserAdmin, assignedId, activeCenterId]);
 
   const handleScan = async (rawScan: string) => {
     let householdId = rawScan;
@@ -259,6 +265,7 @@ export const useVerifyHousehold = () => {
           ? household.members.filter((m: any) => !getActiveEvacuation(m)).map((m: any) => m.member_id) 
           : [];
         setSelectedMembers(memberIds);
+        setSelectedUnitId("");
         showMessage("QR scanned successfully. Confirm admission below.");
         setModalError(null);
         setAssignmentModal(true);
@@ -273,6 +280,7 @@ export const useVerifyHousehold = () => {
         });
         setMemberCount(1);
         setSelectedMembers([]);
+        setSelectedUnitId("");
         showMessage("QR scanned. Confirm member count to proceed.");
         setModalError(null);
         setAssignmentModal(true);
@@ -311,6 +319,7 @@ export const useVerifyHousehold = () => {
       ? household.members.filter((m: any) => !getActiveEvacuation(m)).map((m: any) => m.member_id) 
       : [];
     setSelectedMembers(memberIds);
+    setSelectedUnitId("");
     setModalError(null);
     setAssignmentModal(true);
   };
@@ -404,6 +413,7 @@ export const useVerifyHousehold = () => {
     });
     setSelectedMembers(tempHousehold.members.map((m: any) => m.member_id));
     setMemberCount(walkInMembers.length);
+    setSelectedUnitId("");
     setModalError(null);
     setAssignmentModal(true);
   };
@@ -470,7 +480,16 @@ export const useVerifyHousehold = () => {
           throw new Error("Failed to create household. No ID returned.");
         }
 
-        const createdMemberIds = (createdHousehold?.members || []).map((m: any) => m.member_id);
+        const createdMembers = createdHousehold?.members || [];
+        const selectedIndices = new Set(
+          selectedMembers
+            .map((id: any) => (String(id).startsWith('temp-') ? Number(String(id).replace('temp-', '')) : -1))
+            .filter((idx: number) => idx >= 0)
+        );
+        const createdMemberIds =
+          selectedIndices.size > 0 && selectedIndices.size < createdMembers.length
+            ? createdMembers.filter((_: any, idx: number) => selectedIndices.has(idx)).map((m: any) => m.member_id)
+            : createdMembers.map((m: any) => m.member_id);
         if (createdMemberIds.length > 0) {
           finalMemberIds = createdMemberIds;
         }
@@ -482,6 +501,7 @@ export const useVerifyHousehold = () => {
           household_id: finalHouseholdId,
           member_ids: hasMembers ? selectedMembers : undefined,
           center_id: activeCenterId,
+          unit_id: selectedUnitId ? Number(selectedUnitId) : undefined,
         });
       } else {
         const admitIds = finalMemberIds.length > 0
@@ -493,6 +513,7 @@ export const useVerifyHousehold = () => {
           member_ids: admitIds,
           member_count: (!admitIds || admitIds.length === 0) ? Number(memberCount) : undefined,
           center_id: activeCenterId,
+          unit_id: selectedUnitId ? Number(selectedUnitId) : undefined,
         });
       }
 
@@ -500,20 +521,27 @@ export const useVerifyHousehold = () => {
       const evacuation = payload?.evacuation || payload?.record || payload?.evacuation_record || payload;
       const evacuationId = evacuation?.evacuation_id;
 
-      if (selectedUnitId && evacuationId) {
+      if (selectedUnitId && evacuationId && !evacuation?.unit_allocation && !evacuation?.unitAllocation) {
         try {
           await assignHousehold(selectedUnitId, evacuationId);
         } catch (assignErr: any) {
           const assignErrMsg = assignErr.response?.data?.message || "Unit assignment failed.";
-          throw new Error(`Admitted successfully, but allocation failed: ${assignErrMsg}`);
+          if (!String(assignErrMsg).toLowerCase().includes("already assigned")) {
+            throw new Error(`Admitted successfully, but allocation failed: ${assignErrMsg}`);
+          }
         }
       }
 
       // Synchronize caches across the app
+      clearDashboardCache();
+      clearHouseholdsCache();
+      clearAnalyticsCache();
+      queryClient.invalidateQueries({ queryKey: ['centers'] });
       queryClient.invalidateQueries({ queryKey: ['households'] });
-      queryClient.invalidateQueries({ queryKey: ['centerHouseholds', activeCenterId] });
-      queryClient.invalidateQueries({ queryKey: ['centerUnits', activeCenterId] });
-      queryClient.invalidateQueries({ queryKey: ['center', activeCenterId] });
+      queryClient.invalidateQueries({ queryKey: ['centerHouseholds'] });
+      queryClient.invalidateQueries({ queryKey: ['centerUnits'] });
+      queryClient.invalidateQueries({ queryKey: ['center'] });
+      queryClient.invalidateQueries({ queryKey: ['evacuationRecord'] });
 
       setAssignmentModal(false);
       setScannedData(null);
@@ -545,19 +573,19 @@ export const useVerifyHousehold = () => {
 
       const navPayload = {
          ...payload,
+         evacuation,
          household: {
            ...payload?.household,
            household_id: finalHouseholdId
          }
       };
 
+      navigateToHouseholdDetail(navPayload);
+
       showAlert(
         getMessage(res, "Admission complete."),
         "Success",
-        "success",
-        () => {
-          navigateToHouseholdDetail(navPayload);
-        }
+        "success"
       );
     } catch (err: any) {
       const errMsg = err.response?.data?.message || err.message || "Admission failed.";

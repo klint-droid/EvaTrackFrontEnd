@@ -93,11 +93,8 @@ export default function Profile() {
     };
 
     useEffect(() => {
-        const now = Date.now();
-        const isCacheExpired = !profileCacheTime || (now - profileCacheTime > CACHE_DURATION);
-        if (isCacheExpired || !profileCache) {
-            fetchUserProfile(!profileCache);
-        }
+        // Always refresh user profile on mount so assigned center occupancy is up-to-date
+        fetchUserProfile(!profileCache);
     }, []);
 
     useEffect(() => {
@@ -510,7 +507,7 @@ export default function Profile() {
 
                                     {/* Direct Access Button */}
                                     <button
-                                        onClick={() => navigate(`/evacuation-centers/${profileData.assigned_center.evacuation_center_id}`)}
+                                        onClick={() => navigate(`/evacuation-centers/${profileData.assigned_center.evacuation_center_id || profileData.assigned_center.id}`)}
                                         className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md dark:shadow-none shadow-blue-600/20 transition-all flex-shrink-0 cursor-pointer"
                                     >
                                         <Building2 size={16} />
@@ -524,14 +521,19 @@ export default function Profile() {
                                     <div className="flex items-center justify-between text-xs">
                                         <span className="font-semibold text-slate-600 dark:text-slate-400">Capacity Utilization</span>
                                         <span className="font-bold text-slate-800 dark:text-slate-200">
-                                            {profileData.assigned_center.current_occupancy || 0} / {profileData.assigned_center.capacity || 100} Occupied
+                                            {profileData.assigned_center.current_occupancy ?? 0} / {profileData.assigned_center.capacity || 100} Occupied
+                                            {profileData.assigned_center.household_count != null && (
+                                                <span className="ml-1.5 text-slate-500 dark:text-slate-400 font-medium">
+                                                    ({profileData.assigned_center.household_count} {profileData.assigned_center.household_count === 1 ? "Household" : "Households"})
+                                                </span>
+                                            )}
                                         </span>
                                     </div>
                                     <div className="h-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                                         <div 
                                             className="h-full bg-blue-600 rounded-full transition-all duration-500" 
                                             style={{ 
-                                                width: `${Math.min(100, Math.round(((profileData.assigned_center.current_occupancy || 0) / (profileData.assigned_center.capacity || 100)) * 100))}%` 
+                                                width: `${Math.min(100, Math.round(((profileData.assigned_center.current_occupancy ?? 0) / (profileData.assigned_center.capacity || 100)) * 100))}%` 
                                             }} 
                                         />
                                     </div>

@@ -30,6 +30,7 @@ export default function UnitsTableTab({
     toggleUnit,
     allocations,
     fetchAllocations,
+    viewingUnit,
     setViewingUnit,
     setUnitModal,
     setEditingUnit,
@@ -125,20 +126,23 @@ export default function UnitsTableTab({
                                 const capacity = Number(unit.max_capacity ?? 0);
                                 const percent = capacity > 0 ? Math.round((occupancy / capacity) * 100) : 0;
                                 const isExpanded = expandedUnit === unit.unit_id;
-                                const unitAllocations = allocations[unit.unit_id] || [];
+                                const unitAllocations = allocations[unit.unit_id] ?? unit.unit_allocations ?? unit.unitAllocations ?? [];
                                 const isChecked = selectedUnits.includes(unit.unit_id);
+                                const isViewing = viewingUnit?.unit_id === unit.unit_id;
 
                                 return (
                                     <Fragment key={unit.unit_id}>
                                         <TableRow 
-                                            isSelected={isChecked} 
+                                            isSelected={isChecked || isViewing} 
                                             onClick={() => {
                                                 setViewingUnit(unit);
                                                 if (!allocations[unit.unit_id]) {
                                                     fetchAllocations(unit.unit_id);
                                                 }
                                             }}
-                                            className="cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors"
+                                            className={`cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors ${
+                                                isViewing ? 'bg-blue-50/50 dark:bg-blue-950/30' : ''
+                                            }`}
                                         >
                                             <TableCell onClick={(e) => e.stopPropagation()}>
                                                 <Checkbox
@@ -252,7 +256,7 @@ export default function UnitsTableTab({
                                                             )}
                                                         </div>
 
-                                                        {!allocations[unit.unit_id] ? (
+                                                        {!allocations[unit.unit_id] && !unit.unit_allocations && !unit.unitAllocations ? (
                                                             <p className="text-sm font-medium text-slate-400 px-1">Loading allocations...</p>
                                                         ) : unitAllocations.length === 0 ? (
                                                             <p className="text-xs font-medium text-slate-400 px-1">No households assigned yet.</p>
@@ -281,7 +285,9 @@ export default function UnitsTableTab({
                                                                             <button
                                                                                 onClick={() => setUnassignModal({
                                                                                     unitId: unit.unit_id,
-                                                                                    allocationId: alloc.allocation_id
+                                                                                    allocationId: alloc.allocation_id,
+                                                                                    householdName: alloc.evacuation_record?.household?.household_name || "Household",
+                                                                                    unitName: unit.name
                                                                                 })}
                                                                                 className="px-2 py-1 text-[11px] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded font-bold transition-colors"
                                                                             >

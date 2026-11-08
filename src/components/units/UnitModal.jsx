@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle, Home, Users, Check, Loader2 } from 'lucide-react';
 import { getAccommodationTypes } from '../../api/units/getAccommodationTypes';
 import { createUnit } from '../../api/units/createUnit';
 import { updateUnit } from '../../api/units/updateUnit';
-import Button from '../../ui/Button';
 
 export default function UnitModal({ centerId, unit, onClose, onSaved, units, centerCapacity }) {
     const [types, setTypes] = useState([]);
@@ -40,17 +39,15 @@ export default function UnitModal({ centerId, unit, onClose, onSaved, units, cen
         }
 
         const newCapacity = Number(form.max_capacity);
-        
-        // Check if unit capacity alone exceeds center capacity
+
         if (newCapacity > centerCapacity) {
             setError(`Unit capacity (${newCapacity}) cannot exceed center capacity (${centerCapacity}).`);
             return;
         }
 
-        // Check if total would exceed center capacity
         const existingTotal = getTotalWithoutCurrent();
         const newTotal = existingTotal + newCapacity;
-        
+
         if (newTotal > centerCapacity) {
             setError(
                 `Total unit capacity would be ${newTotal}, exceeding center capacity of ${centerCapacity}. ` +
@@ -82,50 +79,59 @@ export default function UnitModal({ centerId, unit, onClose, onSaved, units, cen
     };
 
     return createPortal(
-        <div className="fixed inset-0 w-screen h-screen flex justify-center items-center z-[9999] p-4 overflow-y-auto">
-            <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm fixed" onClick={onClose} />
-            <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700 my-auto">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+
+            <div className="relative bg-white dark:bg-[#0f1623] border border-slate-200 dark:border-[#1e2a3d] rounded-xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in-95 duration-150 overflow-hidden text-left font-sans">
+
                 {/* Header */}
-                <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-700/60 relative">
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-slate-50">
-                        {unit ? 'Edit Accommodation Unit' : 'Add Accommodation Unit'}
-                    </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        Configure the unit details and its capacity limit.
-                    </p>
-                    <Button 
-                        variant="ghost"
-                        size="icon"
-                        onClick={onClose} 
-                        className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:text-slate-300 rounded-full"
+                <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-[#1e2a3d]">
+                    <div>
+                        <h2 className="text-sm font-black text-slate-900 dark:text-white">
+                            {unit ? 'Edit Accommodation Unit' : 'Add Accommodation Unit'}
+                        </h2>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                            Configure the room or unit details and capacity limit
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1e2a3d] transition-colors"
                     >
-                        <X size={20}/>
-                    </Button>
+                        <X size={16} />
+                    </button>
                 </div>
 
-                <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+                {/* Body */}
+                <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
                     {error && (
-                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-                            <AlertCircle className="text-red-500 flex-shrink-0 mt-0.5" size={16} />
-                            <p className="text-sm text-red-600">{error}</p>
+                        <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-lg flex items-start gap-2.5">
+                            <AlertCircle className="text-rose-500 flex-shrink-0 mt-0.5" size={15} />
+                            <p className="text-xs font-semibold text-rose-600 dark:text-rose-300">{error}</p>
                         </div>
                     )}
 
-                    <div className="space-y-4">
+                    <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide flex items-center gap-1">
+                            <Home size={11} /> Unit Name
+                        </label>
+                        <input
+                            type="text"
+                            className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#1e2a3d] border border-slate-200 dark:border-[#263047] text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-all"
+                            placeholder="e.g. Room A, Tent 1"
+                            value={form.name}
+                            onChange={e => setForm({ ...form, name: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Unit Name</label>
-                            <input
-                                type="text"
-                                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 outline-none transition-all"
-                                placeholder="e.g. Room A, Tent 1"
-                                value={form.name}
-                                onChange={e => setForm({ ...form, name: e.target.value })}
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Unit Type</label>
+                            <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                                Unit Type
+                            </label>
                             <select
-                                className="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 outline-none cursor-pointer focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 transition-all"
+                                className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#1e2a3d] border border-slate-200 dark:border-[#263047] text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 transition-all cursor-pointer"
                                 value={form.type_id}
                                 onChange={e => setForm({ ...form, type_id: e.target.value })}
                             >
@@ -135,42 +141,47 @@ export default function UnitModal({ centerId, unit, onClose, onSaved, units, cen
                                 ))}
                             </select>
                         </div>
+
                         <div className="space-y-1.5">
                             <div className="flex items-center justify-between">
-                                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Max Capacity</label>
-                                <span className="text-[10px] font-medium text-slate-400">
-                                    Center Capacity: {centerCapacity}
+                                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide flex items-center gap-1">
+                                    <Users size={11} /> Max Capacity
+                                </label>
+                                <span className="text-[10px] font-semibold text-slate-400">
+                                    Max: {centerCapacity}
                                 </span>
                             </div>
                             <input
                                 type="number"
                                 min="1"
                                 max={centerCapacity}
-                                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 outline-none transition-all"
+                                className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#1e2a3d] border border-slate-200 dark:border-[#263047] text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-all"
                                 placeholder="e.g. 20"
                                 value={form.max_capacity}
-                                onChange={e => setForm({ ...form, max_capacity: e.target.value})}
+                                onChange={e => setForm({ ...form, max_capacity: e.target.value })}
                             />
                         </div>
                     </div>
                 </div>
 
-                <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
-                    <Button 
-                        variant="ghost"
-                        onClick={onClose} 
-                        className="font-bold text-slate-600 dark:text-slate-300"
+                {/* Footer */}
+                <div className="flex items-center justify-end gap-2.5 px-5 py-3.5 border-t border-slate-100 dark:border-[#1e2a3d]">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-[#1e2a3d] hover:bg-slate-200 dark:hover:bg-[#263047] rounded-lg transition-all"
                     >
                         Cancel
-                    </Button>
-                    <Button
-                        variant="primary"
+                    </button>
+                    <button
+                        type="button"
                         onClick={handleSubmit}
-                        isLoading={loading}
-                        className="min-w-[120px]"
+                        disabled={loading}
+                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {unit ? 'Save Changes' : 'Create Unit'}
-                    </Button>
+                        {loading ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                        <span>{unit ? 'Save Changes' : 'Create Unit'}</span>
+                    </button>
                 </div>
             </div>
         </div>,

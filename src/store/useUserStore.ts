@@ -47,9 +47,11 @@ export const useUserStore = create<UserState>((set, get) => ({
           'Evacuation Personnel'
         ),
         assigned_center: u.assigned_center ? {
+          ...u.assigned_center,
           id: u.assigned_center.evacuation_center_id || u.assigned_center.id,
+          evacuation_center_id: u.assigned_center.evacuation_center_id || u.assigned_center.id,
           name: u.assigned_center.name,
-        } : (u.assigned_center_id ? { id: u.assigned_center_id, name: '' } : null),
+        } : (u.assigned_center_id ? { id: u.assigned_center_id, evacuation_center_id: u.assigned_center_id, name: '' } : null),
       } as UserProfile;
       localStorage.setItem("user", JSON.stringify(normalizedUser));
       set({ user: normalizedUser });

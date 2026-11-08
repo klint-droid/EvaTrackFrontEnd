@@ -73,7 +73,7 @@ function App() {
 
                 {/* Operational routes — Evac Admin + Evac Personnel only (NOT Super Admin) */}
                 <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["evac_admin", "evac_personnel"]}><Dashboard /></ProtectedRoute>} />
-                <Route path="/evacuation-alerts" element={<ProtectedRoute allowedRoles={["evac_admin", "evac_personnel"]}><EvacuationAlerts /></ProtectedRoute>} />
+                <Route path="/evacuation-alerts" element={<ProtectedRoute allowedRoles={["evac_admin"]}><EvacuationAlerts /></ProtectedRoute>} />
                 <Route path="/household-verification" element={<ProtectedRoute allowedRoles={["evac_personnel"]}><VerifyHousehold /></ProtectedRoute>} />
                 <Route path="/events" element={<ProtectedRoute allowedRoles={["evac_admin"]}><EventManagement /></ProtectedRoute>} />
 

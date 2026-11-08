@@ -95,7 +95,7 @@ const BottomNav = () => {
         {
             title: "Communications & Intelligence",
             items: [
-                { label: "SMS & Push Broadcast", desc: "Send emergency alerts to citizens", path: "/evacuation-alerts", icon: Megaphone, color: "bg-fuchsia-600", roles: ["evac_admin", "evac_personnel"] },
+                { label: "SMS & Push Broadcast", desc: "Send emergency alerts to citizens", path: "/evacuation-alerts", icon: Megaphone, color: "bg-fuchsia-600", roles: ["evac_admin"] },
                 { label: "Reports & Analytics", desc: "Charts, demographics & logs", path: "/analytics", icon: BarChart3, color: "bg-teal-600", roles: ["evac_admin", "evac_personnel"] },
                 { label: "User Management", desc: "Personnel & account control", path: "/user-management", icon: UserCog, color: "bg-violet-600", roles: ["evac_admin", "super_admin"] },
                 { label: "My Profile", desc: "Security, theme & settings", path: "/profile", icon: UserCircle, color: "bg-slate-700", roles: ["evac_admin", "evac_personnel", "super_admin"] },

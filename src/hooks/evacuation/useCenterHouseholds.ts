@@ -2,13 +2,17 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getRecordsByCenter } from '../../api/evacuationRecords/getRecordsByCenter';
 import { deleteRecord } from '../../api/evacuationRecords/deleteRecord';
+import { assignHousehold } from '../../api/allocations/assignHousehold';
 import { unassignHousehold } from '../../api/allocations/unassignHousehold';
 import { useAlert } from '../../context/AlertContext';
+import { clearDashboardCache } from '../../pages/Dashboard';
+import { clearHouseholdsCache } from '../../pages/HouseholdManagement';
+import { clearAnalyticsCache } from '../../pages/Analytics';
 
 export interface UseCenterHouseholdsOptions {
   centerId?: string;
   selectedEventId?: string;
-  onMutationSuccess?: (action: 'unassign' | 'deleteRecord', data?: any) => void;
+  onMutationSuccess?: (action: 'assign' | 'unassign' | 'deleteRecord', data?: any) => void;
 }
 
 export function useCenterHouseholds({
@@ -29,6 +33,8 @@ export function useCenterHouseholds({
   // Selection & Modals
   const [selectedHouseholds, setSelectedHouseholds] = useState<any[]>([]);
   const [viewingHousehold, setViewingHousehold] = useState<any>(null);
+  const [assignUnitModal, setAssignUnitModal] = useState<any>(null);
+  const [isAssigningUnit, setIsAssigningUnit] = useState<boolean>(false);
   const [unassignModal, setUnassignModal] = useState<any>(null);
   const [isUnassigning, setIsUnassigning] = useState<boolean>(false);
   const [deleteRecordModal, setDeleteRecordModal] = useState<any>(null);
@@ -54,11 +60,38 @@ export function useCenterHouseholds({
     return queryClient.invalidateQueries({ queryKey: ['centerHouseholds', centerId] });
   };
 
+  const confirmAssignUnit = async () => {
+    if (!assignUnitModal) return;
+    setIsAssigningUnit(true);
+    try {
+      await assignHousehold(assignUnitModal.unitId, assignUnitModal.evacuationId);
+      clearDashboardCache();
+      clearHouseholdsCache();
+      clearAnalyticsCache();
+      queryClient.invalidateQueries({ queryKey: ['centers'] });
+      queryClient.invalidateQueries({ queryKey: ['centerUnits', centerId] });
+      queryClient.invalidateQueries({ queryKey: ['centerHouseholds', centerId] });
+      queryClient.invalidateQueries({ queryKey: ['center', centerId] });
+      if (onMutationSuccess) {
+        onMutationSuccess('assign', assignUnitModal);
+      }
+      setAssignUnitModal(null);
+    } catch (err: any) {
+      showAlert(err.response?.data?.message || 'Failed to assign accommodation unit.', 'Error', 'danger');
+    } finally {
+      setIsAssigningUnit(false);
+    }
+  };
+
   const confirmUnassign = async () => {
     if (!unassignModal) return;
     setIsUnassigning(true);
     try {
       await unassignHousehold(unassignModal.unitId, unassignModal.allocationId);
+      clearDashboardCache();
+      clearHouseholdsCache();
+      clearAnalyticsCache();
+      queryClient.invalidateQueries({ queryKey: ['centers'] });
       queryClient.invalidateQueries({ queryKey: ['centerUnits', centerId] });
       queryClient.invalidateQueries({ queryKey: ['centerHouseholds', centerId] });
       queryClient.invalidateQueries({ queryKey: ['center', centerId] });
@@ -78,6 +111,10 @@ export function useCenterHouseholds({
     setIsDeletingRecord(true);
     try {
       await deleteRecord(deleteRecordModal);
+      clearDashboardCache();
+      clearHouseholdsCache();
+      clearAnalyticsCache();
+      queryClient.invalidateQueries({ queryKey: ['centers'] });
       queryClient.invalidateQueries({ queryKey: ['center', centerId] });
       queryClient.invalidateQueries({ queryKey: ['centerUnits', centerId] });
       queryClient.invalidateQueries({ queryKey: ['centerHouseholds', centerId] });
@@ -157,6 +194,10 @@ export function useCenterHouseholds({
     setSelectedHouseholds,
     viewingHousehold,
     setViewingHousehold,
+    assignUnitModal,
+    setAssignUnitModal,
+    isAssigningUnit,
+    confirmAssignUnit,
     unassignModal,
     setUnassignModal,
     isUnassigning,

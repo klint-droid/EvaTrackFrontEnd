@@ -69,6 +69,9 @@ export interface NotificationBase {
   status: 'sent' | 'failed' | 'scheduled' | 'pending' | 'cancelled' | null;
   target_filter: string | null;
   recurrence_type: string | null;
+  recurrence_interval_value?: number | null;
+  recurrence_interval_unit?: string | null;
+  recurrence_interval_minutes?: number | null;
   sender: User | null;
 }
 

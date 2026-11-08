@@ -52,6 +52,7 @@ export default function UserTable({
   getRoleLabel,
   selectedUsers = [],
   setSelectedUsers,
+  viewingUser,
   onView,
 }) {
   const [columnFilters, setColumnFilters] = useState({
@@ -169,8 +170,16 @@ export default function UserTable({
             ) : (
               filteredUsers.map((user) => {
                 const isChecked = selectedUsers.includes(user.user_id);
+                const isViewing = viewingUser?.user_id === user.user_id;
                 return (
-                  <TableRow key={user.user_id} isSelected={isChecked} onClick={onView ? () => onView(user) : undefined} className="cursor-pointer">
+                  <TableRow
+                    key={user.user_id}
+                    isSelected={isChecked || isViewing}
+                    onClick={onView ? () => onView(user) : undefined}
+                    className={`cursor-pointer transition-colors ${
+                      isViewing ? "bg-blue-50/50 dark:bg-blue-950/30" : ""
+                    }`}
+                  >
                     <TableCell>
                       <Checkbox
                         checked={isChecked}

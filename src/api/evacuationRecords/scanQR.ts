@@ -6,6 +6,7 @@ export interface ScanQRPayload {
   event_id?: string | null;
   member_ids?: string[];
   center_id?: string | null;
+  unit_id?: number | string | null;
 }
 
 export interface ScanQRResponse {

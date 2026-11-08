@@ -21,6 +21,11 @@ let dashboardCache = null;
 let dashboardCacheTime = 0;
 const CACHE_DURATION = 30000; // 30 seconds cache expiration
 
+export const clearDashboardCache = () => {
+    dashboardCache = null;
+    dashboardCacheTime = 0;
+};
+
 const Dashboard = () => {
     // Derive role context from Zustand for UI branching
     const storedUser = useUserStore(state => state.user) || {};

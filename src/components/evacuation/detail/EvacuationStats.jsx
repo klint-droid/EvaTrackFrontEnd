@@ -6,13 +6,21 @@ import React from 'react';
  * Adheres to Single Responsibility Principle (SRP).
  * Strictly responsible for displaying capacity, unit counts, and occupancy numbers.
  */
-export default function EvacuationStats({ center, units }) {
+export default function EvacuationStats({ center, units = [], evacuatedHouseholds = [] }) {
     if (!center) return null;
 
-    const totalOccupancy = units.reduce(
+    const unitsOccupancy = units.reduce(
         (sum, u) => sum + (parseInt(u.current_occupancy, 10) || 0),
         0
     );
+
+    const householdsOccupancy = evacuatedHouseholds.reduce(
+        (sum, record) => sum + (parseInt(record.evacuated_count ?? record.household?.member_count, 10) || 0),
+        0
+    );
+
+    const centerOccupancy = parseInt(center.current_occupancy, 10) || 0;
+    const totalOccupancy = Math.max(householdsOccupancy, centerOccupancy, unitsOccupancy);
 
     return (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
