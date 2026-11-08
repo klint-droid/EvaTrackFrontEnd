@@ -31,13 +31,13 @@ API.interceptors.response.use(
 
       // 401: Unauthorized / Session Expired
       if (status === 401) {
-        const hadToken = !!localStorage.getItem("token");
+        const hadSession = !!localStorage.getItem("user") || !!localStorage.getItem("token");
         localStorage.removeItem("token");
         localStorage.removeItem("user");
 
         // Avoid infinite redirect loop if already on login or landing
         const currentPath = window.location.pathname;
-        if (hadToken && currentPath !== "/login" && currentPath !== "/") {
+        if (hadSession && currentPath !== "/login" && currentPath !== "/") {
           window.location.href = "/login?session_expired=1";
         }
       }

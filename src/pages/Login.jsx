@@ -99,7 +99,9 @@ function Login() {
         password,
       });
 
-      localStorage.setItem("token", response.data.token);
+      // Remove any legacy token from localStorage.
+      // Authentication is now secured via HttpOnly access_token cookie set by the backend.
+      localStorage.removeItem("token");
       const loggedInUser = response.data.user;
       useUserStore.getState().setUser(loggedInUser);
 
