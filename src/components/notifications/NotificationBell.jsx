@@ -10,7 +10,8 @@ import {
     ChevronRight,
     Loader2,
     Package,
-    CheckCircle2
+    CheckCircle2,
+    AlertTriangle
 } from 'lucide-react';
 import { useUserNotifications } from '../../hooks/useUserNotifications';
 
@@ -114,6 +115,8 @@ export default function NotificationBell() {
             navigate(notif.data.link);
         } else if (notif.data?.request_id) {
             navigate('/resource-requests');
+        } else if (notif.data?.report_id) {
+            navigate('/center-issue-reports');
         } else if (notif.data?.center_id) {
             navigate(`/evacuation-centers/${notif.data.center_id}`);
         }
@@ -121,6 +124,18 @@ export default function NotificationBell() {
 
     const getIconForType = (type) => {
         switch (type) {
+            case 'center_issue_created':
+                return (
+                    <div className="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 flex items-center justify-center flex-shrink-0">
+                        <AlertTriangle size={16} />
+                    </div>
+                );
+            case 'center_issue_status':
+                return (
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+                        <CheckCircle2 size={16} />
+                    </div>
+                );
             case 'resource_request_created':
                 return (
                     <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0">
