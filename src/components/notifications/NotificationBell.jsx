@@ -8,7 +8,9 @@ import {
     Info,
     ExternalLink,
     ChevronRight,
-    Loader2
+    Loader2,
+    Package,
+    CheckCircle2
 } from 'lucide-react';
 import { useUserNotifications } from '../../hooks/useUserNotifications';
 
@@ -107,14 +109,30 @@ export default function NotificationBell() {
             await markAsRead(notif.id);
         }
 
-        if (notif.data?.center_id) {
-            setIsOpen(false);
+        setIsOpen(false);
+        if (notif.data?.link) {
+            navigate(notif.data.link);
+        } else if (notif.data?.request_id) {
+            navigate('/resource-requests');
+        } else if (notif.data?.center_id) {
             navigate(`/evacuation-centers/${notif.data.center_id}`);
         }
     };
 
     const getIconForType = (type) => {
         switch (type) {
+            case 'resource_request_created':
+                return (
+                    <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0">
+                        <Package size={16} />
+                    </div>
+                );
+            case 'resource_request_status':
+                return (
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+                        <CheckCircle2 size={16} />
+                    </div>
+                );
             case 'center_assignment':
                 return (
                     <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
