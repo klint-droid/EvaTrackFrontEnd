@@ -8,7 +8,7 @@ export interface CenterIssueReport {
     handled_by: string | null;
     category_id: number;
     title: string;
-    description: string;
+    description: string | null;
     severity_id: number;
     status_id: number;
     created_at: string;

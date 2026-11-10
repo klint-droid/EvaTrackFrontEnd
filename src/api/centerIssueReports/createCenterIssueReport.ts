@@ -5,7 +5,7 @@ export interface CreateCenterIssueReportPayload {
     evacuation_center_id?: string | null;
     category: 'incident' | 'facility_issue' | 'health_issue' | 'safety_issue' | 'other';
     title: string;
-    description: string;
+    description?: string | null;
     severity: 'low' | 'medium' | 'high' | 'critical';
 }
 

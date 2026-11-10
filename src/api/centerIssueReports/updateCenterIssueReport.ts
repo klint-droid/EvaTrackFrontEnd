@@ -4,7 +4,7 @@ import type { CenterIssueReport } from '../types';
 export interface UpdateCenterIssueReportPayload {
     category?: 'incident' | 'facility_issue' | 'health_issue' | 'safety_issue' | 'other';
     title?: string;
-    description?: string;
+    description?: string | null;
     severity?: 'low' | 'medium' | 'high' | 'critical';
 }
 

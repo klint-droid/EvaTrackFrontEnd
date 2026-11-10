@@ -239,7 +239,7 @@ export const useCenterIssueReports = () => {
   };
 
   const handleSubmit = async () => {
-    if (!form.category || !form.title || !form.description || !form.severity) {
+    if (!form.category || !form.title || !form.severity) {
       showMessage('Please complete all required fields.', 'error');
       return;
     }
@@ -255,7 +255,7 @@ export const useCenterIssueReports = () => {
       const formData = new FormData();
       formData.append('category', form.category);
       formData.append('title', form.title);
-      formData.append('description', form.description);
+      formData.append('description', form.description ? form.description.trim() : '');
       formData.append('severity', form.severity);
       if (canChooseCenter && form.evacuation_center_id) {
           formData.append('evacuation_center_id', form.evacuation_center_id);
@@ -266,7 +266,7 @@ export const useCenterIssueReports = () => {
       payloadToSubmit = {
         category: form.category,
         title: form.title,
-        description: form.description,
+        description: form.description?.trim() ? form.description.trim() : null,
         severity: form.severity,
       };
       if (canChooseCenter) {

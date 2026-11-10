@@ -82,7 +82,7 @@ export default function ReportModal({
             {form.category === 'other' && (
               <div className="p-2.5 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-800/40 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2 animate-in fade-in duration-150">
                 <AlertTriangle size={14} className="text-amber-500 flex-shrink-0" />
-                <span>Selected category is <strong>Other</strong>. Please specify details in the <strong>Title</strong> and <strong>Description</strong> below.</span>
+                <span>Selected category is <strong>Other</strong>. Please specify details in the <strong>Title</strong> or <strong>Description</strong> below.</span>
               </div>
             )}
           </div>
@@ -124,13 +124,13 @@ export default function ReportModal({
           {/* Description */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
-              Description
+              Description <span className="text-[10px] font-normal text-slate-400 lowercase">(optional)</span>
             </label>
             <textarea
               rows="3"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Provide specific details or immediate assistance required..."
+              placeholder="Provide specific details or immediate assistance required (optional)..."
               className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#1e2a3d] border border-slate-200 dark:border-[#263047] text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 resize-none transition-all"
             />
           </div>
