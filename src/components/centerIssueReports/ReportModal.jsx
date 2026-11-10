@@ -1,23 +1,15 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { 
-  X, Wrench, HeartPulse, Shield, FileWarning, AlertTriangle, 
-  MapPin, UploadCloud, Loader2, Send 
+  X, AlertTriangle, MapPin, UploadCloud, Loader2, Send 
 } from 'lucide-react';
 
 const CATEGORY_ITEMS = [
-  { value: 'facility_issue', label: 'Facility', icon: Wrench },
-  { value: 'health_issue',   label: 'Health',   icon: HeartPulse },
-  { value: 'safety_issue',   label: 'Safety',   icon: Shield },
-  { value: 'incident',       label: 'Incident', icon: FileWarning },
-  { value: 'other',          label: 'Other',    icon: AlertTriangle },
-];
-
-const SEVERITY_ITEMS = [
-  { value: 'low',      label: 'Low',      color: 'border-slate-300 dark:border-slate-600 text-slate-500' },
-  { value: 'medium',   label: 'Medium',   color: 'border-amber-400 bg-amber-50 dark:bg-amber-950/40 text-amber-600 font-bold' },
-  { value: 'high',     label: 'High',     color: 'border-orange-400 bg-orange-50 dark:bg-orange-950/40 text-orange-600 font-bold' },
-  { value: 'critical', label: 'Critical', color: 'border-rose-400 bg-rose-50 dark:bg-rose-950/40 text-rose-600 font-bold' },
+  { value: 'facility_issue', label: 'Facility Issue' },
+  { value: 'health_issue',   label: 'Health Issue' },
+  { value: 'safety_issue',   label: 'Safety Issue' },
+  { value: 'incident',       label: 'Incident' },
+  { value: 'other',          label: 'Other' },
 ];
 
 export default function ReportModal({
@@ -53,36 +45,40 @@ export default function ReportModal({
         {/* Body */}
         <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
 
-          {/* Category Toggle */}
+          {/* Issue Name */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+              Issue Name
+            </label>
+            <input
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              placeholder="e.g. Water pipe leakage in Hall B"
+              className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#1e2a3d] border border-slate-200 dark:border-[#263047] text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-all"
+            />
+          </div>
+
+          {/* Category Dropdown */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
               Category
             </label>
-            <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
-              {CATEGORY_ITEMS.map(({ value, label, icon: Icon }) => {
-                const isSelected = form.category === value;
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setForm({ ...form, category: value })}
-                    className={`flex flex-col items-center py-2 px-1 border rounded-lg cursor-pointer transition-all text-center ${
-                      isSelected
-                        ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-black shadow-xs'
-                        : 'border-slate-200 dark:border-[#263047] text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:bg-[#1e2a3d]'
-                    }`}
-                  >
-                    <Icon size={16} className="mb-1" />
-                    <span className="text-[10px] font-bold truncate max-w-full">{label}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <select
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+              className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#1e2a3d] border border-slate-200 dark:border-[#263047] text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 transition-all cursor-pointer"
+            >
+              {CATEGORY_ITEMS.map(({ value, label }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
 
             {form.category === 'other' && (
               <div className="p-2.5 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-800/40 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2 animate-in fade-in duration-150">
                 <AlertTriangle size={14} className="text-amber-500 flex-shrink-0" />
-                <span>Selected category is <strong>Other</strong>. Please specify details in the <strong>Title</strong> or <strong>Description</strong> below.</span>
+                <span>Selected category is <strong>Other</strong>. Please specify details in the <strong>Issue Name</strong> or <strong>Description</strong> below.</span>
               </div>
             )}
           </div>
@@ -107,19 +103,6 @@ export default function ReportModal({
               </select>
             </div>
           )}
-
-          {/* Title */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
-              Issue Title
-            </label>
-            <input
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="e.g. Water pipe leakage in Hall B"
-              className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#1e2a3d] border border-slate-200 dark:border-[#263047] text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-all"
-            />
-          </div>
 
           {/* Description */}
           <div className="space-y-1.5">
