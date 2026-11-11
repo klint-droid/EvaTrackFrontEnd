@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     Bell, Plus, Eye, Trash2, Clock, RefreshCw,
     ChevronLeft, ChevronRight, MoreHorizontal,
-    TrendingUp, Search, Filter, CheckCircle2, Play, XCircle
+    Search, Filter, CheckCircle2, Play, XCircle
 } from 'lucide-react';
 
 import { getAlerts } from '../api/alerts/getAlerts';
@@ -126,16 +126,6 @@ export default function EvacuationAlerts() {
 
 
 
-    // Derived statistics
-    const stats = (() => {
-        if (!alerts.length) return { rate: 0, sent: 0, total: 0, failed: 0 };
-        const total   = alerts.reduce((s, a) => s + (a.recipients_count || 0), 0);
-        const sent    = alerts.filter(a => a.status === 'sent').reduce((s, a) => s + (a.recipients_count || 0), 0);
-        const failed  = alerts.filter(a => a.status === 'failed').length;
-        const rate    = total > 0 ? Math.round((sent / total) * 100) : 0;
-        return { rate, sent, total, failed };
-    })();
-
     // Client-side filtering for search & filters
     const filteredAlerts = alerts.filter(alert => {
         const matchesSearch = alert.message?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -160,60 +150,6 @@ export default function EvacuationAlerts() {
                 {canCreate && (
                     <button type="button" onClick={() => setCreateModal(true)} className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 transition-all active:scale-[0.98]"><Megaphone size={15} /><span>Create Broadcast Alert</span></button>
                 )}
-            </div>
-
-            {/* ── Stats Cards Row ── */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                {/* Alerts Sent (24h) */}
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-5 flex flex-col gap-1">
-                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Alerts Sent (24h)</p>
-                    {loading ? (
-                        <div className="flex items-baseline gap-3 mt-1 animate-pulse">
-                            <div className="h-9 w-24 bg-slate-200 dark:bg-slate-700/80 rounded-lg" />
-                            <div className="h-4 w-12 bg-slate-100 dark:bg-slate-800 rounded" />
-                        </div>
-                    ) : (
-                        <div className="flex items-baseline gap-3">
-                            <p className="text-4xl font-black text-slate-900 dark:text-slate-50 tracking-tight leading-none">{stats.total.toLocaleString()}</p>
-                            <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                                <TrendingUp size={12} />
-                                {stats.rate > 0 ? `${stats.rate}%` : '—'}
-                            </span>
-                        </div>
-                    )}
-                </div>
-
-                {/* Delivery Rate */}
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-5 flex flex-col gap-1">
-                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Delivery Rate</p>
-                    {loading ? (
-                        <div className="flex items-baseline gap-3 mt-1 animate-pulse">
-                            <div className="h-9 w-20 bg-slate-200 dark:bg-slate-700/80 rounded-lg" />
-                            <div className="h-4 w-20 bg-slate-100 dark:bg-slate-800 rounded" />
-                        </div>
-                    ) : (
-                        <div className="flex items-baseline gap-3">
-                            <p className="text-4xl font-black text-slate-900 dark:text-slate-50 tracking-tight leading-none">{stats.rate}%</p>
-                            <span className="text-xs font-medium text-slate-400">Network avg</span>
-                        </div>
-                    )}
-                </div>
-
-                {/* Active Broadcasts */}
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-5 flex flex-col gap-1 border-l-4 border-l-red-500">
-                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Active Broadcasts</p>
-                    {loading ? (
-                        <div className="flex items-baseline gap-3 mt-1 animate-pulse">
-                            <div className="h-9 w-16 bg-slate-200 dark:bg-slate-700/80 rounded-lg" />
-                            <div className="h-4 w-28 bg-slate-100 dark:bg-slate-800 rounded" />
-                        </div>
-                    ) : (
-                        <div className="flex items-baseline gap-3">
-                            <p className="text-4xl font-black text-slate-900 dark:text-slate-50 tracking-tight leading-none">{alerts.filter(a => a.status === 'sent').length}</p>
-                            <span className="text-xs font-medium text-slate-400">Ongoing scenarios</span>
-                        </div>
-                    )}
-                </div>
             </div>
 
             <TableLayout
