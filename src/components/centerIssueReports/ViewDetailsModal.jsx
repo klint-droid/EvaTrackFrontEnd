@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   X, ExternalLink, Wrench, HeartPulse, Shield, FileWarning, AlertTriangle,
   MapPin, Clock, Activity, CheckCircle2, ShieldCheck, ArrowRight,
-  User, Calendar, Paperclip, Hash, Sparkles
+  User, Calendar, Paperclip, Hash, Sparkles, Edit3, Trash2
 } from 'lucide-react';
 
 const STATUS_OPTIONS = [
@@ -72,7 +72,7 @@ function Field({ label, icon: Icon, children }) {
   );
 }
 
-import ActionMenu from '../ui/ActionMenu';
+
 
 export default function ViewDetailsModal({
   report,
@@ -82,21 +82,21 @@ export default function ViewDetailsModal({
   handleDelete,
   openEditModal
 }) {
-  const [currentStatus, setCurrentStatus] = useState('open');
+  const initialStatus = typeof report?.status === 'object' ? report?.status?.status_key : report?.status || 'open';
+  const [currentStatus, setCurrentStatus] = useState(initialStatus);
+  const [prevReportId, setPrevReportId] = useState(report?.report_id);
   const [statusChanging, setStatusChanging] = useState(false);
 
-  useEffect(() => {
-    if (report) {
-      const sk = typeof report.status === 'object' ? report.status?.status_key : report.status || 'open';
-      setCurrentStatus(sk);
-    }
-  }, [report]);
+  if (report && report.report_id !== prevReportId) {
+    setPrevReportId(report.report_id);
+    setCurrentStatus(initialStatus);
+  }
 
   if (!report) return null;
 
-  const shortId = report.report_id?.slice(-8) || report.report_id || '—';
+  const _shortId = report.report_id?.slice(-8) || report.report_id || '—';
   const severityKey = (typeof report.severity === 'object' ? report.severity?.severity_key : report.severity) || 'medium';
-  const sev = severityConfig[severityKey] || severityConfig.medium;
+  const _sev = severityConfig[severityKey] || severityConfig.medium;
   const statusObj = STATUS_OPTIONS.find(s => s.key === currentStatus) || STATUS_OPTIONS[0];
 
   const r = report.reporter || report.reported_by_user;
@@ -137,26 +137,13 @@ export default function ViewDetailsModal({
             <span>Issue Report</span>
             <span className="font-mono font-black text-slate-400 dark:text-slate-500">/ {report.report_id}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            {openEditModal && (
-              <button 
-                onClick={() => { onClose(); openEditModal(report); }} 
-                className="px-2 py-1 text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-md transition-colors"
-              >
-                Edit
-              </button>
-            )}
-            <ActionMenu
-              itemId={report.report_id}
-              itemKey={report.report_id}
-              currentStatus={currentStatus}
-              statusOptions={STATUS_OPTIONS}
-              onStatusChange={canUpdateStatus && handleStatusChange ? onStatusSelect : undefined}
-              onDelete={handleDelete ? () => { onClose(); handleDelete(report.report_id); } : undefined}
-              canDelete={Boolean(handleDelete)}
-              canChangeStatus={canUpdateStatus}
-            />
-            <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1e2a3d] transition-colors">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <button 
+              type="button"
+              onClick={onClose} 
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1e2a3d] transition-colors cursor-pointer"
+              title="Close panel"
+            >
               <X size={15} />
             </button>
           </div>
@@ -321,44 +308,62 @@ export default function ViewDetailsModal({
         </div>
 
         {/* ── Drawer Footer Actions ── */}
-        {canUpdateStatus && handleStatusChange && (
+        {(canUpdateStatus || openEditModal || handleDelete) && (
           <div className="px-5 py-3.5 border-t border-slate-100 dark:border-[#1e2a3d] bg-slate-50/80 dark:bg-[#141b29]/80 backdrop-blur-sm">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Quick Actions</p>
             <div className="flex gap-2 flex-wrap">
-              {currentStatus === 'open' && (
+              {canUpdateStatus && handleStatusChange && currentStatus === 'open' && (
                 <button
                   type="button"
                   onClick={() => onStatusSelect('in_progress')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-xs"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-xs cursor-pointer"
                 >
                   <Sparkles size={12} /> Start Progress
                 </button>
               )}
-              {currentStatus === 'in_progress' && (
+              {canUpdateStatus && handleStatusChange && currentStatus === 'in_progress' && (
                 <button
                   type="button"
                   onClick={() => onStatusSelect('resolved')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-xs"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-xs cursor-pointer"
                 >
                   <CheckCircle2 size={12} /> Mark Resolved
                 </button>
               )}
-              {currentStatus === 'resolved' && (
+              {canUpdateStatus && handleStatusChange && currentStatus === 'resolved' && (
                 <button
                   type="button"
                   onClick={() => onStatusSelect('closed')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-800 hover:bg-slate-900 text-white transition-all shadow-xs"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-800 hover:bg-slate-900 text-white transition-all shadow-xs cursor-pointer"
                 >
                   <ShieldCheck size={12} /> Close Issue
                 </button>
               )}
-              {currentStatus !== 'open' && currentStatus !== 'closed' && (
+              {canUpdateStatus && handleStatusChange && currentStatus !== 'open' && currentStatus !== 'closed' && (
                 <button
                   type="button"
                   onClick={() => onStatusSelect('open')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1e2a3d] transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1e2a3d] transition-all cursor-pointer"
                 >
                   Re-open
+                </button>
+              )}
+              {openEditModal && currentStatus === 'open' && (
+                <button
+                  type="button"
+                  onClick={() => { onClose(); openEditModal(report); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1e2a3d] transition-all cursor-pointer"
+                >
+                  <Edit3 size={12} /> Edit Issue
+                </button>
+              )}
+              {handleDelete && currentStatus === 'open' && (
+                <button
+                  type="button"
+                  onClick={() => { onClose(); handleDelete(report.report_id); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-rose-200 dark:border-rose-800/60 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all cursor-pointer"
+                >
+                  <Trash2 size={12} /> Delete
                 </button>
               )}
             </div>

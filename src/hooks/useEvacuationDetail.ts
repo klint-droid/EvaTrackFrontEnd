@@ -73,9 +73,11 @@ export function useEvacuationDetail() {
   });
 
   // Permissions via Capability Matrix (OCP)
-  const canManage = can('centers:manage') || isPersonnel();
-  const canAdmit = can('evacuees:admit');
+  // Household admissions and room allocations are on-site operations reserved for personnel
+  const canManage = can('allocations:manage') && isPersonnel();
+  const canAdmit = can('evacuees:admit') && isPersonnel();
   const canEditUnits = can('units:manage');
+  const canDeleteRecord = can('centers:manage') || isPersonnel();
 
   const loading = isCenterLoading || unitsDomain.isUnitsLoading;
 
@@ -113,6 +115,7 @@ export function useEvacuationDetail() {
     canManage,
     canAdmit,
     canEditUnits,
+    canDeleteRecord,
 
     // Units Domain (spread from useCenterUnits)
     units: unitsDomain.units,

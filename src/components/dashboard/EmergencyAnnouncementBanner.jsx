@@ -80,10 +80,10 @@ export default function EmergencyAnnouncementBanner({ activeEvents = [] }) {
           )}
 
           <Link
-            to="/events"
+            to="/evacuation-alerts"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-800 hover:bg-rose-100/50 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-300 text-xs font-semibold shadow-xs transition-colors"
           >
-            <span>View details</span>
+            <span>View alerts</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>

@@ -3,7 +3,6 @@ import { Users, Phone, Home } from 'lucide-react';
 import { Table, TableHeader, TableRow, TableHead, TableCell, StatusBadge, Checkbox } from '../../../ui/Table';
 import { TableLayout } from '../../ui/TableLayout';
 import { Pagination } from '../../ui/Pagination';
-import ActionMenu from '../../ui/ActionMenu';
 
 /**
  * Component: EvacuatedHouseholdsTab
@@ -29,6 +28,7 @@ export default function EvacuatedHouseholdsTab({
     setHouseholdUnitFilter,
     canManage,
     canAdmit,
+    canDeleteRecord,
     onAdmit,
     viewingHousehold,
     setViewingHousehold,
@@ -42,7 +42,7 @@ export default function EvacuatedHouseholdsTab({
                 badgeText={`${filteredHouseholds.length} Households`}
                 subtitle="Households currently evacuated and verified in this center"
                 selectedCount={selectedHouseholds.length}
-                onDeleteSelected={canManage && selectedHouseholds.length > 0 ? () => {
+                onDeleteSelected={(canDeleteRecord ?? canManage) && selectedHouseholds.length > 0 ? () => {
                     selectedHouseholds.forEach(id => {
                         setDeleteRecordModal(id);
                     });
@@ -114,19 +114,18 @@ export default function EvacuatedHouseholdsTab({
                                     Assigned Unit
                                 </TableHead>
                                 <TableHead>Verified On</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
                             </tr>
                         </TableHeader>
                         <tbody>
                             {householdsLoading ? (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="px-6 py-16 text-center text-slate-400">
+                                    <TableCell colSpan={6} className="px-6 py-16 text-center text-slate-400">
                                         Loading evacuated households...
                                     </TableCell>
                                 </TableRow>
                             ) : paginatedHouseholds.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="px-6 py-16 text-center">
+                                    <TableCell colSpan={6} className="px-6 py-16 text-center">
                                         <Users className="mx-auto text-slate-300 dark:text-slate-600 mb-2" size={28} />
                                         <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">No evacuated households found</p>
                                         <p className="text-xs text-slate-400 mt-1">Try adjusting your search terms or status filter.</p>
@@ -201,21 +200,115 @@ export default function EvacuatedHouseholdsTab({
                                                     {formatDateTime(record.verified_at)}
                                                 </span>
                                             </TableCell>
-                                            <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                                                <div className="flex items-center justify-end gap-1.5">
-                                                    <ActionMenu
-                                                        onView={() => setViewingHousehold(record)}
-                                                        onDelete={canManage ? () => setDeleteRecordModal(record.evacuation_id) : undefined}
-                                                        canDelete={canManage}
-                                                    />
-                                                </div>
-                                            </TableCell>
                                         </TableRow>
                                     );
                                 })
                             )}
                         </tbody>
                     </Table>
+                </div>
+
+                {/* ── MOBILE CARD VIEW (below md) ── */}
+                <div className="md:hidden p-3 space-y-3">
+                    {householdsLoading ? (
+                        <div className="p-4 space-y-3">
+                            {[...Array(3)].map((_, i) => (
+                                <div
+                                    key={i}
+                                    className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800 animate-pulse space-y-2.5"
+                                >
+                                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-40" />
+                                    <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-24" />
+                                    <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-32" />
+                                </div>
+                            ))}
+                        </div>
+                    ) : paginatedHouseholds.length === 0 ? (
+                        <div className="py-12 text-center">
+                            <Users className="mx-auto text-slate-300 dark:text-slate-600 mb-2" size={28} />
+                            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">No evacuated households found</p>
+                            <p className="text-xs text-slate-400 mt-1">Try adjusting your search terms or status filter.</p>
+                        </div>
+                    ) : (
+                        paginatedHouseholds.map(record => {
+                            const isChecked = selectedHouseholds.includes(record.evacuation_id);
+                            const isViewing = viewingHousehold?.evacuation_id === record.evacuation_id;
+                            const unitName = record.unit_allocation?.unit?.name || record.unit_allocations?.[0]?.unit?.name || record.unit?.name;
+
+                            return (
+                                <div
+                                    key={record.evacuation_id}
+                                    className={`p-4 bg-white dark:bg-slate-900 rounded-xl border transition-all space-y-3 cursor-pointer ${
+                                        isChecked || isViewing
+                                            ? "border-blue-500 bg-blue-50/20 dark:bg-blue-950/20 dark:border-blue-500/50"
+                                            : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                                    }`}
+                                    onClick={() => setViewingHousehold(record)}
+                                >
+                                    {/* Top Row: Checkbox, Name, ActionMenu */}
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <div onClick={(e) => e.stopPropagation()}>
+                                                <Checkbox
+                                                    checked={isChecked}
+                                                    onChange={() => {
+                                                        setSelectedHouseholds(prev =>
+                                                            prev.includes(record.evacuation_id)
+                                                                ? prev.filter(id => id !== record.evacuation_id)
+                                                                : [...prev, record.evacuation_id]
+                                                        );
+                                                    }}
+                                                    ariaLabel={`Select household ${record.evacuation_id}`}
+                                                />
+                                            </div>
+                                            <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50 flex items-center justify-center flex-shrink-0">
+                                                <Users size={16} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-bold text-gray-900 dark:text-slate-100 truncate leading-tight">
+                                                    {record.household?.household_name || 'Unnamed Household'}
+                                                </p>
+                                                <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">
+                                                    ID-{record.household_id}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Middle Row: Evacuee Count & Assigned Unit Badge */}
+                                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                                {record.evacuated_count || record.household?.member_count || 0} members
+                                            </span>
+                                        </div>
+
+                                        <div>
+                                            {unitName ? (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200/50">
+                                                    <Home size={12} />
+                                                    {unitName}
+                                                </span>
+                                            ) : (
+                                                <StatusBadge label="Unassigned" color="orange" />
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Bottom Row: Contact & Verified At */}
+                                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-1">
+                                        <div className="flex items-center gap-1 font-mono text-[11px]">
+                                            <Phone size={12} className="text-slate-400" />
+                                            <span>{record.household?.contact_number || '—'}</span>
+                                        </div>
+                                        <span className="text-[11px]">
+                                            {formatDateTime(record.verified_at)}
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
                 </div>
             </TableLayout>
         </div>

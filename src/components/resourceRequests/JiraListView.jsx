@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   Package, MapPin, Clock, ArrowRight, User, CheckCircle2, 
   AlertTriangle, Droplet, Utensils, HeartPulse, Home, Box,
-  CheckSquare, Tag, ChevronRight, Inbox, Sparkles
+  CheckSquare, Tag, ChevronRight, Inbox, Sparkles, Trash2
 } from 'lucide-react';
 
 const getResourceTheme = (resourceType = '') => {
@@ -51,21 +51,9 @@ const formatTimeAgo = (dateString) => {
   return `${Math.floor(diff / 86400)}d ago`;
 };
 
-import ActionMenu from '../ui/ActionMenu';
-
-const STATUS_MENU_OPTIONS = [
-  { key: 'pending', label: 'Pending' },
-  { key: 'acknowledged', label: 'Acknowledged' },
-  { key: 'approved', label: 'Approved' },
-  { key: 'rejected', label: 'Rejected' },
-  { key: 'delivered', label: 'Delivered' },
-];
-
 export default function JiraListView({
   requests = [],
   loading = false,
-  canUpdateStatus = false,
-  handleStatusChange,
   handleDelete,
   getStatusClass,
   viewingRequest,
@@ -101,9 +89,9 @@ export default function JiraListView({
       {/* List Header */}
       <div className="grid grid-cols-12 gap-3 px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 text-[11px] font-black uppercase tracking-wider text-slate-400 select-none bg-slate-50/70 dark:bg-slate-800/40">
         <div className="col-span-2 flex items-center gap-2">
-          <span>Ticket</span>
+          <span>Request ID</span>
         </div>
-        <div className="col-span-4">
+        <div className="col-span-3">
           <span>Resource Supply Item</span>
         </div>
         <div className="col-span-3">
@@ -114,6 +102,9 @@ export default function JiraListView({
         </div>
         <div className="col-span-2 text-right">
           <span>Requested</span>
+        </div>
+        <div className="col-span-1 text-right">
+          <span>Actions</span>
         </div>
       </div>
 
@@ -135,7 +126,7 @@ export default function JiraListView({
                 isSelected ? 'bg-blue-50/50 dark:bg-blue-950/30' : ''
               }`}
             >
-              {/* Ticket ID */}
+              {/* Request ID */}
               <div className="col-span-2 flex items-center gap-2">
                 <span className="font-mono text-xs font-black text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                   {shortId}
@@ -143,7 +134,7 @@ export default function JiraListView({
               </div>
 
               {/* Resource Summary & Quantity */}
-              <div className="col-span-4 flex items-center gap-3 min-w-0 pr-3">
+              <div className="col-span-3 flex items-center gap-3 min-w-0 pr-3">
                 <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0 border border-slate-200/60 dark:border-slate-700/60">
                   {resourceTheme.icon}
                 </div>
@@ -178,7 +169,7 @@ export default function JiraListView({
                 </span>
               </div>
 
-              {/* Requester & Created Time & Actions */}
+              {/* Requester & Created Time */}
               <div className="col-span-2 flex items-center justify-end gap-2 text-right">
                 <div className="text-xs font-mono font-bold text-slate-400 dark:text-slate-400">
                   {formatTimeAgo(req.created_at)}
@@ -186,17 +177,23 @@ export default function JiraListView({
                 <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 shadow-xs" title={`Requested by: ${req.requester?.name || 'Officer'}`}>
                   {initials}
                 </div>
-                <ActionMenu
-                  itemId={req.request_id}
-                  itemKey={req.request_id}
-                  currentStatus={statusKey}
-                  statusOptions={STATUS_MENU_OPTIONS}
-                  onView={() => setViewingRequest(req)}
-                  onStatusChange={canUpdateStatus && handleStatusChange ? (newSt) => handleStatusChange(req.request_id, newSt) : undefined}
-                  onDelete={handleDelete ? () => handleDelete(req.request_id) : undefined}
-                  canDelete={Boolean(handleDelete)}
-                  canChangeStatus={canUpdateStatus}
-                />
+              </div>
+
+              {/* Actions */}
+              <div className="col-span-1 flex items-center justify-end text-right" onClick={(e) => e.stopPropagation()}>
+                {handleDelete && statusKey === 'pending' && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(req.request_id);
+                    }}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                    title="Delete request"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                )}
               </div>
             </div>
           );

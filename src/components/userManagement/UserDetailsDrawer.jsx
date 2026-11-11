@@ -3,7 +3,6 @@ import {
   X, User, Phone, Mail, MapPin, Shield, Hash,
   Building2, Edit3, Trash2, CheckCircle2, Loader2, Clock, Sparkles
 } from "lucide-react";
-import ActionMenu from "../ui/ActionMenu";
 
 /* ── Small labelled field (matches Issue Reports ViewDetailsModal) ── */
 function Field({ label, icon: Icon, children }) {
@@ -94,25 +93,11 @@ export default function UserDetailsDrawer({
             </span>
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            {allowEdit && (
-              <button
-                type="button"
-                onClick={() => onEdit(user)}
-                className="px-2 py-1 text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-md transition-colors"
-              >
-                Edit
-              </button>
-            )}
-            {(allowEdit || allowDelete) && (
-              <ActionMenu
-                onEdit={allowEdit ? () => onEdit(user) : undefined}
-                onDelete={allowDelete ? () => { onClose(); onDelete(user.user_id); } : undefined}
-                canDelete={allowDelete}
-              />
-            )}
             <button
+              type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1e2a3d] transition-colors"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1e2a3d] transition-colors cursor-pointer"
+              title="Close panel"
             >
               <X size={15} />
             </button>

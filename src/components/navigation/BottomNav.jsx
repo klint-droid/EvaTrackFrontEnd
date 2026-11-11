@@ -3,7 +3,6 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
     Home,
     Building2,
-    Radio,
     Megaphone,
     ClipboardList,
     Truck,
@@ -67,7 +66,7 @@ const BottomNav = () => {
         bottomTabs = [
             { id: "home", label: "Home", path: "/dashboard", icon: Home },
             { id: "centers", label: "Centers", path: "/evacuation-centers", icon: Building2 },
-            { id: "events", label: "Events", path: "/events", icon: Radio },
+            { id: "alerts", label: "Alerts", path: "/evacuation-alerts", icon: Megaphone },
             { id: "requests", label: "Requests", path: "/resource-requests", icon: Truck },
             { id: "more", label: "Services", isMore: true, icon: LayoutGrid },
         ];
@@ -80,7 +79,6 @@ const BottomNav = () => {
             items: [
                 { label: "Dashboard", desc: "Real-time overview & metrics", path: "/dashboard", icon: Home, color: "bg-blue-600", roles: ["evac_admin", "evac_personnel"] },
                 { label: "Evacuation Centers", desc: "Shelter directory & capacity", path: "/evacuation-centers", icon: Building2, color: "bg-emerald-600", roles: ["evac_admin", "evac_personnel"] },
-                { label: "Disaster Events", desc: "Active alerts & event lifecycle", path: "/events", icon: Radio, color: "bg-rose-600", roles: ["evac_admin"] },
             ]
         },
         {

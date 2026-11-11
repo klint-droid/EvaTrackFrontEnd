@@ -90,6 +90,7 @@ export default function EvacuationDetail() {
         canManage,
         canAdmit,
         canEditUnits,
+        canDeleteRecord,
 
         // Mutation Handlers
         confirmDeleteUnit,
@@ -101,11 +102,11 @@ export default function EvacuationDetail() {
 
     // Keep open drawers synced with live query data
     const activeViewingUnit = viewingUnit
-        ? units.find((u) => u.unit_id === viewingUnit.unit_id) ?? viewingUnit
+        ? units.find((u) => String(u.unit_id) === String(viewingUnit.unit_id)) ?? viewingUnit
         : null;
 
     const activeViewingHousehold = viewingHousehold
-        ? evacuatedHouseholds.find((r) => r.evacuation_id === viewingHousehold.evacuation_id) ?? viewingHousehold
+        ? evacuatedHouseholds.find((r) => String(r.evacuation_id) === String(viewingHousehold.evacuation_id)) ?? viewingHousehold
         : null;
 
     const hasOpenDrawer = Boolean(activeViewingUnit || activeViewingHousehold);
@@ -282,6 +283,7 @@ export default function EvacuationDetail() {
                         setHouseholdUnitFilter={setHouseholdUnitFilter}
                         canManage={canManage}
                         canAdmit={canAdmit}
+                        canDeleteRecord={canDeleteRecord}
                         onAdmit={() => navigate('/household-verification')}
                         viewingHousehold={activeViewingHousehold}
                         setViewingHousehold={(r) => {

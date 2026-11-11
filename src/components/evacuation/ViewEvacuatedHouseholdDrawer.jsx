@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   X, Users, Phone, Home, Calendar, Clock,
-  CheckCircle2, ExternalLink, Trash2, ArrowRight, MapPin, Loader2
+  CheckCircle2, Trash2, ArrowRight, MapPin, Loader2
 } from 'lucide-react';
-import ActionMenu from '../ui/ActionMenu';
 
 function Field({ label, icon: Icon, children }) {
   return (
@@ -100,30 +99,11 @@ export default function ViewEvacuatedHouseholdDrawer({
             </span>
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            {onViewProfile && (
-              <button
-                type="button"
-                onClick={() => onViewProfile(record)}
-                className="px-2 py-1 text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-md transition-colors inline-flex items-center gap-1"
-              >
-                Profile <ExternalLink size={11} />
-              </button>
-            )}
-            <ActionMenu
-              onView={onViewProfile ? () => onViewProfile(record) : undefined}
-              onDelete={
-                canManage && onDeleteRecord
-                  ? () => {
-                      onClose();
-                      onDeleteRecord(record.evacuation_id);
-                    }
-                  : undefined
-              }
-              canDelete={canManage}
-            />
             <button
+              type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1e2a3d] transition-colors"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1e2a3d] transition-colors cursor-pointer"
+              title="Close panel"
             >
               <X size={15} />
             </button>

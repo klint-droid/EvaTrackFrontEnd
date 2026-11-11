@@ -1,15 +1,9 @@
+/* eslint-disable react-refresh/only-export-components */
 import {
     Edit3,
-    Eye,
     Home,
-    MoreHorizontal,
-    Search,
-    Trash2,
-    Users,
-    Filter,
-    RefreshCw
 } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { getCenters } from "../api/evacuation/getCenters";
@@ -19,9 +13,8 @@ import { updateHousehold } from "../api/households/updateHousehold";
 import { getEvents } from "../api/events/getEvents";
 import { useUserStore } from "../store/useUserStore";
 import { useAlert } from "../context/AlertContext";
-import { Table, TableHeader, TableRow, TableHead, TableCell, StatusBadge, RowMenu } from "../ui/Table";
+import { Table, TableHeader, TableRow, TableHead, TableCell, RowMenu } from "../ui/Table";
 import { Input } from "../ui/Input";
-import { Select } from "../ui/Select";
 import { Modal } from "../ui/Modal";
 import { TableLayout } from "../components/ui/TableLayout";
 import { StatCard } from "../components/ui/StatCard";
@@ -42,7 +35,6 @@ export const clearHouseholdsCache = () => {
 
 export default function HouseholdManagement() {
     const navigate = useNavigate();
-    const isMounted = useRef(false);
     const { showAlert, showConfirm } = useAlert();
 
     const [households, setHouseholds] = useState(householdsCache?.households || []);
@@ -51,7 +43,17 @@ export default function HouseholdManagement() {
     const [pagination, setPagination] = useState(householdsCache?.pagination || {});
     const [loading, setLoading] = useState(!householdsCache);
     const [editingHousehold, setEditingHousehold] = useState(null);
-    const [showFilters, setShowFilters] = useState(false);
+    const [activeTab, setActiveTab] = useState("all");
+
+    // Persisted tracking of newly registered household IDs in this session
+    const [newHouseholdIds] = useState(() => {
+        try {
+            const stored = localStorage.getItem("evatrack_new_household_ids");
+            return stored ? new Set(JSON.parse(stored)) : new Set();
+        } catch {
+            return new Set();
+        }
+    });
 
     const [filters, setFilters] = useState(householdsCache?.filters || {
         q: '',
@@ -59,24 +61,32 @@ export default function HouseholdManagement() {
         center_id: '',
         event_id: '',
     });
-    const [searchInput, setSearchInput] = useState(householdsCache?.filters?.q || '');
 
     const currentUser = useUserStore(state => state.user);
     const fetchFreshUser = useUserStore(state => state.fetchFreshUser);
-    const isAdminUser = currentUser?.role === 'evac_admin';
+    const isAdminUser = currentUser?.role === 'evac_admin' || currentUser?.role === 'super_admin';
 
-    const [syncing, setSyncing] = useState(false);
 
-    const canEditHousehold = (h) => {
-        if (isAdminUser) return true;
-        if (currentUser?.role === 'evac_personnel') {
-            const currentEvac = h.current_evacuation || h.currentEvacuation;
-            const currentCenterId = currentEvac?.center_id || currentEvac?.center?.evacuation_center_id;
-            const assignedCenterId = currentUser?.assigned_center?.id || currentUser?.assigned_center_id;
-            return !currentCenterId || String(currentCenterId) === String(assignedCenterId);
+    // Helper: Determine if household is considered a "New Household" vs "Registered Household"
+    const isNewHousehold = (h) => {
+        if (!h) return false;
+        if (newHouseholdIds.has(h.household_id)) return true;
+        if (h.is_new_registration || h.source === 'walk_in' || h.is_manual_new) return true;
+        const hasNonNhh = households.some(item => item.household_id && !item.household_id.startsWith('NHH-'));
+        if (hasNonNhh && h.household_id?.startsWith('NHH-')) {
+            return true;
         }
         return false;
     };
+
+    const registeredCount = households.filter(h => !isNewHousehold(h)).length;
+    const newCount = households.filter(h => isNewHousehold(h)).length;
+
+    const displayedHouseholds = households.filter(h => {
+        if (activeTab === "new") return isNewHousehold(h);
+        if (activeTab === "registered") return !isNewHousehold(h);
+        return true;
+    });
 
     const canDeleteHousehold = isAdminUser;
 
@@ -113,19 +123,6 @@ export default function HouseholdManagement() {
         }
     };
 
-    const handleSyncExternal = async () => {
-        setSyncing(true);
-        try {
-            householdsCache = null;
-            await fetchHouseholds(1, { ...filters, force_sync: true }, true);
-            showAlert("Household data synchronized with external partner system.", "success");
-        } catch (err) {
-            console.error(err);
-            showAlert("Could not sync with external partner system.", "error");
-        } finally {
-            setSyncing(false);
-        }
-    };
 
     const fetchCenters = async () => {
         try {
@@ -160,21 +157,8 @@ export default function HouseholdManagement() {
         if (isCacheExpired || !householdsCache) {
             fetchHouseholds(1, filters, !householdsCache);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
-    // debounced search
-    useEffect(() => {
-        if (!isMounted.current) {
-            isMounted.current = true;
-            return;
-        }
-        const timeout = setTimeout(() => {
-            const newFilters = { ...filters, q: searchInput };
-            setFilters(newFilters);
-            fetchHouseholds(1, newFilters);
-        }, 400);
-        return () => clearTimeout(timeout);
-    }, [searchInput]);
 
     const handleFilterChange = (key, value) => {
         const newFilters = { ...filters, [key]: value };
@@ -228,6 +212,7 @@ export default function HouseholdManagement() {
             'Delete'
         );
     };
+
     const getEvacuationProgress = (household) => {
         const currentEvac = household.current_evacuation || household.currentEvacuation;
         const latestEvac = household.latest_evacuation || household.latestEvacuation;
@@ -335,28 +320,33 @@ export default function HouseholdManagement() {
             perPage={perPage}
             onPageChange={(page) => fetchHouseholds(page)}
         />
-    );    return (
+    );
+
+    const tabs = (
+        <TableTabs
+            tabs={[
+                { key: "all", label: `All Households (${pagination.total || households.length})` },
+                { key: "registered", label: `Registered Households (${registeredCount})` },
+                { key: "new", label: `New Households (${newCount})` },
+            ]}
+            activeTab={activeTab}
+            onChange={setActiveTab}
+        />
+    );
+
+    return (
         <div className="min-h-screen font-sans text-left pb-24">
             <TableLayout
                 title="Households"
-                badgeText={`${pagination.total || households.length} Households`}
-                subtitle="Manage registered family units, contact info, and evacuation statuses"
-                onAdd={isAdminUser ? () => navigate('/households/register') : undefined}
-                addLabel="Register Household"
-                actions={
-                    isAdminUser ? (
-                        <button
-                            type="button"
-                            onClick={handleSyncExternal}
-                            disabled={syncing}
-                            className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors shadow-xs disabled:opacity-50"
-                            title="Sync latest households from external partner system"
-                        >
-                            <RefreshCw size={14} className={syncing ? "animate-spin text-blue-600" : "text-slate-500"} />
-                            <span>{syncing ? "Syncing..." : "Sync Partner Data"}</span>
-                        </button>
-                    ) : undefined
+                badgeText={
+                    activeTab === "new"
+                        ? `${newCount} New`
+                        : activeTab === "registered"
+                        ? `${registeredCount} Registered`
+                        : `${pagination.total || households.length} Total`
                 }
+                subtitle="Manage registered family units, contact info, and evacuation statuses"
+                tabs={tabs}
                 stats={stats}
                 pagination={paginationComponent}
             >
@@ -394,7 +384,7 @@ export default function HouseholdManagement() {
                             >
                               Center / Unit
                             </TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            {activeTab === 'new' && <TableHead className="text-right">Actions</TableHead>}
                         </tr>
                     </TableHeader>
                     <tbody>
@@ -413,29 +403,57 @@ export default function HouseholdManagement() {
                                     <TableCell><div className="w-24 h-3 bg-slate-100 dark:bg-slate-800 rounded" /></TableCell>
                                     <TableCell><div className="w-36 h-6 bg-slate-100 dark:bg-slate-800 rounded-full" /></TableCell>
                                     <TableCell><div className="w-28 h-3 bg-slate-100 dark:bg-slate-800 rounded" /></TableCell>
-                                    <TableCell className="text-right"><div className="w-12 h-4 bg-slate-100 dark:bg-slate-800 rounded ml-auto" /></TableCell>
+                                    {activeTab === 'new' && (
+                                        <TableCell className="text-right">
+                                            <div className="w-12 h-4 bg-slate-100 dark:bg-slate-800 rounded ml-auto" />
+                                        </TableCell>
+                                    )}
                                 </TableRow>
                             ))
-                        ) : households.length === 0 ? (
+                        ) : displayedHouseholds.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan="5" className="py-14 text-center text-slate-400 text-xs">
-                                    No households found.
+                                <TableCell colSpan={activeTab === 'new' ? 5 : 4} className="py-14 text-center">
+                                    <Home className="mx-auto text-slate-300 dark:text-slate-600 mb-2" size={28} />
+                                    <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                                        {activeTab === "new"
+                                            ? "No new households registered"
+                                            : activeTab === "registered"
+                                            ? "No registered households found"
+                                            : "No households found"}
+                                    </p>
+                                    <p className="text-xs text-slate-400 mt-1">
+                                        {activeTab === "new"
+                                            ? "No newly registered family units found."
+                                            : "Try adjusting your column filters or search criteria."}
+                                    </p>
                                 </TableCell>
                             </TableRow>
-                        ) : households.map(h => {
+                        ) : displayedHouseholds.map(h => {
                             const prog = getEvacuationProgress(h);
+                            const isNew = isNewHousehold(h);
                             return (
-                                <TableRow key={h.household_id} className="group">
+                                <TableRow
+                                    key={h.household_id}
+                                    onClick={() => navigate(`/households/${h.household_id}`)}
+                                    className="group cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors"
+                                >
                                     <TableCell>
                                         <div className="flex items-center gap-2.5">
                                             <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 flex-shrink-0">
                                                 <Home size={14} />
                                             </div>
                                             <div>
-                                                <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 leading-tight">
-                                                    {h.household_name}
-                                                </p>
-                                                <p className="text-[10px] text-slate-400 font-mono leading-none">
+                                                <div className="flex items-center gap-1.5">
+                                                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 leading-tight">
+                                                        {h.household_name}
+                                                    </p>
+                                                    {isNew && (
+                                                        <span className="px-1.5 py-0.2 text-[8px] font-black uppercase tracking-wider rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                                            New
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[10px] text-slate-400 font-mono leading-none mt-0.5">
                                                     {h.household_id}
                                                 </p>
                                             </div>
@@ -476,13 +494,13 @@ export default function HouseholdManagement() {
                                             <span className="text-slate-400 text-xs">—</span>
                                         )}
                                     </TableCell>
-                                    <TableCell className="text-right">
-                                        <RowMenu
-                                            onView={() => navigate(`/households/${h.household_id}`)}
-                                            onEdit={canEditHousehold(h) && h.household_id?.startsWith('NHH-') ? () => setEditingHousehold({ ...h }) : undefined}
-                                            onDelete={canDeleteHousehold && h.household_id?.startsWith('NHH-') ? () => handleDelete(h.household_id) : undefined}
-                                        />
-                                    </TableCell>
+                                    {activeTab === 'new' && (
+                                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                                            <RowMenu
+                                                onDelete={canDeleteHousehold ? () => handleDelete(h.household_id) : undefined}
+                                            />
+                                        </TableCell>
+                                    )}
                                 </TableRow>
                             );
                         })}

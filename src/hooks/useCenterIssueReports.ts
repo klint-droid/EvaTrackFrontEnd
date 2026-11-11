@@ -31,7 +31,7 @@ const EMPTY_FORM: FormState = {
 
 export const useCenterIssueReports = () => {
   const queryClient = useQueryClient();
-  const { showConfirm } = useAlert();
+  const { showConfirm, showAlert } = useAlert();
 
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [editingReport, setEditingReport] = useState<any>(null);
@@ -226,6 +226,11 @@ export const useCenterIssueReports = () => {
   };
 
   const openEditModal = (report: any) => {
+    const statusKey = typeof report?.status === 'object' ? report?.status?.status_key : report?.status;
+    if (statusKey && statusKey !== 'open') {
+      showAlert('Only open reports can be edited.', 'Action Not Allowed', 'warning');
+      return;
+    }
     setEditingReport(report);
     setForm({
       evacuation_center_id: report.evacuation_center_id || '',
@@ -282,6 +287,12 @@ export const useCenterIssueReports = () => {
   };
 
   const handleDelete = async (reportId: string | number) => {
+    const target = reports.find((r: any) => String(r.report_id) === String(reportId));
+    const statusKey = typeof target?.status === 'object' ? target?.status?.status_key : target?.status;
+    if (target && statusKey && statusKey !== 'open') {
+      showAlert('Only open reports can be deleted.', 'Action Not Allowed', 'warning');
+      return;
+    }
     showConfirm(
       'Delete this issue report?',
       async () => {
@@ -294,9 +305,12 @@ export const useCenterIssueReports = () => {
   };
 
   const canModifyReport = (report: any): boolean => {
+    const statusKey = typeof report?.status === 'object' ? report?.status?.status_key : report?.status;
+    if (statusKey !== 'open') return false;
+
     if (can('issues:update_status')) return true;
     if (isPersonnel()) {
-      return report.status === 'open' && report.reported_by === user?.user_id;
+      return report.reported_by === user?.user_id;
     }
     return false;
   };

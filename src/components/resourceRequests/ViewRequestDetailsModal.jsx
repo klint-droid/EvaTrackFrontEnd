@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   X, ExternalLink, Package, Users, MapPin, Clock, Activity,
   CheckCircle2, AlertTriangle, ArrowRight, User, Calendar,
-  Droplet, Utensils, HeartPulse, Home, Box, Hash
+  Droplet, Utensils, HeartPulse, Home, Box, Hash, Trash2
 } from 'lucide-react';
-
-import ActionMenu from '../ui/ActionMenu';
 
 const STATUS_OPTIONS = [
   { key: 'pending',      label: 'Pending',      color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-400/40' },
@@ -52,17 +50,19 @@ function Field({ label, icon: Icon, children }) {
 export default function ViewRequestDetailsModal({
   request,
   onClose,
-  getStatusClass,
   canUpdateStatus,
   handleStatusChange,
   handleDelete
 }) {
-  const [currentStatus, setCurrentStatus] = useState('pending');
+  const resolvedStatus = request?.status?.status_key || request?.status || 'pending';
+  const [currentStatus, setCurrentStatus] = useState(resolvedStatus);
+  const [prevReqId, setPrevReqId] = useState(request?.request_id);
   const [statusChanging, setStatusChanging] = useState(false);
 
-  useEffect(() => {
-    if (request) setCurrentStatus(request.status?.status_key || request.status || 'pending');
-  }, [request]);
+  if (request && request.request_id !== prevReqId) {
+    setPrevReqId(request.request_id);
+    setCurrentStatus(resolvedStatus);
+  }
 
   if (!request) return null;
 
@@ -110,18 +110,13 @@ export default function ViewRequestDetailsModal({
             <span>Resource Request</span>
             <span className="font-mono font-black text-slate-400 dark:text-slate-500">/ RR-{shortId.toUpperCase()}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <ActionMenu
-              itemId={request.request_id}
-              itemKey={request.request_id}
-              currentStatus={currentStatus}
-              statusOptions={STATUS_OPTIONS}
-              onStatusChange={canUpdateStatus && handleStatusChange ? onStatusSelect : undefined}
-              onDelete={handleDelete ? () => { onClose(); handleDelete(request.request_id); } : undefined}
-              canDelete={Boolean(handleDelete)}
-              canChangeStatus={canUpdateStatus}
-            />
-            <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1e2a3d] transition-colors">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <button 
+              type="button"
+              onClick={onClose} 
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1e2a3d] transition-colors cursor-pointer"
+              title="Close panel"
+            >
               <X size={15} />
             </button>
           </div>
@@ -256,44 +251,53 @@ export default function ViewRequestDetailsModal({
         </div>
 
         {/* ── Drawer Footer Actions ── */}
-        {canUpdateStatus && handleStatusChange && (
+        {((canUpdateStatus && handleStatusChange) || handleDelete) && (
           <div className="px-5 py-3.5 border-t border-slate-100 dark:border-[#1e2a3d] bg-slate-50/80 dark:bg-[#141b29]/80 backdrop-blur-sm">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Quick Actions</p>
             <div className="flex gap-2 flex-wrap">
-              {currentStatus === 'pending' && (
+              {canUpdateStatus && handleStatusChange && currentStatus === 'pending' && (
                 <button
                   type="button"
                   onClick={() => onStatusSelect('acknowledged')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-all cursor-pointer"
                 >
                   <ArrowRight size={12} /> Acknowledge
                 </button>
               )}
-              {currentStatus === 'acknowledged' && (
+              {canUpdateStatus && handleStatusChange && currentStatus === 'acknowledged' && (
                 <button
                   type="button"
                   onClick={() => onStatusSelect('approved')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-all cursor-pointer"
                 >
                   <ArrowRight size={12} /> Approve
                 </button>
               )}
-              {currentStatus === 'approved' && (
+              {canUpdateStatus && handleStatusChange && currentStatus === 'approved' && (
                 <button
                   type="button"
                   onClick={() => onStatusSelect('delivered')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all cursor-pointer"
                 >
                   <CheckCircle2 size={12} /> Mark Delivered
                 </button>
               )}
-              {!['delivered', 'rejected'].includes(currentStatus) && (
+              {canUpdateStatus && handleStatusChange && !['delivered', 'rejected'].includes(currentStatus) && (
                 <button
                   type="button"
                   onClick={() => onStatusSelect('rejected')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-rose-200 dark:border-rose-800/60 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-rose-200 dark:border-rose-800/60 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all cursor-pointer"
                 >
                   Reject
+                </button>
+              )}
+              {handleDelete && currentStatus === 'pending' && (
+                <button
+                  type="button"
+                  onClick={() => { onClose(); handleDelete(request.request_id); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-rose-200 dark:border-rose-800/60 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all cursor-pointer"
+                >
+                  <Trash2 size={12} /> Delete
                 </button>
               )}
             </div>

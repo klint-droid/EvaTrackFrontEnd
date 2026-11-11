@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import "leaflet/dist/leaflet.css";
 import "./index.css";
 
@@ -25,7 +25,6 @@ import VerifyHousehold from "./pages/VerifyHousehold";
 import EvacuationList from "./pages/evacuation/EvacuationList";
 import DashboardLayout from "./layout/DashboardLayout";
 import EvacuationDetail from "./pages/evacuation/EvacuationDetail";
-import EventManagement from "./pages/EventManagement";
 import HouseholdManagement from './pages/HouseholdManagement';
 import HouseholdDetail from './pages/HouseholdDetail';
 import ResourceRequests from './pages/ResourceRequests';
@@ -75,7 +74,7 @@ function App() {
                 <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["evac_admin", "evac_personnel"]}><Dashboard /></ProtectedRoute>} />
                 <Route path="/evacuation-alerts" element={<ProtectedRoute allowedRoles={["evac_admin"]}><EvacuationAlerts /></ProtectedRoute>} />
                 <Route path="/household-verification" element={<ProtectedRoute allowedRoles={["evac_personnel"]}><VerifyHousehold /></ProtectedRoute>} />
-                <Route path="/events" element={<ProtectedRoute allowedRoles={["evac_admin"]}><EventManagement /></ProtectedRoute>} />
+                <Route path="/events" element={<Navigate to="/dashboard" replace />} />
 
                 <Route path="/evacuation-centers">
                   <Route index element={<ProtectedRoute allowedRoles={["evac_admin", "evac_personnel"]}><EvacuationList /></ProtectedRoute>} />

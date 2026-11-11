@@ -88,6 +88,7 @@ const DashboardLayout = () => {
         location.pathname.startsWith("/center-issue-reports") ||
         location.pathname.startsWith("/resource-requests") ||
         location.pathname.startsWith("/user-management") ||
+        location.pathname.startsWith("/evacuation-alerts") ||
         location.pathname.startsWith("/evacuation-centers/");
 
     return (

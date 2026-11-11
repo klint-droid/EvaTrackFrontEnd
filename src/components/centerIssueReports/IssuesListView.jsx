@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Wrench, HeartPulse, Shield, AlertTriangle, FileWarning,
-  MapPin, Clock, Paperclip, ChevronRight 
+  MapPin, Clock, Paperclip, ChevronRight, Trash2
 } from 'lucide-react';
 
 const getCategoryIcon = (category = '') => {
@@ -33,22 +33,10 @@ const formatTimeAgo = (dateString) => {
   return `${Math.floor(diff / 86400)}d ago`;
 };
 
-import ActionMenu from '../ui/ActionMenu';
-
-const STATUS_MENU_OPTIONS = [
-  { key: 'open', label: 'Open' },
-  { key: 'in_progress', label: 'In Progress' },
-  { key: 'resolved', label: 'Resolved' },
-  { key: 'closed', label: 'Closed' },
-];
-
 export default function IssuesListView({
   reports = [],
   loading = false,
-  canUpdateStatus = false,
-  handleStatusChange,
   handleDelete,
-  getSeverityClass,
   getStatusClass,
   viewingReport,
   setViewingReport
@@ -83,11 +71,12 @@ export default function IssuesListView({
       {/* Table Header Row */}
       <div className="grid grid-cols-12 gap-3 px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 text-[10px] font-black uppercase tracking-wider text-slate-400">
         <div className="col-span-2">Key</div>
-        <div className="col-span-5">Summary & Category</div>
+        <div className="col-span-4">Summary & Category</div>
         <div className="col-span-2">Center</div>
         <div className="col-span-1">Status</div>
         <div className="col-span-1">Updated</div>
-        <div className="col-span-1 text-right">Reporter</div>
+        <div className="col-span-1 text-center">Reporter</div>
+        <div className="col-span-1 text-right">Actions</div>
       </div>
 
       {/* Rows */}
@@ -115,7 +104,7 @@ export default function IssuesListView({
               </div>
 
               {/* Title & Category */}
-              <div className="col-span-5 flex items-center gap-2.5 min-w-0">
+              <div className="col-span-4 flex items-center gap-2.5 min-w-0">
                 <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 flex-shrink-0">
                   {getCategoryIcon(report.category)}
                 </div>
@@ -155,25 +144,31 @@ export default function IssuesListView({
                 {formatTimeAgo(report.created_at)}
               </div>
 
-              {/* Reporter Profile & Actions */}
-              <div className="col-span-1 flex items-center justify-end gap-1.5">
+              {/* Reporter Profile */}
+              <div className="col-span-1 flex items-center justify-center">
                 <div 
                   className="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-600 to-orange-500 text-white text-[10px] font-bold flex items-center justify-center shadow-xs flex-shrink-0"
                   title={`Reported by: ${reporterName}`}
                 >
                   {initials}
                 </div>
-                <ActionMenu
-                  itemId={report.report_id}
-                  itemKey={report.report_id}
-                  currentStatus={statusKey}
-                  statusOptions={STATUS_MENU_OPTIONS}
-                  onView={() => setViewingReport(report)}
-                  onStatusChange={canUpdateStatus && handleStatusChange ? (newSt) => handleStatusChange(report.report_id, newSt) : undefined}
-                  onDelete={handleDelete ? () => handleDelete(report.report_id) : undefined}
-                  canDelete={Boolean(handleDelete)}
-                  canChangeStatus={canUpdateStatus}
-                />
+              </div>
+
+              {/* Actions */}
+              <div className="col-span-1 flex items-center justify-end text-right" onClick={(e) => e.stopPropagation()}>
+                {handleDelete && statusKey === 'open' && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(report.report_id);
+                    }}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                    title="Delete report"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </div>
             </div>
           );

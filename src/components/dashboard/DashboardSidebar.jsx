@@ -1,14 +1,18 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Radio, ClipboardList, Truck, UserPlus, Bell, Clock, ShieldAlert, CheckCircle2, Wrench, HeartPulse, Shield, FileWarning, AlertTriangle, ChevronRight, Package } from "lucide-react";
+import { useUserStore } from "../../store/useUserStore";
+import { normalizeRole } from "../../utils/roles";
 
 export default function DashboardSidebar({
     loading,
     recentAlerts,
     displayIssues,
-    displayRequests
+    isPersonnel: propIsPersonnel
 }) {
-
+    const user = useUserStore(state => state.user) || {};
+    const currentRole = normalizeRole(user?.role, user?.role_id);
+    const isPersonnel = propIsPersonnel !== undefined ? propIsPersonnel : currentRole === "evac_personnel";
 
     const getCategoryIcon = (category) => {
         switch (category) {
@@ -20,36 +24,51 @@ export default function DashboardSidebar({
         }
     };
 
-    const QUICK_ACTIONS = [
+    const BASE_QUICK_ACTIONS = [
         { 
             icon: Radio, 
             label: "Broadcast Alert", 
             sub: "Send emergency advisory", 
             color: "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-900/50",
-            link: "/evacuation-alerts" 
+            link: "/evacuation-alerts",
+            roles: ["evac_admin", "super_admin"]
         },
         { 
             icon: ClipboardList, 
             label: "Report Issue", 
             sub: "Log shelter incident", 
             color: "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/50",
-            link: "/center-issue-reports" 
+            link: "/center-issue-reports",
+            roles: ["evac_admin", "super_admin", "evac_personnel"]
         },
         { 
             icon: Truck, 
             label: "Request Supplies", 
             sub: "Order logistics pack", 
             color: "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/50",
-            link: "/resource-requests" 
+            link: "/resource-requests",
+            roles: ["evac_admin", "super_admin", "evac_personnel"]
         },
         { 
             icon: UserPlus, 
             label: "Register Family", 
             sub: "Enroll evacuee household", 
             color: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50",
-            link: "/household-verification" 
+            link: "/household-verification",
+            roles: ["evac_personnel"]
         },
     ];
+
+    const quickActions = BASE_QUICK_ACTIONS.filter((a) => {
+        // Explicitly remove "Register Family" on the admin side
+        if (!isPersonnel && a.label === "Register Family") {
+            return false;
+        }
+        if (a.roles) {
+            return a.roles.includes(currentRole);
+        }
+        return true;
+    });
 
     return (
         <div className="lg:col-span-1 space-y-6">
@@ -57,13 +76,13 @@ export default function DashboardSidebar({
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Quick actions</h2>
-                    <Link to="/evacuation-alerts" className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-medium">
+                    <Link to={isPersonnel ? "/center-issue-reports" : "/evacuation-alerts"} className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-medium">
                         View all <ChevronRight className="w-3.5 h-3.5" />
                     </Link>
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5">
-                    {QUICK_ACTIONS.map((a) => {
+                    {quickActions.map((a) => {
                         const Icon = a.icon;
                         return (
                             <Link
@@ -186,4 +205,3 @@ export default function DashboardSidebar({
         </div>
     );
 }
-

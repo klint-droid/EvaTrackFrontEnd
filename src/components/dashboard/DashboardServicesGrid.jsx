@@ -2,7 +2,6 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Building2,
-    Radio,
     Megaphone,
     ClipboardList,
     Truck,
@@ -45,17 +44,6 @@ const DashboardServicesGrid = ({
             gradient: "from-blue-500 to-indigo-600 shadow-blue-500/25",
             roles: ["evac_admin", "evac_personnel"],
             badge: null
-        },
-        {
-            id: "events",
-            label: "Disaster Events",
-            fullLabel: "Disaster Events",
-            path: "/events",
-            icon: Radio,
-            gradient: "from-rose-500 to-red-600 shadow-rose-500/25",
-            roles: ["evac_admin"],
-            badge: hasActiveEvent ? "Live" : null,
-            badgeColor: "bg-rose-500 text-white animate-pulse"
         },
         {
             id: "requests",

@@ -29,7 +29,7 @@ const EMPTY_FORM: FormState = {
 
 export const useResourceRequests = () => {
   const queryClient = useQueryClient();
-  const { showConfirm } = useAlert();
+  const { showConfirm, showAlert } = useAlert();
 
   const [selectedEventId, setSelectedEventId] = useState<string>("all");
   const [modalOpen, setModalOpen] = useState<boolean>(false);
@@ -203,6 +203,12 @@ export const useResourceRequests = () => {
   };
 
   const handleDelete = async (requestId: string | number) => {
+    const target = requests.find((r: any) => String(r.request_id) === String(requestId));
+    const statusKey = typeof target?.status === 'object' ? target?.status?.status_key : target?.status;
+    if (target && statusKey && statusKey !== 'pending') {
+      showAlert('Only pending requests can be deleted.', 'Action Not Allowed', 'warning');
+      return;
+    }
     showConfirm(
       'Delete this resource request?',
       async () => {

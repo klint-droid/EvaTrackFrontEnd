@@ -94,13 +94,11 @@ const formatTimeAgo = (dateString) => {
 
 export default function IssuesKanbanBoard({
   reports = [],
-  loading = false,
   canUpdateStatus = false,
   canCreate = false,
   openCreateModal,
   handleStatusChange,
   handleDelete,
-  getSeverityClass,
   viewingReport,
   setViewingReport
 }) {
@@ -233,8 +231,8 @@ export default function IssuesKanbanBoard({
                               statusOptions={STATUS_MENU_OPTIONS}
                               onView={() => setViewingReport(report)}
                               onStatusChange={canUpdateStatus && handleStatusChange ? (newSt) => handleStatusChange(report.report_id, newSt) : undefined}
-                              onDelete={handleDelete ? () => handleDelete(report.report_id) : undefined}
-                              canDelete={Boolean(handleDelete)}
+                              onDelete={handleDelete && column.id === 'open' ? () => handleDelete(report.report_id) : undefined}
+                              canDelete={Boolean(handleDelete) && column.id === 'open'}
                               canChangeStatus={canUpdateStatus}
                             />
                           </div>

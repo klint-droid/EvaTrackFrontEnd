@@ -303,6 +303,7 @@ const Dashboard = () => {
                     recentAlerts={recentAlerts}
                     displayIssues={displayIssues}
                     displayRequests={displayRequests}
+                    isPersonnel={isPersonnel}
                 />
 
             </div>

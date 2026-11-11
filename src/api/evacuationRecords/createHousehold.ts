@@ -24,7 +24,14 @@ export interface CreateMemberPayload {
 export interface CreateHouseholdPayload {
   household_name: string;
   contact_number?: string | null;
+  emergency_contact?: string | null;
   address_id?: number | null;
+  barangay?: string | null;
+  street?: string | null;
+  purok?: string | null;
+  city?: string | null;
+  province?: string | null;
+  full_address?: string | null;
   members?: CreateMemberPayload[];
 }
 
