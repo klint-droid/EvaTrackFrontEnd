@@ -162,8 +162,6 @@ export default function EvacuationAlerts() {
                     title="SMS & Push Alerts"
                     badgeText={loading ? <span className="inline-block w-16 h-3 bg-blue-200/70 dark:bg-blue-800/60 rounded animate-pulse align-middle" /> : `${pagination.total || alerts.length} Dispatches`}
                     subtitle="Broadcast emergency warnings, SMS notifications, and mobile push alerts"
-                    onAdd={canCreate ? () => setCreateModal(true) : undefined}
-                    addLabel="Broadcast Alert"
                     pagination={
                         <Pagination
                             currentPage={pagination.current_page || 1}
