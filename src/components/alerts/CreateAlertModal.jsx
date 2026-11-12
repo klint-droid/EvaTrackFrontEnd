@@ -118,48 +118,6 @@ export default function CreateAlertModal({ onClose, onSent }) {
         return parts.join(', ') + '.';
     };
 
-    const generateEvatrackAdvisory = () => {
-        if (!centers || centers.length === 0) {
-            setError('No evacuation centers found to generate status advisory.');
-            return;
-        }
-
-        const centersWithStats = centers.map(c => {
-            const capacity = Number(c.capacity) || 1;
-            const current = Number(c.current_occupancy) || 0;
-            const pct = Math.min(100, Math.round((current / capacity) * 100));
-            return {
-                name: c.name,
-                pct,
-                current,
-                capacity,
-                available: Math.max(0, capacity - current)
-            };
-        });
-
-        const nearFull = centersWithStats.filter(c => c.pct >= 80);
-        const openCenters = centersWithStats.filter(c => c.pct < 80).sort((a, b) => a.pct - b.pct);
-
-        let parts = ['EVATRACK ADVISORY: Evacuation Center Status & Redirection Directive.'];
-
-        if (nearFull.length > 0) {
-            const fullList = nearFull.map(c => `${c.name} (${c.pct}% FULL)`).join(', ');
-            parts.push(`NEAR CAPACITY / AVOID: ${fullList}.`);
-        }
-
-        if (openCenters.length > 0) {
-            const topRecs = openCenters.slice(0, 3).map(c => `${c.name} (${c.pct}% occupied, space available)`).join(', ');
-            parts.push(`RECOMMENDED SHELTERS: Please proceed to ${topRecs}.`);
-        } else {
-            parts.push('NOTICE: All designated shelters are operating near capacity. Please coordinate with barangay responders.');
-        }
-
-        const generated = parts.join('\n\n');
-        setForm(prev => ({ ...prev, message: generated.slice(0, 500) }));
-        setSelectedTargets([{ type: 'not_evacuated', id: 'not_evacuated' }]);
-        setError(null);
-    };
-
     const appendCenterStatus = () => {
         if (!centers || centers.length === 0) {
             setError('No evacuation centers found to include status.');
@@ -376,28 +334,18 @@ export default function CreateAlertModal({ onClose, onSent }) {
 
                         {/* Message */}
                         <div className="space-y-3">
-                            <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center justify-between">
                                 <label className="text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-1">
                                     Alert Message <span className="text-red-500">*</span>
                                 </label>
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={appendCenterStatus}
-                                        className="inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shadow-sm"
-                                        title="Append live occupancy status of all evacuation centers to current message"
-                                    >
-                                        Include Center Status
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={generateEvatrackAdvisory}
-                                        className="inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all shadow-sm"
-                                        title="Auto-generate live center status & redirection advice based on current occupancy"
-                                    >
-                                        Auto-Draft EVATRACK ADVISORY
-                                    </button>
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={appendCenterStatus}
+                                    className="inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all shadow-sm"
+                                    title="Append live occupancy status of all evacuation centers to current message"
+                                >
+                                    Include Center Status
+                                </button>
                             </div>
                             <textarea
                                 rows={5}
